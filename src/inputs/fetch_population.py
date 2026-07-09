@@ -2,8 +2,12 @@
 """
 Prepare the InVEST `population_raster` for San Francisco.
 
-Downloads (or reuses) the WorldPop United States 100 m population raster, clips
-it to the SF AOI, and reprojects it to a metric CRS.
+One script, three ways to supply the raster (checked in this order):
+  1. --pop /path/to/file.tif        (an explicit file you point to)
+  2. an existing .tif already in data/urban-mental-health/inputs/_worldpop/
+     (e.g. one you downloaded by hand — no re-download)
+  3. otherwise, auto-download the WorldPop US file for --year
+Then it clips to the SF AOI and reprojects to a metric CRS.
 
 DATA SOURCE
     WorldPop "Global 2015-2030" (Global2), release R2025A — constrained US
@@ -72,6 +76,18 @@ def worldpop_url(year: int) -> tuple[str, str]:
     return f"{base}/{fname}", fname
 
 
+def find_cached() -> "Path | None":
+    """Return an already-present WorldPop .tif in the cache, if there's exactly one."""
+    tifs = sorted(CACHE.glob("*.tif")) if CACHE.exists() else []
+    if len(tifs) == 1:
+        LOGGER.info("Using existing local file (no download): %s", tifs[0])
+        return tifs[0]
+    if len(tifs) > 1:
+        sys.exit("Multiple .tif files in %s; pick one with --pop:\n  %s"
+                 % (CACHE, "\n  ".join(str(t) for t in tifs)))
+    return None
+
+
 def download_worldpop(year: int, url_override: str | None) -> Path:
     """Download the WorldPop US file into the cache (skip if already present)."""
     if url_override:
@@ -118,22 +134,33 @@ def main():
     if not cli.aoi.exists():
         sys.exit(f"AOI not found: {cli.aoi}. Run build_aoi_prevalence.py first.")
 
-    pop_path = cli.pop if cli.pop else download_worldpop(cli.year, cli.url)
+    # Resolve the source: explicit --pop, else a local cached file, else download.
+    pop_path = cli.pop or find_cached() or download_worldpop(cli.year, cli.url)
     if not pop_path.exists():
         sys.exit(f"Population raster not found: {pop_path}")
 
     aoi = gpd.read_file(cli.aoi)
     pop = rioxarray.open_rasterio(pop_path, masked=True)
-
-    # 1) Clip to the AOI in the raster's own CRS (fast; avoids loading all of USA).
     aoi_in_pop_crs = aoi.to_crs(pop.rio.crs)
-    LOGGER.info("Clipping population to SF AOI extent...")
-    clipped = pop.rio.clip(aoi_in_pop_crs.geometry, aoi_in_pop_crs.crs, drop=True)
 
-    # 2) Reproject to the metric CRS the model needs (population must be in meters).
+    # 1) Windowed read of just the SF bounding box. Reads only that small region
+    #    off disk — clipping the full US raster directly loads >1e9 pixels into
+    #    memory and gets the process killed (OOM: "zsh: killed").
+    minx, miny, maxx, maxy = aoi_in_pop_crs.total_bounds
+    LOGGER.info("Reading SF window from the national raster...")
+    pop_window = pop.rio.clip_box(minx, miny, maxx, maxy)
+
+    # 2) Clip that small window to the actual AOI polygons.
+    LOGGER.info("Clipping to AOI polygons...")
+    clipped = pop_window.rio.clip(aoi_in_pop_crs.geometry, aoi_in_pop_crs.crs, drop=True)
+
+    # 3) Reproject to the metric CRS the model needs (population must be in meters).
     LOGGER.info("Reprojecting to %s...", METRIC_CRS)
     projected = clipped.rio.reproject(METRIC_CRS, resampling=Resampling.bilinear)
-    projected = projected.rio.write_nodata(float("nan"))
+    projected.rio.write_nodata(float("nan"), inplace=True)
+    # The source raster carries a _FillValue in BOTH .attrs and .encoding; xarray's
+    # writer refuses that clash, so drop the attrs copy (nodata stays in encoding).
+    projected.attrs.pop("_FillValue", None)
 
     cli.output.parent.mkdir(parents=True, exist_ok=True)
     projected.rio.to_raster(cli.output, driver="GTiff", compress="LZW")

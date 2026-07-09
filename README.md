@@ -24,7 +24,7 @@ SNAPP/
 │   │   └── ndvi_gee.py       # 30 m Landsat JJAS p90 NDVI via Google Earth Engine
 │   ├── inputs/
 │   │   ├── build_aoi_prevalence.py  # SF tracts AOI + CDC PLACES depression (risk_rate)
-│   │   ├── fetch_population.py       # WorldPop US 100 m -> clip to SF AOI
+│   │   ├── fetch_population.py       # WorldPop US 100 m -> clip to SF AOI (local file or download)
 │   │   └── make_ndvi_scenario.py    # ndvi_base -> ndvi_alt greening scenario
 │   └── urban_mental_health/
 │       └── run_model.py      # runs the InVEST Urban Mental Health model
@@ -176,7 +176,7 @@ python src/sf_ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via Goog
 # AOI + baseline prevalence (depression) as one step:
 python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_prevalence.gpkg
 
-# population raster (auto-downloads WorldPop US 100 m, then clips to SF):
+# population raster (uses a local file in _worldpop/ if present, else downloads):
 python src/inputs/fetch_population.py
 
 # greening scenario (ndvi_alt) from the baseline NDVI:
