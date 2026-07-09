@@ -1,0 +1,10 @@
+{
+  // Default interpreter hint — the `snapp` conda env (Miniforge default path).
+  // If your conda lives elsewhere, use Cmd+Shift+P -> "Python: Select Interpreter".
+  "python.defaultInterpreterPath": "${env:HOME}/miniforge3/envs/snapp/bin/python",
+  "python.terminal.activateEnvironment": true,
+  "files.exclude": {
+    "**/__pycache__": true,
+    "**/*.pyc": true
+  }
+}

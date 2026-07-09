@@ -1,0 +1,28 @@
+# Secrets — never commit real credentials
+.env
+
+# Data (large / regenerable) — datasets live here but stay out of git
+data/
+
+# Leftover empty folders from an earlier layout (delete these manually;
+# the synced drive blocks automated deletion)
+/scripts/
+/code/
+/sf-ndvi-2024/
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+*.egg-info/
+
+# OS / editor cruft
+.DS_Store
+.idea/
+
+# VS Code: share the project config, ignore personal/local settings
+.vscode/*
+!.vscode/settings.json
+!.vscode/extensions.json

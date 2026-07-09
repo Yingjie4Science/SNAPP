@@ -1,0 +1,40 @@
+# Conda environment for the SNAPP project (Apple Silicon friendly).
+# Create:   conda env create -f environment.yml
+# Update:   conda env update -f environment.yml --prune
+# Activate: conda activate snapp
+#
+# conda-forge ships arm64 (Apple Silicon) builds of GDAL and everything below,
+# so this avoids the compiler/GDAL problems you'd hit with pip.
+name: snapp
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+
+  # NDVI download + clip (src/sf_ndvi)
+  - requests>=2.31
+  - xarray>=2023.1
+  - netcdf4>=1.6
+  - python-dotenv>=1.0
+
+  # Rasters / compositing / population (src/sf_ndvi, src/inputs)
+  - rioxarray>=0.15
+  - rasterio>=1.3
+
+  # Vector inputs: AOI + CDC PLACES prevalence (src/inputs)
+  - geopandas>=0.14
+  - pandas>=2.0
+
+  # Sentinel-2 10 m NDVI via CDSE openEO (src/sf_ndvi/ndvi_sentinel2.py)
+  - openeo>=0.30
+
+  # Sentinel-2 10 m NDVI via Google Earth Engine (src/sf_ndvi/ndvi_gee.py)
+  - earthengine-api>=0.1.390
+  - geemap>=0.30
+
+  # InVEST Urban Mental Health model (src/urban_mental_health)
+  - natcap.invest>=3.19
+
+  # VS Code / notebooks
+  - ipykernel
+  - pip
