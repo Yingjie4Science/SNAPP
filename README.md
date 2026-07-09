@@ -14,6 +14,7 @@ SNAPP/
 ├── .env                      # real secrets (gitignored)
 ├── environment.yml           # conda env spec (recommended setup)
 ├── requirements.txt          # pip alternative
+├── run_pipeline.sh           # run all five steps end to end
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
 │   ├── sf_ndvi/
@@ -157,7 +158,15 @@ conda activate invest
 ```
 (`pip install natcap.invest` works only if a GDAL toolchain is already present.)
 
-Prepare the inputs, then run the model:
+**Run everything at once.** With the `snapp` env active and Earth Engine
+authenticated (see setup), the whole pipeline runs in one command:
+```bash
+bash run_pipeline.sh              # all five steps, in order
+bash run_pipeline.sh --validate   # build inputs, then only validate the model
+```
+It stops at the first error; comment out a step in the script if its output
+already exists (e.g. to avoid re-downloading). To run steps individually:
+
 ```bash
 # greenness (ndvi_base) — pick ONE:
 python src/sf_ndvi/composite_ndvi.py           # 300 m: composite the Copernicus dekads
@@ -181,12 +190,19 @@ python src/urban_mental_health/run_model.py              # run
 
 Input builders (`src/inputs/`): `build_aoi_prevalence.py` pulls Census TIGER
 tracts for SF and joins CDC PLACES depression prevalence into a `risk_rate`
-field; `fetch_population.py` downloads the WorldPop US 100 m population raster
-([listing id=79](https://hub.worldpop.org/geodata/listing?id=79)), clips it to
-the AOI, and reprojects it to meters (or pass `--pop` to use your own file). Both write into
-`data/urban-mental-health/inputs/` with the exact filenames `run_model.py`
-expects. If you use the Sentinel-2 NDVI, point `ndvi_base` at
-`sf_ndvi_2024_s2_10m.tif`.
+field; `fetch_population.py` downloads the WorldPop US 100 m population raster,
+clips it to the AOI, and reprojects it to meters (or pass `--pop` to use your own
+file). Both write into `data/urban-mental-health/inputs/` with the exact
+filenames `run_model.py` expects. If you use the Sentinel-2 NDVI, point
+`ndvi_base` at `sf_ndvi_2024_s2_10m.tif`.
+
+Data sources:
+
+- **Greenness (NDVI):** Landsat via [Google Earth Engine](https://developers.google.com/earth-engine/datasets) (default) or [Copernicus NDVI 300 m / Sentinel-2 via CDSE](https://land.copernicus.eu/).
+- **AOI:** [US Census TIGER/Line census tracts](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html).
+- **Depression prevalence:** [CDC PLACES, census-tract 2024 release](https://data.cdc.gov/500-Cities-Places/) (dataset `cwsq-ngmh`, measure `DEPRESSION`).
+- **Population:** [WorldPop "Global 2015–2030" (Global2), R2025A, listing id=135](https://hub.worldpop.org/geodata/listing?id=135) — constrained US 100 m population, per year 2015–2030 (default 2024). License: CC BY 4.0 — cite WorldPop.
+- **Effect size:** Liu et al. (2023), *Environmental Research* 231:116303, [DOI 10.1016/j.envres.2023.116303](https://doi.org/10.1016/j.envres.2023.116303).
 
 Caveat: the Copernicus NDVI here is 300 m — coarse for a residential-greenness
 analysis (mental-health search radii are typically ≤300 m). Prefer 10 m
@@ -222,18 +238,26 @@ deleted. Budget ~10–15 GB of temporary downloads; final SF outputs are a few K
 each. A lighter Sentinel Hub Process API version (server-side SF window) is
 available on request.
 
-## Sync to GitHub
+## GitHub
+
+The repo is hosted at
+[github.com/Yingjie4Science/SNAPP](https://github.com/Yingjie4Science/SNAPP)
+(default branch `main`). Day-to-day:
 
 ```bash
-git init
 git add .
-git commit -m "Initial commit"
-git remote add origin git@github.com:<you>/<repo>.git
-git push -u origin main
+git commit -m "your message"
+git push
 ```
 
-Before the first commit, confirm `git status` shows `.env` and `data/` as
-ignored (they should not appear as staged).
+`.env` and `data/` are gitignored, so credentials and large data never leave
+your machine — a fresh clone reproduces the data by running the pipeline.
+
+First-time clone on another machine:
+```bash
+git clone git@github.com:Yingjie4Science/SNAPP.git
+# then follow "Development setup" to create the env and add .env
+```
 
 ## Sources
 
