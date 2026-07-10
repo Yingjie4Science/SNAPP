@@ -43,7 +43,7 @@ except ImportError:
 try:
     from dotenv import load_dotenv
 
-    load_dotenv(Path(__file__).resolve().parents[2] / ".env")
+    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
 except ImportError:
     pass
 
@@ -67,7 +67,7 @@ PRODUCT_VERSION = "V2"
 
 # Output locations. This script lives in <project>/src/sf_ndvi/, and the whole
 # data/ tree is kept out of git via .gitignore.
-BASE_DIR = Path(__file__).resolve().parents[2]      # project root (SNAPP)
+BASE_DIR = Path(__file__).resolve().parents[3]      # project root (SNAPP)
 DATASET_DIR = BASE_DIR / "data" / "sf-ndvi-2024"
 RAW_DIR = DATASET_DIR / "raw"           # full global downloads (large, temporary)
 OUT_DIR = DATASET_DIR / "processed"     # clipped SF outputs land here

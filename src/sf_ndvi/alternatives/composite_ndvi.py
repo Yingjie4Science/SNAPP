@@ -36,7 +36,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("composite_ndvi")
 
 # --- project paths (this file lives in <project>/src/sf_ndvi/) ---
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 DEFAULT_IN = BASE_DIR / "data" / "sf-ndvi-2024" / "processed"
 DEFAULT_OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_mean.tif"
 

@@ -18,26 +18,26 @@ SNAPP/
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
 │   ├── sf_ndvi/
-│   │   ├── download.py       # downloads + clips SF NDVI 2024 (Copernicus 300 m)
-│   │   ├── composite_ndvi.py # dekads -> one annual-mean NDVI GeoTIFF (ndvi_base)
-│   │   ├── ndvi_sentinel2.py # 10 m NDVI via CDSE openEO (higher-res alternative)
-│   │   └── ndvi_gee.py       # 30 m Landsat JJAS p90 NDVI via Google Earth Engine
+│   │   ├── ndvi_gee.py       # 30 m Landsat JJAS p90 NDVI via Google Earth Engine (ACTIVE)
+│   │   └── alternatives/     # backup NDVI sources (not in the pipeline)
+│   │       ├── download.py       # Copernicus NDVI 300 m via CDSE
+│   │       ├── composite_ndvi.py # composite the Copernicus dekads
+│   │       └── ndvi_sentinel2.py # 10 m Sentinel-2 via CDSE openEO
 │   ├── inputs/
-│   │   ├── build_aoi_prevalence.py  # SF tracts AOI + CDC PLACES depression (risk_rate)
+│   │   ├── build_aoi_prevalence.py  # SF tracts AOI + depression risk_rate (local shp or CDC API)
 │   │   ├── fetch_population.py       # WorldPop US 100 m -> clip to SF AOI (local file or download)
+│   │   ├── extract_meps_cost.py     # MEPS depression cost/case -> health_cost_rate.txt
 │   │   └── make_ndvi_scenario.py    # ndvi_base -> ndvi_alt greening scenario
 │   └── urban_mental_health/
 │       └── run_model.py      # runs the InVEST Urban Mental Health model
 ├── data/                     # gitignored — never pushed to GitHub
-│   ├── sf-ndvi-2024/
-│   │   ├── raw/              # global downloads (temporary)
-│   │   └── processed/        # clipped SF outputs
 │   ├── urban-mental-health/
-│   │   ├── inputs/           # model inputs you supply
+│   │   ├── raw/              # raw source data for the model
+│   │   │   ├── cdc_places/  # depression prevalence shapefile -> risk_rate
+│   │   │   └── meps/        # MEPS medical-expenditure files -> health_cost_rate
+│   │   ├── inputs/           # model-ready inputs (built by the src/ scripts)
 │   │   └── workspace/        # model outputs
-│   └── meps/
-│       ├── raw/              # source MEPS-HC files
-│       └── processed/
+│   └── sf-ndvi-2024/         # (only used by the Copernicus backup NDVI route)
 └── notebooks/                # optional exploratory analysis
 ```
 
@@ -127,27 +127,31 @@ to use it.
 
 Runner: `src/urban_mental_health/run_model.py`. Uses the `natcap.invest` Python
 API (`urban_mental_health.execute(args)`) to estimate preventable mental-health
-cases (and optional societal cost) from residential greenness. NDVI is the
-greenness input, so this consumes the `sf-ndvi-2024` dataset.
+cases (and optional societal cost) from residential greenness.
 
 The model compares a **baseline vs. an alternate (greening) scenario** — either
-two NDVI rasters (`model_option='ndvi'`) or two LULC rasters. Inputs go in
-`data/urban-mental-health/inputs/`; results land in `.../workspace/`.
+two NDVI rasters (`model_option='ndvi'`) or two LULC rasters. Data flows
+**`raw/` → (scripts) → `inputs/` → (model) → `workspace/`**:
 
-Every required input has a script or a sourced value:
+- `raw/cdc_places/` — depression prevalence shapefile → `baseline_prevalence_vector` (`risk_rate`)
+- `raw/meps/` — MEPS medical-expenditure files → `health_cost_rate` (societal cost per case)
+- `inputs/` — model-ready files the `src/` scripts build; `workspace/` — model outputs
 
-| Model input | How it's produced |
-|---|---|
-| `ndvi_base` | `src/sf_ndvi/ndvi_gee.py` (30 m Landsat JJAS p90) |
-| `ndvi_alt` | `src/inputs/make_ndvi_scenario.py` (greening scenario) |
-| `aoi_path` + `baseline_prevalence_vector` | `src/inputs/build_aoi_prevalence.py` (SF tracts + CDC PLACES depression) |
-| `population_raster` | `src/inputs/fetch_population.py` (WorldPop US 100 m) |
-| `effect_size` | sourced default `0.93` — OR per +0.1 NDVI, Liu et al. 2023, *Environ. Res.* 231:116303 |
-| `search_radius` | `300` m (set in `run_model.py`) |
+| Model input | Built by | Raw source |
+|---|---|---|
+| `ndvi_base` | `src/sf_ndvi/ndvi_gee.py` | Landsat via Google Earth Engine |
+| `ndvi_alt` | `src/inputs/make_ndvi_scenario.py` | derived from `ndvi_base` |
+| `aoi_path` | `src/inputs/build_aoi_prevalence.py` | Census TIGER tracts |
+| `baseline_prevalence_vector` (`risk_rate`) | `src/inputs/build_aoi_prevalence.py` | CDC PLACES — `raw/cdc_places/` |
+| `population_raster` | `src/inputs/fetch_population.py` | WorldPop US 100 m |
+| `health_cost_rate` | `src/inputs/extract_meps_cost.py` | MEPS 2023 — `raw/meps/` ($1,438/case, West) |
+| `effect_size` | sourced default `0.93` | Liu et al. 2023, *Environ. Res.* 231:116303 |
+| `search_radius` | `300` m (set in `run_model.py`) | — |
 
-Two of these are assumptions to revisit for a real analysis: the greening
-scenario (a placeholder +0.05 NDVI) and the effect size (an odds ratio used as a
-risk ratio).
+Assumptions to revisit for a real analysis: the greening scenario (placeholder
++0.05 NDVI), the effect size (an odds ratio used as a risk ratio), and
+`health_cost_rate` (MEPS *direct medical* cost per treated case — excludes
+indirect/societal costs, so it understates true societal cost).
 
 Install (heavy — depends on GDAL). Per the [InVEST install
 docs](https://invest.readthedocs.io/en/latest/installing.html), conda-forge is
@@ -168,12 +172,11 @@ It stops at the first error; comment out a step in the script if its output
 already exists (e.g. to avoid re-downloading). To run steps individually:
 
 ```bash
-# greenness (ndvi_base) — pick ONE:
-python src/sf_ndvi/composite_ndvi.py           # 300 m: composite the Copernicus dekads
-python src/sf_ndvi/ndvi_sentinel2.py           # 10 m: Sentinel-2 via CDSE openEO (better)
+# greenness (ndvi_base) — active route:
 python src/sf_ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via Google Earth Engine
+# backups (see src/sf_ndvi/alternatives/): Copernicus 300 m or Sentinel-2 via CDSE
 
-# AOI + baseline prevalence (depression) as one step:
+# AOI + baseline prevalence (depression): local CDC shapefile by default, or --source api
 python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_prevalence.gpkg
 
 # population raster (uses a local file in _worldpop/ if present, else downloads):
@@ -182,19 +185,23 @@ python src/inputs/fetch_population.py
 # greening scenario (ndvi_alt) from the baseline NDVI:
 python src/inputs/make_ndvi_scenario.py                  # uniform +0.05, capped at 0.90
 
+# health_cost_rate from MEPS (writes inputs/health_cost_rate.txt, read by the model):
+python src/inputs/extract_meps_cost.py                   # Depression, West region ($1,438)
+
 # effect_size has a sourced default (0.93, Liu et al. 2023); adjust in run_model.py if needed
 python src/urban_mental_health/run_model.py --spec       # list inputs
 python src/urban_mental_health/run_model.py --validate   # check inputs
 python src/urban_mental_health/run_model.py              # run
 ```
 
-Input builders (`src/inputs/`): `build_aoi_prevalence.py` pulls Census TIGER
-tracts for SF and joins CDC PLACES depression prevalence into a `risk_rate`
-field; `fetch_population.py` downloads the WorldPop US 100 m population raster,
-clips it to the AOI, and reprojects it to meters (or pass `--pop` to use your own
-file). Both write into `data/urban-mental-health/inputs/` with the exact
-filenames `run_model.py` expects. If you use the Sentinel-2 NDVI, point
-`ndvi_base` at `sf_ndvi_2024_s2_10m.tif`.
+Input builders (`src/inputs/`): `build_aoi_prevalence.py` builds the SF tract AOI
+and a `risk_rate` field — by default from the local CDC shapefile in
+`raw/cdc_places/` (2021), or `--source api` for live Census TIGER + CDC PLACES
+2024; `fetch_population.py` uses the WorldPop US 100 m raster (local file in
+`_worldpop/` or download), clips to the AOI, and reprojects to meters;
+`extract_meps_cost.py` pulls the depression cost/case from the MEPS files into
+`health_cost_rate.txt`. All write into `data/urban-mental-health/inputs/` with the
+exact filenames `run_model.py` expects.
 
 Data sources:
 
@@ -209,10 +216,14 @@ analysis (mental-health search radii are typically ≤300 m). Prefer 10 m
 Sentinel-2 or 30 m Landsat NDVI for a real study; 300 m is fine for testing the
 pipeline.
 
-### meps — Medical Expenditure Panel Survey (MEPS-HC)
+### Raw source data (`data/urban-mental-health/raw/`)
 
-*How to obtain:* downloaded from the MEPS-HC Data Tools portal
-(https://meps.ahrq.gov). Source files are in `data/meps/raw/`.
+- **`cdc_places/`** — CDC PLACES depression prevalence shapefile
+  (`prevalence_rate_usa_2021.shp`), the source for the model's `risk_rate`.
+  From [CDC PLACES](https://www.cdc.gov/places/).
+- **`meps/`** — Medical Expenditure Panel Survey (MEPS-HC) medical-conditions
+  files, the source for `health_cost_rate` (societal cost per depression case).
+  From the [MEPS-HC Data Tools portal](https://meps.ahrq.gov).
 
 ## Setup
 
@@ -226,17 +237,17 @@ pipeline.
    pip install -r requirements.txt
    ```
 
-## Run the NDVI downloader
+## Backup NDVI route (Copernicus / CDSE)
 
-```bash
-python src/sf_ndvi/download.py
-```
+The active NDVI source is `src/sf_ndvi/ndvi_gee.py`. If you ever need the
+Copernicus route instead, `src/sf_ndvi/alternatives/download.py` downloads the
+NDVI 300 m global 10-daily files and clips them to SF, then
+`alternatives/composite_ndvi.py` composites them into one `ndvi_base` raster.
 
 **Heads-up on size:** OData can't subset spatially server-side, so each global
 file (~a few hundred MB) is downloaded to `raw/`, clipped into `processed/`, then
 deleted. Budget ~10–15 GB of temporary downloads; final SF outputs are a few KB
-each. A lighter Sentinel Hub Process API version (server-side SF window) is
-available on request.
+each.
 
 ## GitHub
 

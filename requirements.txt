@@ -11,6 +11,7 @@ rasterio>=1.3
 # --- Model input builders (src/inputs) ---
 geopandas>=0.14          # AOI + prevalence vectors
 pandas>=2.0              # CDC PLACES join
+openpyxl>=3.1            # read MEPS .xlsx (extract_meps_cost.py)
 
 # --- Sentinel-2 10m NDVI via CDSE openEO (src/sf_ndvi/ndvi_sentinel2.py) ---
 openeo>=0.30

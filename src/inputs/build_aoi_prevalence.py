@@ -4,23 +4,24 @@ Build two InVEST inputs for San Francisco:
   1. sf_aoi.gpkg               - census-tract AOI, projected in meters
   2. baseline_prevalence.gpkg  - same tracts + a `risk_rate` field (depression)
 
-SOURCES
-  - Boundaries: US Census TIGER/Line 2024 census tracts (California, FIPS 06).
-  - Prevalence: CDC PLACES census-tract 2024 release (Socrata `cwsq-ngmh`),
-    measure DEPRESSION ("Depression among adults"). Data_Value is a percent,
-    converted to a 0-1 ratio for the model's required `risk_rate` field.
+TWO PREVALENCE SOURCES (choose with --source):
+  local  (default) Your CDC PLACES shapefile at
+         data/urban-mental-health/raw/cdc_places/prevalence_rate_usa_2021.shp
+         (fields include GEOID + DEPRESS = crude % prevalence, 2021). Offline.
+  api    US Census TIGER/Line 2024 tracts + CDC PLACES 2024 release pulled live
+         from Socrata (dataset cwsq-ngmh, measure DEPRESSION). Needs internet.
+
+In both cases DEPRESS/Data_Value (a percent) becomes `risk_rate` (a 0-1 ratio),
+and outputs are projected to EPSG:26910 (meters) — the filenames run_model.py
+expects.
 
 REQUIREMENTS
-    pip install geopandas requests pandas
+    conda env: geopandas, pandas, requests   (already in environment.yml)
 
 USAGE
-    python src/inputs/build_aoi_prevalence.py
-    python src/inputs/build_aoi_prevalence.py --value-type "Age-adjusted prevalence"
-
-NOTE
-    Runs on your machine (needs internet). Not run in the Cowork sandbox.
-    Set a CDC Socrata app token via env SOCRATA_APP_TOKEN to avoid throttling
-    (optional for a single small query).
+    python src/inputs/build_aoi_prevalence.py                     # local shapefile
+    python src/inputs/build_aoi_prevalence.py --source api        # live CDC/Census
+    python src/inputs/build_aoi_prevalence.py --source api --value-type "Age-adjusted prevalence"
 """
 
 import argparse
@@ -38,25 +39,50 @@ try:
     import geopandas as gpd
     import pandas as pd
 except ImportError:
-    sys.exit("Missing deps. Install: pip install geopandas requests pandas")
+    sys.exit("Missing deps. Install: conda install -c conda-forge geopandas pandas requests")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("build_aoi_prevalence")
 
-# --- project paths (this file is <project>/src/inputs/) ---
 BASE_DIR = Path(__file__).resolve().parents[2]
 OUT_DIR = BASE_DIR / "data" / "urban-mental-health" / "inputs"
+DEFAULT_SHP = (BASE_DIR / "data" / "urban-mental-health" / "raw" / "cdc_places"
+               / "prevalence_rate_usa_2021.shp")
 
-# --- constants ---
-TRACTS_URL = "https://www2.census.gov/geo/tiger/TIGER2024/TRACT/tl_2024_06_tract.zip"  # CA=06
-SF_COUNTYFP = "075"                       # San Francisco County
-METRIC_CRS = "EPSG:26910"                 # NAD83 / UTM 10N (meters) — good for SF
-PLACES_URL = "https://chronicdata.cdc.gov/resource/cwsq-ngmh.json"  # PLACES tract 2024
-DEPRESSION = "DEPRESSION"                  # PLACES MeasureId
+METRIC_CRS = "EPSG:26910"          # NAD83 / UTM 10N (meters) — good for SF
+SF_COUNTY_FIPS = "06075"           # state 06 (CA) + county 075 (San Francisco)
+SF_COUNTYFP = "075"                # county-only code (TIGER field COUNTYFP)
+
+# --- api route sources ---
+TRACTS_URL = "https://www2.census.gov/geo/tiger/TIGER2024/TRACT/tl_2024_06_tract.zip"
+PLACES_URL = "https://chronicdata.cdc.gov/resource/cwsq-ngmh.json"
+DEPRESSION = "DEPRESSION"
 
 
-def load_sf_tracts() -> "gpd.GeoDataFrame":
-    """Download CA tracts, keep San Francisco County, reproject to meters."""
+# --------------------------------------------------------------------------
+# Local source: the CDC PLACES prevalence shapefile
+# --------------------------------------------------------------------------
+def build_local(shp: Path):
+    """Return (aoi, prevalence) GeoDataFrames for SF from the local shapefile."""
+    if not shp.exists():
+        sys.exit(f"Shapefile not found: {shp}\nUse --source api, or check the path.")
+    LOGGER.info("Reading local prevalence shapefile: %s", shp.name)
+    gdf = gpd.read_file(shp)
+    sf = gdf[gdf["GEOID"].astype(str).str.startswith(SF_COUNTY_FIPS)].copy()
+    if sf.empty:
+        sys.exit("No SF tracts (GEOID starting 06075) found in the shapefile.")
+    LOGGER.info("San Francisco tracts: %d", len(sf))
+    sf["risk_rate"] = pd.to_numeric(sf["DEPRESS"], errors="coerce") / 100.0  # % -> ratio
+    sf = sf.to_crs(METRIC_CRS)
+    aoi = sf[["GEOID", "geometry"]]
+    prevalence = sf[["GEOID", "risk_rate", "geometry"]]
+    return aoi, prevalence
+
+
+# --------------------------------------------------------------------------
+# API route: TIGER tracts + CDC PLACES Socrata
+# --------------------------------------------------------------------------
+def load_sf_tracts():
     LOGGER.info("Downloading Census tracts: %s", TRACTS_URL)
     r = requests.get(TRACTS_URL, timeout=300)
     r.raise_for_status()
@@ -70,13 +96,8 @@ def load_sf_tracts() -> "gpd.GeoDataFrame":
 
 
 def load_depression(value_type: str) -> "pd.DataFrame":
-    """Fetch SF depression prevalence from CDC PLACES; return GEOID + risk_rate."""
-    params = {
-        "stateabbr": "CA",
-        "countyname": "San Francisco",
-        "measureid": DEPRESSION,
-        "$limit": "50000",
-    }
+    params = {"stateabbr": "CA", "countyname": "San Francisco",
+              "measureid": DEPRESSION, "$limit": "50000"}
     headers = {}
     token = os.environ.get("SOCRATA_APP_TOKEN")
     if token:
@@ -87,38 +108,47 @@ def load_depression(value_type: str) -> "pd.DataFrame":
     df = pd.DataFrame(r.json())
     if df.empty:
         sys.exit("PLACES returned no rows — check the dataset id / filters.")
-
-    # Column names vary slightly by release: tract id is locationname or locationid.
     id_col = "locationname" if "locationname" in df else "locationid"
     df = df[df["data_value_type"] == value_type].copy()
-    df["risk_rate"] = pd.to_numeric(df["data_value"], errors="coerce") / 100.0  # % -> ratio
-    df = df.rename(columns={id_col: "GEOID"})[["GEOID", "risk_rate"]].dropna()
-    LOGGER.info("Depression rows: %d (value_type=%s)", len(df), value_type)
-    return df
+    df["risk_rate"] = pd.to_numeric(df["data_value"], errors="coerce") / 100.0
+    return df.rename(columns={id_col: "GEOID"})[["GEOID", "risk_rate"]].dropna()
 
 
-def main():
-    ap = argparse.ArgumentParser(description="Build SF AOI + depression prevalence inputs.")
-    ap.add_argument("--value-type", default="Crude prevalence",
-                    choices=["Crude prevalence", "Age-adjusted prevalence"],
-                    help="PLACES Data_Value_Type to use (default: Crude prevalence).")
-    cli = ap.parse_args()
-
-    OUT_DIR.mkdir(parents=True, exist_ok=True)
-
+def build_api(value_type: str):
     tracts = load_sf_tracts()
-    aoi_path = OUT_DIR / "sf_aoi.gpkg"
-    tracts.to_file(aoi_path, driver="GPKG")
-    LOGGER.info("Wrote AOI -> %s", aoi_path)
-
-    dep = load_depression(cli.value_type)
-    # Join prevalence onto tract geometries (GEOID is the 11-digit tract FIPS).
+    dep = load_depression(value_type)
     prevalence = tracts.merge(dep, on="GEOID", how="left")
     missing = prevalence["risk_rate"].isna().sum()
     if missing:
         LOGGER.warning("%d tracts have no depression value (suppressed/short pop).", missing)
+    return tracts, prevalence
+
+
+# --------------------------------------------------------------------------
+# Main
+# --------------------------------------------------------------------------
+def main():
+    ap = argparse.ArgumentParser(description="Build SF AOI + depression prevalence inputs.")
+    ap.add_argument("--source", choices=["local", "api"], default="local",
+                    help="local shapefile (default) or live CDC/Census API.")
+    ap.add_argument("--prevalence-shp", type=Path, default=DEFAULT_SHP,
+                    help="Path to the local CDC prevalence shapefile.")
+    ap.add_argument("--value-type", default="Crude prevalence",
+                    choices=["Crude prevalence", "Age-adjusted prevalence"],
+                    help="PLACES Data_Value_Type (api source only).")
+    cli = ap.parse_args()
+
+    if cli.source == "local":
+        aoi, prevalence = build_local(cli.prevalence_shp)
+    else:
+        aoi, prevalence = build_api(cli.value_type)
+
+    OUT_DIR.mkdir(parents=True, exist_ok=True)
+    aoi_path = OUT_DIR / "sf_aoi.gpkg"
     prev_path = OUT_DIR / "baseline_prevalence.gpkg"
+    aoi.to_file(aoi_path, driver="GPKG")
     prevalence.to_file(prev_path, driver="GPKG")
+    LOGGER.info("Wrote AOI -> %s", aoi_path)
     LOGGER.info("Wrote prevalence (field 'risk_rate') -> %s", prev_path)
     LOGGER.info("These match run_model.py's aoi_path and baseline_prevalence_vector.")
 

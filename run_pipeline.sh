@@ -18,19 +18,22 @@ cd "$(dirname "$0")"        # run from the repo root regardless of where called
 VALIDATE_ONLY=""
 [ "${1:-}" = "--validate" ] && VALIDATE_ONLY="--validate"
 
-echo "==> 1/5  Baseline NDVI (GEE Landsat p90)"
+echo "==> 1/6  Baseline NDVI (GEE Landsat p90)"
 python src/sf_ndvi/ndvi_gee.py
 
-echo "==> 2/5  Greening scenario (ndvi_alt)"
+echo "==> 2/6  Greening scenario (ndvi_alt)"
 python src/inputs/make_ndvi_scenario.py
 
-echo "==> 3/5  AOI + depression prevalence"
+echo "==> 3/6  AOI + depression prevalence (local CDC shapefile)"
 python src/inputs/build_aoi_prevalence.py
 
-echo "==> 4/5  Population raster (WorldPop US 100 m -> SF)"
+echo "==> 4/6  Population raster (WorldPop US 100 m -> SF)"
 python src/inputs/fetch_population.py
 
-echo "==> 5/5  Urban Mental Health model"
+echo "==> 5/6  Health cost per case (MEPS depression, West)"
+python src/inputs/extract_meps_cost.py
+
+echo "==> 6/6  Urban Mental Health model"
 python src/urban_mental_health/run_model.py ${VALIDATE_ONLY}
 
 echo "==> Done. Model outputs are in data/urban-mental-health/workspace/"

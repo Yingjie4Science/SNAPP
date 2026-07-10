@@ -133,8 +133,15 @@ def build_args() -> dict:
         # "lulc_attr_csv": str(INPUTS / "lulc_attributes.csv"),  # cols: lucode, exclude, ndvi
 
         # --- optional: economic valuation ---
-        # "health_cost_rate": 5000.0,     # societal cost per case (currency units)
+        # health_cost_rate is read below from inputs/health_cost_rate.txt if present
+        # (written by src/inputs/extract_meps_cost.py from the MEPS files).
     }
+
+    # Add health_cost_rate if the MEPS extractor produced it.
+    cost_file = INPUTS / "health_cost_rate.txt"
+    if cost_file.exists():
+        args["health_cost_rate"] = float(cost_file.read_text().strip())
+
     return args
 
 
