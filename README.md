@@ -34,7 +34,8 @@ SNAPP/
 │   │   ├── estimate_health_cost.py  # societal (Greenberg) or direct (MEPS) -> health_cost_rate.txt
 │   │   └── make_ndvi_scenario.py    # ndvi_base -> ndvi_alt greening scenario
 │   └── urban_mental_health/
-│       └── run_model.py      # runs the InVEST Urban Mental Health model
+│       ├── run_model.py      # runs the InVEST Urban Mental Health model
+│       └── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV
 ├── data/                     # gitignored — never pushed to GitHub
 │   ├── urban-mental-health/
 │   │   ├── raw/              # raw source data for the model
@@ -199,6 +200,9 @@ python src/inputs/estimate_health_cost.py                # societal ~$21,280 poo
 python src/urban_mental_health/run_model.py --spec       # list inputs
 python src/urban_mental_health/run_model.py --validate   # check inputs
 python src/urban_mental_health/run_model.py              # run
+
+# sensitivity: effect_size (0.887/0.93/0.977) x cost ($17k/$21.3k/$23k) -> summary CSV
+python src/urban_mental_health/run_sensitivity.py
 ```
 
 Input builders (`src/inputs/`): `build_aoi_prevalence.py` builds the SF tract AOI
