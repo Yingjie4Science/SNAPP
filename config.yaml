@@ -33,6 +33,13 @@ scenario:
   cap: 0.90                   # max NDVI after greening
   target: 0.60                # greenable mode: only raise pixels below this
 
+# Scenarios compared by run_scenarios.py (label -> ndvi_alt filename in inputs/).
+# Missing files are skipped, so generate the ones you want first.
+scenarios:
+  greenable: "sf_ndvi_scenario.tif"
+  lulc_masked: "sf_ndvi_scenario_lulc.tif"
+  canopy_target: "sf_ndvi_scenario_canopy.tif"
+
 inputs:                        # filenames under data/urban-mental-health/inputs/
   ndvi_base: "sf_ndvi_2024_gee.tif"
   ndvi_alt: "sf_ndvi_scenario.tif"

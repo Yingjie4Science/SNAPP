@@ -43,6 +43,7 @@ SNAPP/
 │   └── urban_mental_health/
 │       ├── run_model.py      # runs the InVEST Urban Mental Health model
 │       ├── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV
+│       ├── run_scenarios.py   # run all greening scenarios -> comparison CSV
 │       └── summarize_results.py # totals, QA checks, per-tract map -> docs/results_summary.md
 ├── data/                     # gitignored — never pushed to GitHub
 │   ├── urban-mental-health/
@@ -220,6 +221,9 @@ python src/inputs/estimate_health_cost.py                # societal ~$21,280 poo
 python src/urban_mental_health/run_model.py --spec       # list inputs
 python src/urban_mental_health/run_model.py --validate   # check inputs
 python src/urban_mental_health/run_model.py              # run
+
+# compare greening scenarios (runs the model for each ndvi_alt in config.yaml scenarios:)
+python src/urban_mental_health/run_scenarios.py
 
 # sensitivity: effect_size (0.887/0.93/0.977) x cost ($17k/$21.3k/$23k) -> summary CSV
 python src/urban_mental_health/run_sensitivity.py
