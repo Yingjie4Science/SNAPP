@@ -18,11 +18,17 @@ Mental Health model}.
 Do NOT rely on a single study. Pool multiple cost-of-illness (COI) studies and
 cross-validate. Follow these steps and show your work:
 
-1. **Search** the literature using every tool available to you (academic search
-   connectors, PubMed/Europe PMC, web search). Run several query angles:
-   "economic burden of {CONDITION} {GEOGRAPHY}", "cost of illness {CONDITION} per
-   person", indirect/workplace/productivity cost, and "systematic review OR
-   meta-analysis {CONDITION} cost". Prefer peer-reviewed sources.
+1. **Search ≥2 independent databases and cross-check them.** Use a biomedical
+   index (PubMed/Europe PMC) AND a citation-aware index (e.g. Scite / Semantic
+   Scholar / Consensus), plus web search. Run several query angles: "economic
+   burden of {CONDITION} {GEOGRAPHY}", "cost of illness {CONDITION} per person",
+   indirect/workplace/productivity cost, and "systematic review OR meta-analysis
+   {CONDITION} cost". Confirm the databases return the **same top studies** — if
+   they disagree, dig into why. Prefer peer-reviewed sources.
+   - Pick domain-appropriate databases: health-economics/biomedical literature
+     lives in PubMed/Europe PMC and journal indexes — NOT in arXiv or
+     bioRxiv/medRxiv (those are physics/CS or non-keyword-searchable preprints and
+     will miss cost-of-illness studies). State which databases you actually used.
 
 2. **Select** studies that report a *national incremental (excess)* burden AND the
    size of the affected population, so a per-case figure can be derived. Include
@@ -78,5 +84,7 @@ estimate, as the finding.
   wage/cost-of-living factor and state the factor."
 - Example output this prompt produced for MDD/US/2024: pooled ≈ $21,280/case
   (range ~$17k–$23k), from the Greenberg COI series (2010/2018/2019 base years)
-  cross-validated with the König 2019 meta-analysis. See
-  `docs/societal_cost_of_depression.md`.
+  cross-validated with the König 2019 meta-analysis, and independently confirmed
+  in **PubMed** (same studies as top hits). Scite + PubMed were the useful
+  databases; Elicit needed a paid API and arXiv/bioRxiv had nothing relevant.
+  See `docs/societal_cost_of_depression.md`.

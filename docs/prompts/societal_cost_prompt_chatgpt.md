@@ -16,12 +16,15 @@ browse, say so and lower your confidence.
 
 Do this, showing your work at each step:
 
-1. Search for peer-reviewed studies on the economic burden / cost of illness of
-   MDD in the US, including indirect (workplace absenteeism + presenteeism) costs,
-   and at least one systematic review or meta-analysis. Good starting points
-   include the Greenberg et al. economic-burden series (2015 for 2010 data; 2021
-   for 2018; 2023 for 2019) and the König et al. 2019 meta-analysis "The excess
-   costs of depression."
+1. Search at least two independent databases and cross-check them — PubMed/Europe
+   PMC AND Google Scholar (or Semantic Scholar) — for peer-reviewed studies on the
+   economic burden / cost of illness of MDD in the US, including indirect
+   (workplace absenteeism + presenteeism) costs, and at least one systematic
+   review or meta-analysis. Confirm the databases return the same top studies.
+   Good starting points include the Greenberg et al. economic-burden series (2015
+   for 2010 data; 2021 for 2018; 2023 for 2019) and the König et al. 2019
+   meta-analysis "The excess costs of depression." (Note: arXiv and
+   bioRxiv/medRxiv do NOT carry this literature — don't rely on them.)
 
 2. Keep studies that report a national incremental (excess) burden AND the number
    of US adults with MDD, so a per-case figure can be derived. Prefer ≥2 different
@@ -59,5 +62,7 @@ Deliverables:
   it was pooled or convergent-only.
 - A short methods paragraph (search + inclusion + inflation + pooling).
 - Full citations with DOIs/links; label any number you derived yourself.
+- State which databases you searched and whether their top hits agreed
+  (cross-check); if you couldn't browse, say so and lower your confidence.
 
 Present the range, not just the point estimate, as the finding.
