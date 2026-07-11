@@ -1,0 +1,41 @@
+# Central configuration for the SNAPP Urban Mental Health pipeline.
+# Single source of truth for parameters shared across scripts. Scripts fall back
+# to their own defaults if this file or PyYAML is unavailable.
+
+project:
+  crs_sf: "EPSG:26910"        # San Francisco (NAD83 / UTM 10N, meters)
+  crs_national: "EPSG:5070"   # CONUS Albers (meters) for the national run
+  aoi_sf_bbox: [-122.55, 37.70, -122.35, 37.83]   # W, S, E, N (WGS84)
+
+model:
+  search_radius_m: 300        # residential greenness exposure radius
+  effect_size: 0.93           # relative risk per +0.1 NDVI (Liu et al. 2023)
+  effect_size_low: 0.887      # sensitivity bound
+  effect_size_high: 0.977     # sensitivity bound
+  model_option: "ndvi"        # 'ndvi' or 'lulc'
+
+population:
+  # Prevalence is for adults (>=18) but WorldPop counts all ages, so scale the
+  # population to adults. SF ~0.86 adults; US ~0.78. Set 1.0 to disable.
+  adult_fraction: 0.86
+
+cost:
+  basis: "societal"           # 'societal' (pooled Greenberg) or 'direct' (MEPS)
+  anchor: "pooled"            # 'pooled' | 'greenberg2018' | 'greenberg2019'
+  target_year: 2024
+  low_usd: 17000
+  central_usd: 21280
+  high_usd: 23000
+
+scenario:
+  mode: "uniform"             # 'uniform' or 'greenable'
+  delta: 0.05                 # NDVI increase
+  cap: 0.90                   # max NDVI after greening
+  target: 0.60                # greenable mode: only raise pixels below this
+
+inputs:                        # filenames under data/urban-mental-health/inputs/
+  ndvi_base: "sf_ndvi_2024_gee.tif"
+  ndvi_alt: "sf_ndvi_scenario.tif"
+  aoi: "sf_aoi.gpkg"
+  prevalence: "baseline_prevalence.gpkg"
+  population: "sf_population.tif"

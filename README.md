@@ -12,8 +12,11 @@ SNAPP/
 ├── .gitignore
 ├── .env.example              # committed credential template
 ├── .env                      # real secrets (gitignored)
+├── config.yaml               # central parameters (CRS, effect size, cost, scenario…)
+├── TODO.md                   # roadmap / open items
 ├── environment.yml           # conda env spec (recommended setup)
 ├── requirements.txt          # pip alternative
+├── tests/                    # pytest smoke tests (cost math, config, scenario)
 ├── run_pipeline.sh           # SF: run all steps end to end
 ├── run_national.sh           # national: loop config/cities.csv, run per city
 ├── config/cities.csv         # list of US cities (place GEOIDs) for the national run
@@ -35,7 +38,8 @@ SNAPP/
 │   │   └── make_ndvi_scenario.py    # ndvi_base -> ndvi_alt greening scenario
 │   └── urban_mental_health/
 │       ├── run_model.py      # runs the InVEST Urban Mental Health model
-│       └── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV
+│       ├── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV
+│       └── summarize_results.py # totals, QA checks, per-tract map -> docs/results_summary.md
 ├── data/                     # gitignored — never pushed to GitHub
 │   ├── urban-mental-health/
 │   │   ├── raw/              # raw source data for the model
@@ -113,6 +117,18 @@ In VS Code:
    your conda lives elsewhere.)
 3. Open a new terminal — it should auto-activate `snapp`.
 
+### Config, tests, reproducibility
+
+- **`config.yaml`** is the single source of truth for parameters (CRS, effect
+  size, cost basis, scenario, adult fraction). `run_model.py` and the pipeline
+  read it; edit there rather than in individual scripts.
+- **Tests:** `pytest` (from the repo root) runs smoke tests for the cost math,
+  config integrity, and scenario capping.
+- **Lock the environment** for exact reproducibility, and commit the lock:
+  ```bash
+  conda env export --from-history > environment.lock.yml
+  ```
+
 ## Datasets
 
 ### sf-ndvi-2024 — Copernicus NDVI 300m for San Francisco, 2024
@@ -186,8 +202,8 @@ python src/sf_ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via Goog
 # AOI + baseline prevalence (depression): local CDC shapefile by default, or --source api
 python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_prevalence.gpkg
 
-# population raster (uses a local file in _worldpop/ if present, else downloads):
-python src/inputs/fetch_population.py
+# population raster (adult-scaled: prevalence is adult, so scale total pop to >=18):
+python src/inputs/fetch_population.py --adult-fraction 0.86   # SF adult share
 
 # greening scenario (ndvi_alt) from the baseline NDVI:
 python src/inputs/make_ndvi_scenario.py                  # uniform +0.05, capped at 0.90
@@ -203,6 +219,9 @@ python src/urban_mental_health/run_model.py              # run
 
 # sensitivity: effect_size (0.887/0.93/0.977) x cost ($17k/$21.3k/$23k) -> summary CSV
 python src/urban_mental_health/run_sensitivity.py
+
+# summarize + QA the outputs -> docs/results_summary.md (add --map for a choropleth)
+python src/urban_mental_health/summarize_results.py
 ```
 
 Input builders (`src/inputs/`): `build_aoi_prevalence.py` builds the SF tract AOI

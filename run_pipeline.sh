@@ -27,8 +27,8 @@ python src/inputs/make_ndvi_scenario.py
 echo "==> 3/6  AOI + depression prevalence (local CDC shapefile)"
 python src/inputs/build_aoi_prevalence.py
 
-echo "==> 4/6  Population raster (WorldPop US 100 m -> SF)"
-python src/inputs/fetch_population.py
+echo "==> 4/6  Population raster (WorldPop US 100 m -> SF, adults only)"
+python src/inputs/fetch_population.py --adult-fraction 0.86   # SF adult (>=18) share
 
 echo "==> 5/6  Health cost per case (societal, Greenberg 2021)"
 python src/inputs/estimate_health_cost.py

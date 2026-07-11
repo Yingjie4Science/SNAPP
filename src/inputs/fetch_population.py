@@ -129,6 +129,9 @@ def main():
                     help=f"WorldPop year, 2015-2030 (default {DEFAULT_YEAR}).")
     ap.add_argument("--aoi", type=Path, default=DEFAULT_AOI, help="AOI vector (GPKG).")
     ap.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Output GeoTIFF.")
+    ap.add_argument("--adult-fraction", type=float, default=1.0,
+                    help="Scale to adults >=18 (prevalence is adult). e.g. 0.86 for "
+                         "SF, ~0.78 US. Default 1.0 = no scaling (total population).")
     cli = ap.parse_args()
 
     if not cli.aoi.exists():
@@ -161,6 +164,16 @@ def main():
     # The source raster carries a _FillValue in BOTH .attrs and .encoding; xarray's
     # writer refuses that clash, so drop the attrs copy (nodata stays in encoding).
     projected.attrs.pop("_FillValue", None)
+
+    # 4) Scale total population -> adult (>=18) population, since the model's
+    #    prevalence (risk_rate) is an adult rate. Uniform scalar (first-order;
+    #    assumes the adult share is constant across the AOI).
+    if cli.adult_fraction != 1.0:
+        crs = projected.rio.crs
+        projected = (projected * cli.adult_fraction).rio.write_crs(crs)
+        projected.rio.write_nodata(float("nan"), inplace=True)
+        projected.attrs.pop("_FillValue", None)
+        LOGGER.info("Scaled to adult population (x%.2f)", cli.adult_fraction)
 
     cli.output.parent.mkdir(parents=True, exist_ok=True)
     projected.rio.to_raster(cli.output, driver="GTiff", compress="LZW")

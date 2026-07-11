@@ -36,6 +36,9 @@ dependencies:
   # InVEST Urban Mental Health model (src/urban_mental_health)
   - natcap.invest>=3.19
 
-  # VS Code / notebooks
+  # Config + tests + notebooks / VS Code
+  - pyyaml>=6.0          # read config.yaml
+  - pytest>=7.0          # smoke tests (tests/)
+  - matplotlib>=3.7      # optional maps in summarize_results.py
   - ipykernel
   - pip

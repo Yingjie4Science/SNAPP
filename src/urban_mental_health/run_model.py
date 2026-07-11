@@ -71,6 +71,23 @@ DATASET_DIR = BASE_DIR / "data" / "urban-mental-health"
 INPUTS = DATASET_DIR / "inputs"
 WORKSPACE = DATASET_DIR / "workspace"                    # model writes results here
 
+
+def _load_config() -> dict:
+    """Read config.yaml (single source of truth) if PyYAML + file are available."""
+    try:
+        import yaml
+        p = BASE_DIR / "config.yaml"
+        if p.exists():
+            return yaml.safe_load(p.read_text()) or {}
+    except Exception:
+        pass
+    return {}
+
+
+CFG = _load_config()
+_MODEL = CFG.get("model", {})
+_INP = CFG.get("inputs", {})
+
 # Baseline NDVI can be derived from the SF NDVI 2024 downloads
 # (data/sf-ndvi-2024/processed/*): composite the dekads into one baseline raster.
 SF_NDVI_PROCESSED = BASE_DIR / "data" / "sf-ndvi-2024" / "processed"
@@ -103,10 +120,10 @@ def build_args() -> dict:
         "results_suffix": "sf_2024",
         # "n_workers": -1,                # optional: -1 = run in the main process
 
-        # --- spatial inputs ---
-        "aoi_path": str(INPUTS / "sf_aoi.gpkg"),                 # projected in METERS
-        "population_raster": str(INPUTS / "sf_population.tif"),  # int, people/pixel
-        "search_radius": 300.0,                                  # meters (> 0)
+        # --- spatial inputs (filenames + params from config.yaml if present) ---
+        "aoi_path": str(INPUTS / _INP.get("aoi", "sf_aoi.gpkg")),         # projected METERS
+        "population_raster": str(INPUTS / _INP.get("population", "sf_population.tif")),
+        "search_radius": float(_MODEL.get("search_radius_m", 300)),      # meters (> 0)
 
         # --- exposure-response ---
         # Relative risk per +0.1 NDVI; must be in (0, 1] (<1 = protective). The
@@ -116,16 +133,16 @@ def build_args() -> dict:
         # DOI 10.1016/j.envres.2023.116303 (PMID 37268208). NOTE it's an odds
         # ratio used here as a risk ratio — fine for a first pass; revisit for
         # your exact outcome/region. Sensitivity bounds: 0.887 (low) - 0.977 (high).
-        "effect_size": 0.93,
+        "effect_size": float(_MODEL.get("effect_size", 0.93)),
 
         # --- baseline burden ---
         # Polygon vector of admin units; must have a `risk_rate` field (a ratio).
-        "baseline_prevalence_vector": str(INPUTS / "baseline_prevalence.gpkg"),
+        "baseline_prevalence_vector": str(INPUTS / _INP.get("prevalence", "baseline_prevalence.gpkg")),
 
         # --- scenario option: compare baseline vs. alternate NDVI ---
-        "model_option": "ndvi",                                  # 'ndvi' or 'lulc'
-        "ndvi_base": str(INPUTS / "sf_ndvi_2024_gee.tif"),       # baseline (GEE route)
-        "ndvi_alt": str(INPUTS / "sf_ndvi_scenario.tif"),        # from make_ndvi_scenario.py
+        "model_option": _MODEL.get("model_option", "ndvi"),      # 'ndvi' or 'lulc'
+        "ndvi_base": str(INPUTS / _INP.get("ndvi_base", "sf_ndvi_2024_gee.tif")),
+        "ndvi_alt": str(INPUTS / _INP.get("ndvi_alt", "sf_ndvi_scenario.tif")),
 
         # If instead model_option == 'lulc', supply these and drop the ndvi_* keys:
         # "lulc_base": str(INPUTS / "lulc_base.tif"),
