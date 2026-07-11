@@ -30,8 +30,8 @@ python src/inputs/build_aoi_prevalence.py
 echo "==> 4/6  Population raster (WorldPop US 100 m -> SF)"
 python src/inputs/fetch_population.py
 
-echo "==> 5/6  Health cost per case (MEPS depression, West)"
-python src/inputs/extract_meps_cost.py
+echo "==> 5/6  Health cost per case (societal, Greenberg 2021)"
+python src/inputs/estimate_health_cost.py
 
 echo "==> 6/6  Urban Mental Health model"
 python src/urban_mental_health/run_model.py ${VALIDATE_ONLY}
