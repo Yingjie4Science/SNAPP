@@ -17,10 +17,12 @@ Independent estimates converge within ~12%, which gives reasonable confidence.
 
 ## Approach (how this was produced)
 
-1. **Literature search** via research connectors (scite/Consensus-style
-   `search_literature`; Elicit `search_papers`) plus web search. Queries covered
-   "economic burden of MDD United States", "cost of illness depression per
-   person", workplace/productivity cost, and systematic reviews/meta-analyses.
+1. **Literature search** via research connectors — Scite `search_literature`
+   (used) and an independent **PubMed** cross-check (used); Elicit was gated by
+   plan and alphaXiv/bioRxiv don't carry this literature (see "Connector
+   cross-check" below). Queries covered "economic burden of MDD United States",
+   "cost of illness depression per person", workplace/productivity cost, and
+   systematic reviews/meta-analyses.
 2. **Inclusion:** US national incremental (excess) cost-of-illness studies for
    adults with MDD that report a total burden and the prevalent population, so a
    per-case figure can be derived; plus one worldwide meta-analysis and one
@@ -73,6 +75,21 @@ vintage lands in the same band, confirming stability.
 
 `estimate_health_cost.py` prints all anchors so you can see the spread, and
 `--anchor greenberg2018|greenberg2019|pooled` selects the basis (default pooled).
+
+## Connector cross-check (which databases were used)
+
+- **Scite** (`search_literature`): primary source; surfaced the Greenberg series
+  and the König meta-analysis. Used for the pooled figure.
+- **PubMed** (NCBI connector): independent re-search ("economic burden major
+  depressive disorder United States cost", 2014+) returned 110 hits with the
+  **same canonical studies as top results** — Greenberg 2021 (PMID 33950419) and
+  Greenberg 2015 (PMID 25742202) — plus claims-based *per-patient* cost studies
+  reporting all-cause/direct costs of roughly **$6,000–$12,000 per patient/yr**.
+  Those are direct/healthcare (a component), consistent with the societal total.
+  This corroborates the pooled estimate and its building blocks. (Source: PubMed.)
+- **Elicit**: unavailable — account lacks API access.
+- **alphaXiv / bioRxiv-medRxiv**: wrong domain (arXiv CS/ML; preprints without
+  keyword search) — no relevant cost-of-illness studies. Not used.
 
 ## Composition (two taxonomies)
 
