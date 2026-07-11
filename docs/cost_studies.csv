@@ -1,0 +1,7 @@
+study,base_year,total_burden_usd,usd_basis_year,us_adults_mdd,per_case_reported_usd,per_case_2024_usd,pooled,doi,notes
+Greenberg et al. 2015 (J Clin Psychiatry),2010,210500000000,2012,15500000,13600,18600,check,10.4088/jcp.14m09298,"2005 & 2010; direct 45% / workplace 50% / suicide 5%; MDD-attributable 38%"
+Greenberg et al. 2021 (PharmacoEconomics),2018,326200000000,2020,17500000,18640,22592,yes,10.1007/s40273-021-01019-4,"workplace 61% / comorbid 24% / MDD-direct 11.2% / suicide 4%"
+Greenberg et al. 2023 (Advances in Therapy),2019,382400000000,2023,19800000,16854,19882,yes,10.1007/s12325-023-02622-x,"reported $16,854/adult in 2019 USD; healthcare 38.1% / household 24% / presenteeism 13% / absenteeism 11.5%"
+Konig et al. 2019 meta-analysis (Epidemiol Psychiatr Sci),NA,NA,NA,NA,NA,NA,convergent,10.1017/s2045796019000180,"48 studies; ratio-of-means direct 2.58 (2.01-3.31), indirect 2.28 (1.75-2.98) in adults"
+Evans-Lacko & Knapp 2016 (Soc Psychiatry Psychiatr Epidemiol),NA,NA,NA,NA,NA,NA,convergent,10.1007/s00127-016-1278-4,"8-country workplace absenteeism+presenteeism incl. US"
+POOLED (studies 2 & 3),2024,NA,2024,NA,NA,21240,central,NA,"mean of Greenberg 2018 & 2019 anchors, 2024 USD; range 17000-23000"

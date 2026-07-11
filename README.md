@@ -14,9 +14,14 @@ SNAPP/
 ├── .env                      # real secrets (gitignored)
 ├── environment.yml           # conda env spec (recommended setup)
 ├── requirements.txt          # pip alternative
-├── run_pipeline.sh           # run all five steps end to end
+├── run_pipeline.sh           # SF: run all steps end to end
+├── run_national.sh           # national: loop config/cities.csv, run per city
+├── config/cities.csv         # list of US cities (place GEOIDs) for the national run
+├── docs/                     # societal-cost synthesis, cost_studies.csv, scaling notes
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
+│   ├── national/
+│   │   └── run_city.py       # run the model for ONE city (EPSG:5070); driven by run_national.sh
 │   ├── sf_ndvi/
 │   │   ├── ndvi_gee.py       # 30 m Landsat JJAS p90 NDVI via Google Earth Engine (ACTIVE)
 │   │   └── alternatives/     # backup NDVI sources (not in the pipeline)
@@ -144,13 +149,13 @@ two NDVI rasters (`model_option='ndvi'`) or two LULC rasters. Data flows
 | `aoi_path` | `src/inputs/build_aoi_prevalence.py` | Census TIGER tracts |
 | `baseline_prevalence_vector` (`risk_rate`) | `src/inputs/build_aoi_prevalence.py` | CDC PLACES — `raw/cdc_places/` |
 | `population_raster` | `src/inputs/fetch_population.py` | WorldPop US 100 m |
-| `health_cost_rate` | `src/inputs/estimate_health_cost.py` | societal ~$22,638/case (Greenberg 2021) default, or `--basis direct` MEPS ~$1,438 |
+| `health_cost_rate` | `src/inputs/estimate_health_cost.py` | societal ~$21,280/case (pooled Greenberg 2018 & 2019) default, or `--basis direct` MEPS ~$1,438 |
 | `effect_size` | sourced default `0.93` | Liu et al. 2023, *Environ. Res.* 231:116303 |
 | `search_radius` | `300` m (set in `run_model.py`) | — |
 
 Assumptions to revisit for a real analysis: the greening scenario (placeholder
 +0.05 NDVI), the effect size (an odds ratio used as a risk ratio), and
-`health_cost_rate` — now the **societal** ~$22,638/case (range ~$17k–$23k;
+`health_cost_rate` — now the **societal** ~$21,280/case (pooled; range ~$17k–$23k;
 US-national, comorbidity attribution debatable). Use `--basis direct` for a
 conservative healthcare-only figure. Details: `docs/societal_cost_of_depression.md`.
 
@@ -187,7 +192,7 @@ python src/inputs/fetch_population.py
 python src/inputs/make_ndvi_scenario.py                  # uniform +0.05, capped at 0.90
 
 # health_cost_rate (writes inputs/health_cost_rate.txt + components.csv, read by the model):
-python src/inputs/estimate_health_cost.py                # societal ~$22,638 (default)
+python src/inputs/estimate_health_cost.py                # societal ~$21,280 pooled (default)
 # python src/inputs/estimate_health_cost.py --basis direct   # MEPS direct medical (~$1,438)
 
 # effect_size has a sourced default (0.93, Liu et al. 2023); adjust in run_model.py if needed
@@ -202,7 +207,7 @@ and a `risk_rate` field — by default from the local CDC shapefile in
 2024; `fetch_population.py` uses the WorldPop US 100 m raster (local file in
 `_worldpop/` or download), clips to the AOI, and reprojects to meters;
 `estimate_health_cost.py` writes the cost per case to `health_cost_rate.txt` —
-default **societal** (~$22,638, Greenberg 2021, with a `health_cost_components.csv`
+default **societal** (~$21,280, pooled across Greenberg 2018 & 2019, with a `health_cost_components.csv`
 breakdown) or `--basis direct` for the MEPS direct-medical figure (~$1,438). See
 `docs/societal_cost_of_depression.md`. All write into `data/urban-mental-health/inputs/` with the
 exact filenames `run_model.py` expects.
@@ -240,6 +245,25 @@ pipeline.
    ```bash
    pip install -r requirements.txt
    ```
+
+## Scaling to a national multi-city study
+
+The SF pipeline generalizes to all US cities. `src/national/run_city.py` runs the
+model for one Census **place** (by GEOID), using a CONUS-wide CRS (**EPSG:5070**),
+selecting prevalence tracts by spatial intersection, windowed-clipping the
+national WorldPop raster, and writing to a per-city workspace.
+`run_national.sh` loops `config/cities.csv`:
+
+```bash
+bash run_national.sh data/national/places.gpkg data/national/ndvi
+# args: <national places layer>  <dir of per-city <GEOID>_ndvi.tif>
+```
+
+What you provide once: a national "places" polygon layer, and per-city NDVI
+rasters from the GEE city loop (your Code Editor script already iterates cities).
+Prevalence (national CDC tract shapefile), population (WorldPop US), cost, and
+effect size are already national. Full rationale and steps:
+`docs/scaling_to_national.md`.
 
 ## Backup NDVI route (Copernicus / CDSE)
 
