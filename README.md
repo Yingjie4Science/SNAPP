@@ -35,7 +35,9 @@ SNAPP/
 │   │   ├── build_aoi_prevalence.py  # SF tracts AOI + depression risk_rate (local shp or CDC API)
 │   │   ├── fetch_population.py       # WorldPop US 100 m -> clip to SF AOI (local file or download)
 │   │   ├── estimate_health_cost.py  # societal (Greenberg) or direct (MEPS) -> health_cost_rate.txt
-│   │   └── make_ndvi_scenario.py    # ndvi_base -> ndvi_alt greening scenario
+│   │   ├── make_ndvi_scenario.py    # ndvi_alt: uniform / greenable (quick sensitivity)
+│   │   ├── scenario_lulc_masked.py  # ndvi_alt: LULC-masked greening (primary; needs NLCD)
+│   │   └── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target (policy headline)
 │   └── urban_mental_health/
 │       ├── run_model.py      # runs the InVEST Urban Mental Health model
 │       ├── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV

@@ -48,13 +48,19 @@ low-intensity / barren pixels toward the tract's 75th-percentile NDVI (a locally
 achievable "green" level), capped at 0.85; leave water, wetlands, and high-canopy
 pixels unchanged.** Report results against a 30% canopy-target headline.
 
-## What I'd need to implement each
+## Scripts (all three are implemented)
 
-- **C:** an NLCD Land Cover raster for SF (30 m; free from MRLC) + a small
-  lucode→exclude/NDVI table. I can wire `model_option='lulc'` and build the table.
-- **D:** NLCD TCC for SF + a TCC↔NDVI relationship (regress your Landsat NDVI on
-  TCC, which your pipeline can already produce). I can write that regression step.
-- **B:** nothing new — just run `make_ndvi_scenario.py --mode greenable`.
+| Scenario | Script | You still supply |
+|---|---|---|
+| B — greenable-only (quick sensitivity) | `src/inputs/make_ndvi_scenario.py --mode greenable` | nothing |
+| C — LULC-masked (primary) | `src/inputs/scenario_lulc_masked.py --lulc <nlcd.tif>` | an NLCD Land Cover raster (free, [mrlc.gov](https://www.mrlc.gov/data)) |
+| D — canopy-target (policy headline) | `src/inputs/scenario_canopy_target.py --target-ndvi 0.60` (or `--canopy-target 30 --tcc-slope … --tcc-intercept …`) | a target NDVI, or a TCC→NDVI regression (fit tract-mean NDVI on NLCD TCC) |
 
-Tell me which (C or D) to build and I'll add the scenario generator + point the
-model at it.
+Each writes an `ndvi_alt` raster to `data/urban-mental-health/inputs/`
+(`sf_ndvi_scenario_lulc.tif` / `sf_ndvi_scenario_canopy.tif` / `sf_ndvi_scenario.tif`).
+Point the model at the one you want via `config.yaml → inputs.ndvi_alt`, then run
+`run_model.py`.
+
+Fitting the TCC→NDVI relationship for D: run your Landsat NDVI + NLCD TCC through
+a simple per-tract regression (mean NDVI ~ mean canopy%); the slope/intercept go
+into `--tcc-slope/--tcc-intercept`. I can add that regression helper if useful.
