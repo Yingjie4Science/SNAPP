@@ -37,7 +37,9 @@ SNAPP/
 │   │   ├── estimate_health_cost.py  # societal (Greenberg) or direct (MEPS) -> health_cost_rate.txt
 │   │   ├── make_ndvi_scenario.py    # ndvi_alt: uniform / greenable (quick sensitivity)
 │   │   ├── scenario_lulc_masked.py  # ndvi_alt: LULC-masked greening (primary; needs NLCD)
-│   │   └── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target (policy headline)
+│   │   ├── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target (policy headline)
+│   │   ├── fetch_nlcd_gee.py        # fetch NLCD Land Cover + Tree Canopy Cover (GEE)
+│   │   └── fit_tcc_ndvi.py          # regress tract NDVI ~ canopy% -> slope/intercept
 │   └── urban_mental_health/
 │       ├── run_model.py      # runs the InVEST Urban Mental Health model
 │       ├── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV

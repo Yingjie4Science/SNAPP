@@ -61,6 +61,19 @@ Each writes an `ndvi_alt` raster to `data/urban-mental-health/inputs/`
 Point the model at the one you want via `config.yaml → inputs.ndvi_alt`, then run
 `run_model.py`.
 
-Fitting the TCC→NDVI relationship for D: run your Landsat NDVI + NLCD TCC through
-a simple per-tract regression (mean NDVI ~ mean canopy%); the slope/intercept go
-into `--tcc-slope/--tcc-intercept`. I can add that regression helper if useful.
+Getting the data is now scripted too (via GEE, like the NDVI step):
+
+```bash
+# 1. fetch NLCD Land Cover (for C) and Tree Canopy Cover (for D):
+python src/inputs/fetch_nlcd_gee.py
+
+# 2C. LULC-masked scenario:
+python src/inputs/scenario_lulc_masked.py --lulc data/urban-mental-health/inputs/nlcd_landcover_sf.tif
+
+# 2D. fit TCC->NDVI, then run the canopy-target scenario with the printed slope/intercept:
+python src/inputs/fit_tcc_ndvi.py          # writes docs/tcc_ndvi_regression.md + prints the command
+python src/inputs/scenario_canopy_target.py --canopy-target 30 --tcc-slope <s> --tcc-intercept <i>
+```
+
+`fit_tcc_ndvi.py` regresses per-tract mean NDVI on mean canopy% and reports
+slope/intercept + R²; plug those into the canopy-target scenario.

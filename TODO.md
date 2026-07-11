@@ -11,10 +11,10 @@
 ## Now / high priority
 - [ ] **Adult-population correction** — re-run with `fetch_population.py --adult-fraction`
       so baseline cases use adults ≥18 (prevalence is adult). Confirms the ~8.5k figure.
-- [ ] **Realistic greening scenario** — generators are built (greenable /
-      LULC-masked / canopy-target; see `docs/greening_scenarios.md`). Remaining:
-      get an NLCD Land Cover raster (for LULC-masked) or fit a TCC→NDVI regression
-      (for canopy-target), pick one, and set `config.yaml inputs.ndvi_alt`.
+- [ ] **Realistic greening scenario** — generators + data helpers all built
+      (`fetch_nlcd_gee.py`, `scenario_lulc_masked.py`, `fit_tcc_ndvi.py`,
+      `scenario_canopy_target.py`; see `docs/greening_scenarios.md`). Remaining:
+      run them, pick a scenario, and set `config.yaml inputs.ndvi_alt`.
 - [ ] **Interpret + QA** — run `summarize_results.py`; sanity-check totals and map per tract.
 
 ## Reproducibility / hygiene
