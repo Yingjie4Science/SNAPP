@@ -38,7 +38,7 @@ LOGGER = logging.getLogger("fit_tcc_ndvi")
 BASE_DIR = Path(__file__).resolve().parents[3]
 INPUTS = BASE_DIR / "data" / "urban-mental-health" / "inputs"
 RAW_NLCD = BASE_DIR / "data" / "urban-mental-health" / "raw" / "nlcd"
-OUT_MD = BASE_DIR / "docs" / "tcc_ndvi_regression.md"
+OUT_MD = BASE_DIR / "results" / "summaries" / "tcc_ndvi_regression.md"
 
 
 def tract_means(arr, geoms, shape, transform):

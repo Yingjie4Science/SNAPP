@@ -39,4 +39,4 @@ tail -n +2 "$CITIES" | grep -v '^#' | while IFS=, read -r geoid name; do
         || echo "    WARNING: $geoid failed; continuing."
 done
 
-echo "==> National run complete. Per-city outputs in data/urban-mental-health/workspace_national/<GEOID>/"
+echo "==> National run complete. Per-city outputs in data/urban-mental-health/runs/national/<GEOID>/"

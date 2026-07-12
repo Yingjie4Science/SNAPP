@@ -53,7 +53,7 @@ LOGGER = logging.getLogger("run_city")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 NATIONAL_CRS = "EPSG:5070"          # NAD83 / Conus Albers (meters) — CONUS-wide
-WORKSPACE_ROOT = BASE_DIR / "data" / "urban-mental-health" / "workspace_national"
+WORKSPACE_ROOT = BASE_DIR / "data" / "urban-mental-health" / "runs" / "national"
 
 SEARCH_RADIUS_M = 300.0
 SCENARIO_DELTA = 0.05               # uniform NDVI greening for ndvi_alt

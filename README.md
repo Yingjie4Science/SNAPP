@@ -46,6 +46,10 @@ SNAPP/
 │       ├── run_sensitivity.py         # effect_size x cost sensitivity grid -> CSV
 │       ├── summarize_results.py       # totals, QA checks, per-tract map
 │       └── make_manuscript_figures.py # publication figures + tables (Nature Cities)
+├── results/                  # curated deliverables — COMMITTED
+│   ├── figures/             # manuscript PDFs/PNGs
+│   ├── tables/              # Table1/2 (csv + md)
+│   └── summaries/           # results_summary.md, scenario_comparison.csv, sensitivity_summary.csv
 ├── data/                     # gitignored — never pushed to GitHub
 │   └── urban-mental-health/
 │       ├── raw/              # raw source data
@@ -53,7 +57,11 @@ SNAPP/
 │       │   ├── meps/        # MEPS medical-expenditure files -> health_cost_rate
 │       │   └── nlcd/        # NLCD land cover + tree canopy (greening scenarios)
 │       ├── inputs/           # model-ready inputs (built by the src/ scripts)
-│       └── workspace*/       # model outputs (base, sensitivity, scenarios, national)
+│       └── runs/             # model runs, one folder per run (gitignored, large)
+│           ├── sf_baseline/     #   place _ scenario (InVEST output/ + intermediate/)
+│           ├── sf_sensitivity/  #   effect-size cells
+│           ├── sf_scenarios/    #   greening-scenario runs
+│           └── national/<GEOID>/
 └── notebooks/                # optional exploratory analysis
 ```
 

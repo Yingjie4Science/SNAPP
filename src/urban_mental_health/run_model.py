@@ -69,7 +69,14 @@ LOGGER = logging.getLogger("urban_mental_health_runner")
 BASE_DIR = Path(__file__).resolve().parents[2]          # project root (SNAPP)
 DATASET_DIR = BASE_DIR / "data" / "urban-mental-health"
 INPUTS = DATASET_DIR / "inputs"
-WORKSPACE = DATASET_DIR / "workspace"                    # model writes results here
+# Model runs (large, regenerable, gitignored): one folder per run under runs/.
+RUNS = DATASET_DIR / "runs"
+WORKSPACE = RUNS / "sf_baseline"                         # the base SF run
+# Curated, small deliverables (committed): figures / tables / summaries.
+RESULTS = BASE_DIR / "results"
+RESULTS_SUMMARIES = RESULTS / "summaries"
+RESULTS_FIGURES = RESULTS / "figures"
+RESULTS_TABLES = RESULTS / "tables"
 
 
 def _load_config() -> dict:

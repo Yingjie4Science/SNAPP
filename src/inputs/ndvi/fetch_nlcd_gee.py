@@ -9,9 +9,10 @@ Feeds the greening-scenario generators:
 Uses the same Earth Engine setup as ndvi_gee.py (project default gee-planet-natcap;
 browser auth on first run). Exports 30 m GeoTIFFs to the inputs folder.
 
-NOTE on asset IDs: GEE occasionally revises NLCD asset/band names. The defaults
-below are the 2021 release; override with --lc-collection / --tcc-collection /
---lc-index / --tcc-band if a load fails. The script prints what it loaded.
+Land cover: sat-io Annual NLCD (CONUS 1985-2025, 30 m), picked by --lc-year.
+NOTE on asset IDs: GEE occasionally revises asset/band names; override with
+--lc-collection / --lc-year / --tcc-collection / --tcc-band if a load fails.
+The script prints what it loaded.
 
 REQUIREMENTS  (conda env `snapp`): earthengine-api, geemap
 USAGE
@@ -41,10 +42,13 @@ SF_BBOX = [-122.55, 37.70, -122.35, 37.83]
 OUT_CRS = "EPSG:26910"
 SCALE_M = 30
 
-# 2021-release defaults (override via CLI if GEE has revised them).
-LC_COLLECTION = "USGS/NLCD_RELEASES/2021_REL/NLCD"
-LC_INDEX = "2021"
-LC_BAND = "landcover"
+# Land cover: sat-io "Annual NLCD" (LCMAP+NLCD methodology), CONUS 1985-2025, 30 m,
+# selected by a `year` property. Standard NLCD class codes (11..95), so the
+# greenable codes (21/22/31) used downstream are unchanged.
+# https://gee-community-catalog.org/projects/annual_nlcd/
+LC_COLLECTION = "projects/sat-io/open-datasets/USGS/ANNUAL_NLCD/LANDCOVER"
+LC_YEAR = 2024                       # match the NDVI year (dataset covers 1985-2025)
+LC_BAND = None                       # None = first band (avoids band-name drift)
 TCC_COLLECTION = "projects/gtac-data-publish/assets/TCC/Product_Version/2025-6"
 TCC_BAND = "Science_Percent_Tree_Canopy_Cover"
 
@@ -70,8 +74,10 @@ def main():
     ap.add_argument("--project", default=os.environ.get("EE_PROJECT", DEFAULT_EE_PROJECT))
     ap.add_argument("--only", choices=["landcover", "tcc"], help="Fetch just one layer.")
     ap.add_argument("--lc-collection", default=LC_COLLECTION)
-    ap.add_argument("--lc-index", default=LC_INDEX, help="system:index of the LC year image.")
-    ap.add_argument("--lc-band", default=LC_BAND)
+    ap.add_argument("--lc-year", type=int, default=LC_YEAR,
+                    help="Annual NLCD land-cover year (1985-2025).")
+    ap.add_argument("--lc-band", default=LC_BAND,
+                    help="Land-cover band name; default None = first band.")
     ap.add_argument("--tcc-collection", default=TCC_COLLECTION)
     ap.add_argument("--tcc-band", default=TCC_BAND)
     cli = ap.parse_args()
@@ -81,11 +87,11 @@ def main():
 
     if cli.only != "tcc":
         lc = (ee.ImageCollection(cli.lc_collection)
-              .filter(ee.Filter.eq("system:index", cli.lc_index)).first())
-        if lc is None:
-            lc = ee.ImageCollection(cli.lc_collection).mosaic()  # fallback
-        lc = lc.select(cli.lc_band).clip(geom)
-        export(lc, geom, RAW_NLCD / "nlcd_landcover.tif", "NLCD Land Cover")
+              .filter(ee.Filter.eq("year", cli.lc_year)).first())
+        # Keep ORIGINAL NLCD class codes (no remap) — downstream masking needs them.
+        lc = (lc.select(cli.lc_band) if cli.lc_band else lc.select(0)).clip(geom)
+        export(lc, geom, RAW_NLCD / "nlcd_landcover.tif",
+               f"Annual NLCD Land Cover {cli.lc_year}")
 
     if cli.only != "landcover":
         tcc = (ee.ImageCollection(cli.tcc_collection).select(cli.tcc_band)

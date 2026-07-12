@@ -18,8 +18,8 @@ USAGE
     #   python src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60
     python src/urban_mental_health/run_scenarios.py
 Outputs:
-    data/urban-mental-health/workspace_scenarios/<label>/
-    data/urban-mental-health/workspace_scenarios/scenario_comparison.csv
+    data/urban-mental-health/runs/sf_scenarios/<label>/
+    data/urban-mental-health/runs/sf_scenarios/scenario_comparison.csv
 """
 
 import csv
@@ -34,8 +34,8 @@ from run_sensitivity import total_preventable_cases  # noqa: E402  (raster sum h
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("run_scenarios")
 
-WS_ROOT = run_model.DATASET_DIR / "workspace_scenarios"
-COMPARISON_CSV = WS_ROOT / "scenario_comparison.csv"
+WS_ROOT = run_model.RUNS / "sf_scenarios"                    # runs (gitignored)
+COMPARISON_CSV = run_model.RESULTS_SUMMARIES / "scenario_comparison.csv"  # committed
 COST_FILE = run_model.INPUTS / "health_cost_rate.txt"
 
 # Default scenario set if config.yaml has no `scenarios:` block.
@@ -80,6 +80,7 @@ def main():
     if not rows:
         sys.exit("No scenarios ran — generate at least one ndvi_alt raster first.")
 
+    COMPARISON_CSV.parent.mkdir(parents=True, exist_ok=True)
     with open(COMPARISON_CSV, "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["scenario", "ndvi_alt", "preventable_cases",

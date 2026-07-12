@@ -36,4 +36,4 @@ python src/inputs/estimate_health_cost.py
 echo "==> 6/6  Urban Mental Health model"
 python src/urban_mental_health/run_model.py ${VALIDATE_ONLY}
 
-echo "==> Done. Model outputs are in data/urban-mental-health/workspace/"
+echo "==> Done. Model outputs are in data/urban-mental-health/runs/sf_baseline/"

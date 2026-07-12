@@ -15,8 +15,8 @@ REQUIREMENTS  (conda env `snapp`): natcap.invest, rasterio, numpy
 USAGE
     python src/urban_mental_health/run_sensitivity.py
 Outputs:
-    data/urban-mental-health/workspace_sensitivity/<label>/   (per-run workspaces)
-    data/urban-mental-health/workspace_sensitivity/sensitivity_summary.csv
+    data/urban-mental-health/runs/sf_sensitivity/<label>/   (per-run workspaces)
+    data/urban-mental-health/runs/sf_sensitivity/sensitivity_summary.csv
 """
 
 import csv
@@ -35,8 +35,8 @@ LOGGER = logging.getLogger("run_sensitivity")
 EFFECT_SIZES = {"es_low_0887": 0.887, "es_central_093": 0.93, "es_high_0977": 0.977}
 COST_RATES = {"cost_low_17000": 17000.0, "cost_central_21280": 21280.0, "cost_high_23000": 23000.0}
 
-WS_ROOT = run_model.BASE_DIR / "data" / "urban-mental-health" / "workspace_sensitivity"
-SUMMARY_CSV = WS_ROOT / "sensitivity_summary.csv"
+WS_ROOT = run_model.RUNS / "sf_sensitivity"                 # runs (gitignored)
+SUMMARY_CSV = run_model.RESULTS_SUMMARIES / "sensitivity_summary.csv"  # committed
 
 
 def total_preventable_cases(workspace: Path, suffix: str) -> float:
@@ -75,6 +75,7 @@ def main():
         rows.append((label, es, cases))
 
     # Write the grid: cases (per effect_size) x cost bands (analytic).
+    SUMMARY_CSV.parent.mkdir(parents=True, exist_ok=True)
     with open(SUMMARY_CSV, "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["effect_size_label", "effect_size", "preventable_cases",

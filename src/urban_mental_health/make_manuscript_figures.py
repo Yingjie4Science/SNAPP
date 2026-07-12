@@ -2,13 +2,10 @@
 """
 Generate publication-quality figures + tables for the manuscript (Nature Cities).
 
-Reads the actual model outputs and inputs and writes:
-  figures/manuscript/  Fig1_study_area.(pdf|png)      study-area / inputs (NDVI, prevalence, population)
-                       Fig2_results_map.(pdf|png)      per-tract preventable cases (+ cost)
-                       Fig3_scenario_comparison.(pdf|png)
-                       Fig4_sensitivity.(pdf|png)
-  tables/              Table1_data_sources.(csv|md)    inputs + provenance (static)
-                       Table2_results_summary.(csv|md) totals + sensitivity range
+Reads the actual model outputs and inputs and writes (committed under results/):
+  results/figures/  Fig1_study_area / Fig2_results_map / Fig3_scenario_comparison
+                    / Fig4_sensitivity  (each .pdf + .png)
+  results/tables/   Table1_data_sources / Table2_results_summary  (each .csv + .md)
 
 Nature style: Arial, small type, colorblind-safe palettes, 88/180 mm widths,
 editable-text vector PDF (fonttype 42) + 300 dpi PNG. Each figure is independent
@@ -37,11 +34,12 @@ LOGGER = logging.getLogger("make_figures")
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
 INPUTS = UMH / "inputs"
-WORKSPACE = UMH / "workspace"
-SCEN_CSV = UMH / "workspace_scenarios" / "scenario_comparison.csv"
-SENS_CSV = UMH / "workspace_sensitivity" / "sensitivity_summary.csv"
-FIGDIR = BASE_DIR / "figures" / "manuscript"
-TABDIR = BASE_DIR / "tables"
+WORKSPACE = UMH / "runs" / "sf_baseline"
+RESULTS = BASE_DIR / "results"
+SCEN_CSV = RESULTS / "summaries" / "scenario_comparison.csv"
+SENS_CSV = RESULTS / "summaries" / "sensitivity_summary.csv"
+FIGDIR = RESULTS / "figures"
+TABDIR = RESULTS / "tables"
 
 MM = 1 / 25.4
 SINGLE, DOUBLE = 88 * MM, 180 * MM   # Nature column widths
@@ -113,7 +111,7 @@ def fig2_results_map(scenario_label):
     import geopandas as gpd
     gpkgs = sorted(glob.glob(str(WORKSPACE / "output" / "*sum*.gpkg")))
     if not gpkgs:
-        LOGGER.warning("Fig2 skipped — no summary gpkg in workspace/output. Run the model."); return
+        LOGGER.warning("Fig2 skipped — no summary gpkg in runs/sf_baseline/output. Run the model."); return
     gdf = gpd.read_file(gpkgs[0])
     has_cost = "sum_cost" in gdf.columns and gdf["sum_cost"].notna().any()
     n = 2 if has_cost else 1

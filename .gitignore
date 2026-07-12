@@ -1,8 +1,11 @@
 # Secrets — never commit real credentials
 .env
 
-# Data (large / regenerable) — datasets live here but stay out of git
+# Data (large / regenerable) — raw, inputs, and model runs stay out of git
 data/
+
+# results/ (curated figures, tables, summaries) IS tracked on purpose — do not
+# ignore it. Large model scratch lives in data/urban-mental-health/runs/ instead.
 
 # Leftover empty folders from an earlier layout (delete these manually;
 # the synced drive blocks automated deletion)

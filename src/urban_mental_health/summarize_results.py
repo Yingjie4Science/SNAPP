@@ -27,10 +27,11 @@ LOGGER = logging.getLogger("summarize_results")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
-WORKSPACE = UMH / "workspace"
-SENS = UMH / "workspace_sensitivity" / "sensitivity_summary.csv"
+WORKSPACE = UMH / "runs" / "sf_baseline"                  # base model run
+RESULTS = BASE_DIR / "results"
+SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
-OUT_MD = BASE_DIR / "docs" / "results_summary.md"
+OUT_MD = RESULTS / "summaries" / "results_summary.md"
 
 
 def load_sum_csv():
@@ -76,7 +77,7 @@ def draw_map():
                   edgecolor="0.7", linewidth=0.2)
     ax.set_axis_off()
     ax.set_title("Preventable depression cases per tract (SF)")
-    fig_path = BASE_DIR / "figures" / "preventable_cases_map.png"
+    fig_path = RESULTS / "figures" / "preventable_cases_map.png"
     fig_path.parent.mkdir(parents=True, exist_ok=True)
     ax.figure.savefig(fig_path, dpi=150, bbox_inches="tight")
     plt.close(ax.figure)
@@ -136,6 +137,7 @@ def main():
         fig = draw_map()
         if fig:
             lines += ["", f"![Preventable cases per tract](../figures/{fig.name})"]
+            # (results_summary.md lives in results/summaries/; figure in results/figures/)
 
     OUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUT_MD.write_text("\n".join(lines) + "\n")
