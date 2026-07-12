@@ -11,15 +11,20 @@
 #   - a societal cost value:        python src/inputs/estimate_health_cost.py
 #
 # Usage:
-#   bash run_national.sh COUNTIES_LAYER NDVI_DIR
+#   bash run_national.sh COUNTIES_LAYER NDVI_DIR [ADULT_FRACTION]
 # Example:
 #   bash run_national.sh data/national/counties.gpkg data/national/ndvi
+#   bash run_national.sh data/national/counties.gpkg data/national/ndvi 1.0  # disable adult scaling
+#
+# After the run completes, aggregate per-county outputs:
+#   python src/national/aggregate_national.py
 
 set -euo pipefail
 cd "$(dirname "$0")"
 
 REGIONS="${1:?path to counties-in-metro layer required}"
 NDVI_DIR="${2:?path to per-county NDVI dir required}"
+ADULT_FRACTION="${3:-0.86}"     # scale all-ages WorldPop -> adults (prevalence is 18+)
 POP="data/urban-mental-health/inputs/_worldpop/usa_pop_2024_CN_100m_R2025A_v1.tif"
 REGIONS_CSV="config/regions.csv"
 
@@ -36,6 +41,7 @@ tail -n +2 "$REGIONS_CSV" | grep -v '^#' | while IFS=, read -r geoid name; do
         --regions "$REGIONS" \
         --population "$POP" \
         --ndvi-dir "$NDVI_DIR" \
+        --adult-fraction "$ADULT_FRACTION" \
         || echo "    WARNING: $geoid failed; continuing."
 done
 

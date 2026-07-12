@@ -25,6 +25,7 @@ dependencies:
   - geopandas>=0.14
   - pandas>=2.0
   - openpyxl>=3.1          # read MEPS .xlsx (extract_meps_cost.py)
+  - xlrd>=2.0              # read Census delineation .xls (build_metro_counties --crosswalk)
 
   # Sentinel-2 10 m NDVI via CDSE openEO (src/inputs/ndvi/ndvi_sentinel2.py)
   - openeo>=0.30

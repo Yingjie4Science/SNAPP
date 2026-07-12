@@ -60,6 +60,26 @@ SCENARIO_DELTA = 0.05               # uniform NDVI greening for ndvi_alt
 SCENARIO_CAP = 0.90
 
 
+def resolve_adult_fraction(cli) -> float:
+    """Per-county 18+ share from the ACS lookup if present, else the flat default.
+
+    config/adult_fraction.csv (from fetch_adult_fraction.py) maps GEOID ->
+    adult_fraction. If the file exists and lists this county, use it; otherwise
+    fall back to --adult-fraction (0.86).
+    """
+    import csv
+    f = cli.adult_fraction_file
+    if f and f.exists():
+        with open(f) as fh:
+            for r in csv.DictReader(fh):
+                if (r.get("GEOID") or "").strip() == cli.geoid:
+                    val = float(r["adult_fraction"])
+                    LOGGER.info("[%s] adult_fraction %.4f (per-county, ACS).", cli.geoid, val)
+                    return val
+        LOGGER.info("[%s] not in %s; using flat %.3f.", cli.geoid, f.name, cli.adult_fraction)
+    return cli.adult_fraction
+
+
 def pick_geoid_col(gdf) -> str:
     for c in ("GEOID_PLAC", "GEOID", "PLACEFP", "GEOID20"):
         if c in gdf.columns:
@@ -97,6 +117,10 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     pop_win = pop.rio.clip_box(minx, miny, maxx, maxy)
     pop_clip = pop_win.rio.clip(city_in_pop.geometry, city_in_pop.crs, drop=True)
     pop_proj = pop_clip.rio.reproject(NATIONAL_CRS, resampling=Resampling.bilinear)
+    frac = resolve_adult_fraction(cli)              # CDC PLACES prevalence is ADULT (18+);
+    if frac != 1.0:                                  # scale all-ages WorldPop to adults so
+        crs = pop_proj.rio.crs                        # cases aren't ~20% high
+        pop_proj = (pop_proj * frac).rio.write_crs(crs)
     pop_proj.rio.write_nodata(float("nan"), inplace=True)
     pop_proj.attrs.pop("_FillValue", None)          # avoid xarray _FillValue clash
     pop_path = inputs / "population.tif"
@@ -141,6 +165,15 @@ def main():
     ap.add_argument("--ndvi-dir", type=Path, required=True, help="Folder of <GEOID>_ndvi.tif.")
     ap.add_argument("--cost-file", type=Path,
                     default=BASE_DIR / "data/urban-mental-health/inputs/health_cost_rate.txt")
+    ap.add_argument("--adult-fraction", type=float, default=0.86,
+                    help="Fallback all-ages->adult (18+) scale for counties not in the "
+                         "lookup file, since CDC PLACES prevalence is adult. Default 0.86 "
+                         "(US 18+), matching the corrected SF run. Use 1.0 to disable.")
+    ap.add_argument("--adult-fraction-file", type=Path,
+                    default=BASE_DIR / "config" / "adult_fraction.csv",
+                    help="Per-county 18+ share lookup (GEOID,adult_fraction) from "
+                         "fetch_adult_fraction.py. Used when present; overrides the flat "
+                         "value per county. Missing counties fall back to --adult-fraction.")
     cli = ap.parse_args()
 
     city_ws = WORKSPACE_ROOT / cli.geoid
