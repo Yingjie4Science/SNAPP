@@ -19,10 +19,10 @@ VALIDATE_ONLY=""
 [ "${1:-}" = "--validate" ] && VALIDATE_ONLY="--validate"
 
 echo "==> 1/6  Baseline NDVI (GEE Landsat p90)"
-python src/sf_ndvi/ndvi_gee.py
+python src/inputs/ndvi/ndvi_gee.py
 
 echo "==> 2/6  Greening scenario (ndvi_alt)"
-python src/inputs/make_ndvi_scenario.py
+python src/inputs/ndvi/make_ndvi_scenario.py
 
 echo "==> 3/6  AOI + depression prevalence (local CDC shapefile)"
 python src/inputs/build_aoi_prevalence.py

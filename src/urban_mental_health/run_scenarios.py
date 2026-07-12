@@ -13,9 +13,9 @@ can generate a subset and compare just those.
 REQUIREMENTS  (conda env `snapp`): natcap.invest, rasterio, numpy, pyyaml
 USAGE
     # first generate the scenarios you want, e.g.:
-    #   python src/inputs/make_ndvi_scenario.py --mode greenable
-    #   python src/inputs/scenario_lulc_masked.py --lulc .../nlcd_landcover_sf.tif
-    #   python src/inputs/scenario_canopy_target.py --target-ndvi 0.60
+    #   python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable
+    #   python src/inputs/ndvi/scenario_lulc_masked.py --lulc .../nlcd_landcover_sf.tif
+    #   python src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60
     python src/urban_mental_health/run_scenarios.py
 Outputs:
     data/urban-mental-health/workspace_scenarios/<label>/

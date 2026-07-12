@@ -21,7 +21,7 @@ REQUIREMENTS
     A (free) CDSE account — the first run opens a browser to authenticate.
 
 USAGE
-    python src/sf_ndvi/ndvi_sentinel2.py
+    python src/inputs/ndvi/ndvi_sentinel2.py
 
 Then point the model's `ndvi_base` at the output file.
 """
@@ -38,7 +38,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("ndvi_sentinel2")
 
-BASE_DIR = Path(__file__).resolve().parents[3]
+BASE_DIR = Path(__file__).resolve().parents[4]
 OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_s2_10m.tif"
 
 # San Francisco bounding box (WGS84). Widen for the whole Bay Area if needed.

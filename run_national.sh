@@ -6,7 +6,7 @@
 #   - a national "places" polygon layer (--places)
 #   - the national WorldPop raster (already in inputs/_worldpop/)
 #   - per-city NDVI rasters named <GEOID>_ndvi.tif in --ndvi-dir
-#     (produce these with the GEE city loop; see src/sf_ndvi/ndvi_gee.py and
+#     (produce these with the GEE city loop; see src/inputs/ndvi/ndvi_gee.py and
 #      docs/scaling_to_national.md)
 #   - a societal cost value: python src/inputs/estimate_health_cost.py
 #

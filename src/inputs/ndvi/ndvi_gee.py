@@ -23,9 +23,9 @@ REQUIREMENTS
     conda install -c conda-forge earthengine-api geemap   # in environment.yml
 
 USAGE
-    python src/sf_ndvi/ndvi_gee.py --project YOUR_EE_PROJECT_ID           # 2024, local file
-    python src/sf_ndvi/ndvi_gee.py --project ID --year 2021              # a different year
-    python src/sf_ndvi/ndvi_gee.py --project ID --to-drive              # Export.image.toDrive
+    python src/inputs/ndvi/ndvi_gee.py --project YOUR_EE_PROJECT_ID           # 2024, local file
+    python src/inputs/ndvi/ndvi_gee.py --project ID --year 2021              # a different year
+    python src/inputs/ndvi/ndvi_gee.py --project ID --to-drive              # Export.image.toDrive
 """
 
 import argparse
@@ -43,7 +43,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("ndvi_gee")
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_gee.tif"
 
 # Default Earth Engine Cloud project (override with --project or env EE_PROJECT).

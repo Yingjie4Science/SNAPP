@@ -20,7 +20,7 @@ GREENABLE CLASSES (NLCD codes, override with --greenable)
 REQUIREMENTS  (conda env `snapp`): rioxarray, rasterio, xarray, numpy
 
 USAGE
-    python src/inputs/scenario_lulc_masked.py --lulc data/.../nlcd_sf.tif
+    python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/.../nlcd_sf.tif
     # tune: --target 0.65 --delta 0.15 --cap 0.90
 Then point the model's ndvi_alt at the output (config.yaml -> inputs.ndvi_alt).
 """
@@ -40,7 +40,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("scenario_lulc_masked")
 
-INPUTS = Path(__file__).resolve().parents[2] / "data" / "urban-mental-health" / "inputs"
+INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
 DEFAULT_BASE = INPUTS / "sf_ndvi_2024_gee.tif"
 DEFAULT_OUT = INPUTS / "sf_ndvi_scenario_lulc.tif"
 GREENABLE_DEFAULT = [21, 22, 31]

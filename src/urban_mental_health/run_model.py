@@ -178,7 +178,7 @@ def ndvi_prep_note():
     # companion helper, then supply an `ndvi_alt` greening scenario yourself.
     LOGGER.info(
         "ndvi_base expects ONE NDVI raster. Build it from the 2024 dekads in %s via:\n"
-        "    python src/sf_ndvi/composite_ndvi.py\n"
+        "    python src/inputs/ndvi/composite_ndvi.py\n"
         "Both NDVI rasters must extend beyond the AOI by at least the search radius.",
         SF_NDVI_PROCESSED,
     )

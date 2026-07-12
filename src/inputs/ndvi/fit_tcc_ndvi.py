@@ -15,7 +15,7 @@ INPUTS
 
 REQUIREMENTS  (conda env `snapp`): geopandas, rioxarray, rasterio, numpy
 USAGE
-    python src/inputs/fit_tcc_ndvi.py
+    python src/inputs/ndvi/fit_tcc_ndvi.py
 Writes docs/tcc_ndvi_regression.md and prints the ready-to-use scenario command.
 """
 
@@ -35,7 +35,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("fit_tcc_ndvi")
 
-BASE_DIR = Path(__file__).resolve().parents[2]
+BASE_DIR = Path(__file__).resolve().parents[3]
 INPUTS = BASE_DIR / "data" / "urban-mental-health" / "inputs"
 OUT_MD = BASE_DIR / "docs" / "tcc_ndvi_regression.md"
 
@@ -82,7 +82,7 @@ def main():
 
     LOGGER.info("NDVI = %.5f + %.5f * canopy%%   (n=%d tracts, R2=%.3f)",
                 intercept, slope, x.size, r2)
-    cmd = (f"python src/inputs/scenario_canopy_target.py --canopy-target 30 "
+    cmd = (f"python src/inputs/ndvi/scenario_canopy_target.py --canopy-target 30 "
            f"--tcc-slope {slope:.5f} --tcc-intercept {intercept:.5f}")
     OUT_MD.parent.mkdir(parents=True, exist_ok=True)
     OUT_MD.write_text(

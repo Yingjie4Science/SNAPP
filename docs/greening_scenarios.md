@@ -52,9 +52,9 @@ pixels unchanged.** Report results against a 30% canopy-target headline.
 
 | Scenario | Script | You still supply |
 |---|---|---|
-| B — greenable-only (quick sensitivity) | `src/inputs/make_ndvi_scenario.py --mode greenable` | nothing |
-| C — LULC-masked (primary) | `src/inputs/scenario_lulc_masked.py --lulc <nlcd.tif>` | an NLCD Land Cover raster (free, [mrlc.gov](https://www.mrlc.gov/data)) |
-| D — canopy-target (policy headline) | `src/inputs/scenario_canopy_target.py --target-ndvi 0.60` (or `--canopy-target 30 --tcc-slope … --tcc-intercept …`) | a target NDVI, or a TCC→NDVI regression (fit tract-mean NDVI on NLCD TCC) |
+| B — greenable-only (quick sensitivity) | `src/inputs/ndvi/make_ndvi_scenario.py --mode greenable` | nothing |
+| C — LULC-masked (primary) | `src/inputs/ndvi/scenario_lulc_masked.py --lulc <nlcd.tif>` | an NLCD Land Cover raster (free, [mrlc.gov](https://www.mrlc.gov/data)) |
+| D — canopy-target (policy headline) | `src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60` (or `--canopy-target 30 --tcc-slope … --tcc-intercept …`) | a target NDVI, or a TCC→NDVI regression (fit tract-mean NDVI on NLCD TCC) |
 
 Each writes an `ndvi_alt` raster to `data/urban-mental-health/inputs/`
 (`sf_ndvi_scenario_lulc.tif` / `sf_ndvi_scenario_canopy.tif` / `sf_ndvi_scenario.tif`).
@@ -65,14 +65,14 @@ Getting the data is now scripted too (via GEE, like the NDVI step):
 
 ```bash
 # 1. fetch NLCD Land Cover (for C) and Tree Canopy Cover (for D):
-python src/inputs/fetch_nlcd_gee.py
+python src/inputs/ndvi/fetch_nlcd_gee.py
 
 # 2C. LULC-masked scenario:
-python src/inputs/scenario_lulc_masked.py --lulc data/urban-mental-health/inputs/nlcd_landcover_sf.tif
+python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/urban-mental-health/inputs/nlcd_landcover_sf.tif
 
 # 2D. fit TCC->NDVI, then run the canopy-target scenario with the printed slope/intercept:
-python src/inputs/fit_tcc_ndvi.py          # writes docs/tcc_ndvi_regression.md + prints the command
-python src/inputs/scenario_canopy_target.py --canopy-target 30 --tcc-slope <s> --tcc-intercept <i>
+python src/inputs/ndvi/fit_tcc_ndvi.py          # writes docs/tcc_ndvi_regression.md + prints the command
+python src/inputs/ndvi/scenario_canopy_target.py --canopy-target 30 --tcc-slope <s> --tcc-intercept <i>
 ```
 
 `fit_tcc_ndvi.py` regresses per-tract mean NDVI on mean canopy% and reports

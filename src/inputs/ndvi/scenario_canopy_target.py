@@ -19,9 +19,9 @@ REQUIREMENTS  (conda env `snapp`): geopandas, rioxarray, rasterio, xarray, numpy
 
 USAGE
     # direct NDVI target for every tract:
-    python src/inputs/scenario_canopy_target.py --target-ndvi 0.60
+    python src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60
     # from a 30% canopy goal via a TCC->NDVI regression you fit:
-    python src/inputs/scenario_canopy_target.py --canopy-target 30 --tcc-slope 0.012 --tcc-intercept 0.15
+    python src/inputs/ndvi/scenario_canopy_target.py --canopy-target 30 --tcc-slope 0.012 --tcc-intercept 0.15
 Then point the model's ndvi_alt at the output (config.yaml -> inputs.ndvi_alt).
 """
 
@@ -41,7 +41,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("scenario_canopy_target")
 
-INPUTS = Path(__file__).resolve().parents[2] / "data" / "urban-mental-health" / "inputs"
+INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
 DEFAULT_BASE = INPUTS / "sf_ndvi_2024_gee.tif"
 DEFAULT_AOI = INPUTS / "sf_aoi.gpkg"
 DEFAULT_OUT = INPUTS / "sf_ndvi_scenario_canopy.tif"

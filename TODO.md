@@ -1,7 +1,7 @@
 # SNAPP — TODO / roadmap
 
 ## Done
-- [x] NDVI: Landsat JJAS p90 via GEE (`src/sf_ndvi/ndvi_gee.py`); CDSE/Sentinel-2 backups.
+- [x] NDVI: Landsat JJAS p90 via GEE (`src/inputs/ndvi/ndvi_gee.py`); CDSE/Sentinel-2 backups.
 - [x] Inputs: AOI + depression prevalence (local shp or CDC API), WorldPop population, greening scenario.
 - [x] Health cost: pooled societal ~$21,280/case (Greenberg 2018/2019 + König meta-analysis), PubMed cross-checked.
 - [x] Model runs end to end; sensitivity runner (effect_size × cost).

@@ -15,8 +15,8 @@ below are the 2021 release; override with --lc-collection / --tcc-collection /
 
 REQUIREMENTS  (conda env `snapp`): earthengine-api, geemap
 USAGE
-    python src/inputs/fetch_nlcd_gee.py              # both layers
-    python src/inputs/fetch_nlcd_gee.py --only tcc   # just TCC
+    python src/inputs/ndvi/fetch_nlcd_gee.py              # both layers
+    python src/inputs/ndvi/fetch_nlcd_gee.py --only tcc   # just TCC
 """
 
 import argparse
@@ -34,7 +34,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("fetch_nlcd_gee")
 
-INPUTS = Path(__file__).resolve().parents[2] / "data" / "urban-mental-health" / "inputs"
+INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
 DEFAULT_EE_PROJECT = "gee-planet-natcap"
 SF_BBOX = [-122.55, 37.70, -122.35, 37.83]
 OUT_CRS = "EPSG:26910"

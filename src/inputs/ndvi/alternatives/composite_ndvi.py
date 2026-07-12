@@ -16,8 +16,8 @@ REQUIREMENTS
     pip install xarray netCDF4 rioxarray rasterio
 
 USAGE
-    python src/sf_ndvi/composite_ndvi.py                 # use project defaults
-    python src/sf_ndvi/composite_ndvi.py --reproject EPSG:3310   # optional: to meters
+    python src/inputs/ndvi/composite_ndvi.py                 # use project defaults
+    python src/inputs/ndvi/composite_ndvi.py --reproject EPSG:3310   # optional: to meters
 """
 
 import argparse
@@ -35,8 +35,8 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("composite_ndvi")
 
-# --- project paths (this file lives in <project>/src/sf_ndvi/) ---
-BASE_DIR = Path(__file__).resolve().parents[3]
+# --- project paths (this file lives in <project>/src/inputs/ndvi/) ---
+BASE_DIR = Path(__file__).resolve().parents[4]
 DEFAULT_IN = BASE_DIR / "data" / "sf-ndvi-2024" / "processed"
 DEFAULT_OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_mean.tif"
 

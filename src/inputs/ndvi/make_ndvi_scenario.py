@@ -16,13 +16,13 @@ REQUIREMENTS
 
 USAGE
     # uniform +0.05 greening, capped at 0.90 (default input = GEE NDVI):
-    python src/inputs/make_ndvi_scenario.py
+    python src/inputs/ndvi/make_ndvi_scenario.py
 
     # green only pixels below 0.6, raising them by 0.10:
-    python src/inputs/make_ndvi_scenario.py --mode greenable --delta 0.10 --target 0.60
+    python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable --delta 0.10 --target 0.60
 
     # use a different baseline (e.g. the openEO / composite raster):
-    python src/inputs/make_ndvi_scenario.py --input data/urban-mental-health/inputs/sf_ndvi_2024_mean.tif
+    python src/inputs/ndvi/make_ndvi_scenario.py --input data/urban-mental-health/inputs/sf_ndvi_2024_mean.tif
 """
 
 import argparse
@@ -40,7 +40,7 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("make_ndvi_scenario")
 
-INPUTS = Path(__file__).resolve().parents[2] / "data" / "urban-mental-health" / "inputs"
+INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
 DEFAULT_IN = INPUTS / "sf_ndvi_2024_gee.tif"      # the GEE baseline (route in use)
 DEFAULT_OUT = INPUTS / "sf_ndvi_scenario.tif"     # matches run_model.py's ndvi_alt
 

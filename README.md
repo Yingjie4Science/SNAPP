@@ -23,28 +23,28 @@ SNAPP/
 ├── docs/                     # societal-cost synthesis, cost_studies.csv, scaling notes
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
+│   ├── inputs/                        # everything that builds a model input
+│   │   ├── ndvi/                      # greenness: baseline NDVI + greening scenarios
+│   │   │   ├── ndvi_gee.py            # 30 m Landsat JJAS p90 NDVI via GEE (ACTIVE baseline)
+│   │   │   ├── make_ndvi_scenario.py  # ndvi_alt: uniform / greenable
+│   │   │   ├── scenario_lulc_masked.py   # ndvi_alt: LULC-masked greening (primary)
+│   │   │   ├── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target
+│   │   │   ├── fetch_nlcd_gee.py      # NLCD Land Cover + Tree Canopy Cover (GEE)
+│   │   │   ├── fit_tcc_ndvi.py        # regress tract NDVI ~ canopy% -> slope/intercept
+│   │   │   └── alternatives/          # backup NDVI sources (Copernicus/CDSE)
+│   │   │       ├── download.py            # Copernicus NDVI 300 m via CDSE
+│   │   │       ├── composite_ndvi.py      # composite the Copernicus dekads
+│   │   │       └── ndvi_sentinel2.py      # 10 m Sentinel-2 via CDSE openEO
+│   │   ├── build_aoi_prevalence.py    # AOI + depression risk_rate (local shp or CDC API)
+│   │   ├── fetch_population.py        # WorldPop US 100 m -> adult pop, clip to AOI
+│   │   └── estimate_health_cost.py    # societal (Greenberg) or direct (MEPS)
 │   ├── national/
-│   │   └── run_city.py       # run the model for ONE city (EPSG:5070); driven by run_national.sh
-│   ├── sf_ndvi/
-│   │   ├── ndvi_gee.py       # 30 m Landsat JJAS p90 NDVI via Google Earth Engine (ACTIVE)
-│   │   └── alternatives/     # backup NDVI sources (not in the pipeline)
-│   │       ├── download.py       # Copernicus NDVI 300 m via CDSE
-│   │       ├── composite_ndvi.py # composite the Copernicus dekads
-│   │       └── ndvi_sentinel2.py # 10 m Sentinel-2 via CDSE openEO
-│   ├── inputs/
-│   │   ├── build_aoi_prevalence.py  # SF tracts AOI + depression risk_rate (local shp or CDC API)
-│   │   ├── fetch_population.py       # WorldPop US 100 m -> clip to SF AOI (local file or download)
-│   │   ├── estimate_health_cost.py  # societal (Greenberg) or direct (MEPS) -> health_cost_rate.txt
-│   │   ├── make_ndvi_scenario.py    # ndvi_alt: uniform / greenable (quick sensitivity)
-│   │   ├── scenario_lulc_masked.py  # ndvi_alt: LULC-masked greening (primary; needs NLCD)
-│   │   ├── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target (policy headline)
-│   │   ├── fetch_nlcd_gee.py        # fetch NLCD Land Cover + Tree Canopy Cover (GEE)
-│   │   └── fit_tcc_ndvi.py          # regress tract NDVI ~ canopy% -> slope/intercept
+│   │   └── run_city.py                # run the model for ONE city (EPSG:5070)
 │   └── urban_mental_health/
-│       ├── run_model.py      # runs the InVEST Urban Mental Health model
-│       ├── run_sensitivity.py # effect_size x cost sensitivity grid -> summary CSV
-│       ├── run_scenarios.py   # run all greening scenarios -> comparison CSV
-│       └── summarize_results.py # totals, QA checks, per-tract map -> docs/results_summary.md
+│       ├── run_model.py               # runs the InVEST Urban Mental Health model
+│       ├── run_scenarios.py           # run all greening scenarios -> comparison CSV
+│       ├── run_sensitivity.py         # effect_size x cost sensitivity grid -> CSV
+│       └── summarize_results.py       # totals, QA checks, per-tract map
 ├── data/                     # gitignored — never pushed to GitHub
 │   ├── urban-mental-health/
 │   │   ├── raw/              # raw source data for the model
@@ -166,8 +166,8 @@ two NDVI rasters (`model_option='ndvi'`) or two LULC rasters. Data flows
 
 | Model input | Built by | Raw source |
 |---|---|---|
-| `ndvi_base` | `src/sf_ndvi/ndvi_gee.py` | Landsat via Google Earth Engine |
-| `ndvi_alt` | `src/inputs/make_ndvi_scenario.py` | derived from `ndvi_base` |
+| `ndvi_base` | `src/inputs/ndvi/ndvi_gee.py` | Landsat via Google Earth Engine |
+| `ndvi_alt` | `src/inputs/ndvi/make_ndvi_scenario.py` | derived from `ndvi_base` |
 | `aoi_path` | `src/inputs/build_aoi_prevalence.py` | Census TIGER tracts |
 | `baseline_prevalence_vector` (`risk_rate`) | `src/inputs/build_aoi_prevalence.py` | CDC PLACES — `raw/cdc_places/` |
 | `population_raster` | `src/inputs/fetch_population.py` | WorldPop US 100 m |
@@ -201,8 +201,8 @@ already exists (e.g. to avoid re-downloading). To run steps individually:
 
 ```bash
 # greenness (ndvi_base) — active route:
-python src/sf_ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via Google Earth Engine
-# backups (see src/sf_ndvi/alternatives/): Copernicus 300 m or Sentinel-2 via CDSE
+python src/inputs/ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via Google Earth Engine
+# backups (see src/inputs/ndvi/alternatives/): Copernicus 300 m or Sentinel-2 via CDSE
 
 # AOI + baseline prevalence (depression): local CDC shapefile by default, or --source api
 python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_prevalence.gpkg
@@ -211,7 +211,7 @@ python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_preval
 python src/inputs/fetch_population.py --adult-fraction 0.86   # SF adult share
 
 # greening scenario (ndvi_alt) from the baseline NDVI:
-python src/inputs/make_ndvi_scenario.py                  # uniform +0.05, capped at 0.90
+python src/inputs/ndvi/make_ndvi_scenario.py                  # uniform +0.05, capped at 0.90
 
 # health_cost_rate (writes inputs/health_cost_rate.txt + components.csv, read by the model):
 python src/inputs/estimate_health_cost.py                # societal ~$21,280 pooled (default)
@@ -298,8 +298,8 @@ effect size are already national. Full rationale and steps:
 
 ## Backup NDVI route (Copernicus / CDSE)
 
-The active NDVI source is `src/sf_ndvi/ndvi_gee.py`. If you ever need the
-Copernicus route instead, `src/sf_ndvi/alternatives/download.py` downloads the
+The active NDVI source is `src/inputs/ndvi/ndvi_gee.py`. If you ever need the
+Copernicus route instead, `src/inputs/ndvi/alternatives/download.py` downloads the
 NDVI 300 m global 10-daily files and clips them to SF, then
 `alternatives/composite_ndvi.py` composites them into one `ndvi_base` raster.
 
