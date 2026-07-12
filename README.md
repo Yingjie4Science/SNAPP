@@ -44,15 +44,16 @@ SNAPP/
 │       ├── run_model.py               # runs the InVEST Urban Mental Health model
 │       ├── run_scenarios.py           # run all greening scenarios -> comparison CSV
 │       ├── run_sensitivity.py         # effect_size x cost sensitivity grid -> CSV
-│       └── summarize_results.py       # totals, QA checks, per-tract map
+│       ├── summarize_results.py       # totals, QA checks, per-tract map
+│       └── make_manuscript_figures.py # publication figures + tables (Nature Cities)
 ├── data/                     # gitignored — never pushed to GitHub
-│   ├── urban-mental-health/
-│   │   ├── raw/              # raw source data for the model
-│   │   │   ├── cdc_places/  # depression prevalence shapefile -> risk_rate
-│   │   │   └── meps/        # MEPS medical-expenditure files -> health_cost_rate
-│   │   ├── inputs/           # model-ready inputs (built by the src/ scripts)
-│   │   └── workspace/        # model outputs
-│   └── sf-ndvi-2024/         # (only used by the Copernicus backup NDVI route)
+│   └── urban-mental-health/
+│       ├── raw/              # raw source data
+│       │   ├── cdc_places/  # depression prevalence shapefile -> risk_rate
+│       │   ├── meps/        # MEPS medical-expenditure files -> health_cost_rate
+│       │   └── nlcd/        # NLCD land cover + tree canopy (greening scenarios)
+│       ├── inputs/           # model-ready inputs (built by the src/ scripts)
+│       └── workspace*/       # model outputs (base, sensitivity, scenarios, national)
 └── notebooks/                # optional exploratory analysis
 ```
 
@@ -135,20 +136,6 @@ In VS Code:
   ```
 
 ## Datasets
-
-### sf-ndvi-2024 — Copernicus NDVI 300m for San Francisco, 2024
-
-*How to regenerate:* run the downloader (see below). It fetches the Copernicus
-**NDVI 300m v2.0** 10-daily global files for 2024 from the Copernicus Data Space
-Ecosystem (CDSE) and clips each to a San Francisco bounding box.
-
-- `raw/` — full global NetCDFs as downloaded (deleted after clipping unless
-  `KEEP_GLOBAL_FILES = True`).
-- `processed/` — one small `.nc` per 10-day dekad, clipped to SF.
-
-The v2.0 product (2020–2025) is *superseded* but still holds 2024 data; a newer
-**v3.0** (2014–present) also exists — set `PRODUCT_VERSION = "V3"` in the script
-to use it.
 
 ### urban-mental-health — InVEST Urban Mental Health model
 

@@ -1,0 +1,7 @@
+**Table 2.** Summary of preventable depression burden, San Francisco.
+
+| Metric | Value |
+|---|---|
+| Preventable cases per year (central) | 7,294 |
+| Avoided societal cost per year (central) | US$155,219,528 |
+| Preventable cases range (effect-size sensitivity) | 2,753 – 13,851 |
