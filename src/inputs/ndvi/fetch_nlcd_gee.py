@@ -34,7 +34,8 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("fetch_nlcd_gee")
 
-INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
+# NLCD is fetched *source* data, so it lands in raw/ (alongside cdc_places, meps).
+RAW_NLCD = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "raw" / "nlcd"
 DEFAULT_EE_PROJECT = "gee-planet-natcap"
 SF_BBOX = [-122.55, 37.70, -122.35, 37.83]
 OUT_CRS = "EPSG:26910"
@@ -84,16 +85,16 @@ def main():
         if lc is None:
             lc = ee.ImageCollection(cli.lc_collection).mosaic()  # fallback
         lc = lc.select(cli.lc_band).clip(geom)
-        export(lc, geom, INPUTS / "nlcd_landcover_sf.tif", "NLCD Land Cover")
+        export(lc, geom, RAW_NLCD / "nlcd_landcover_sf.tif", "NLCD Land Cover")
 
     if cli.only != "landcover":
         tcc = (ee.ImageCollection(cli.tcc_collection).select(cli.tcc_band)
                .filterBounds(geom).sort("system:time_start", False).first())
         tcc = tcc.clip(geom)
-        export(tcc, geom, INPUTS / "nlcd_tcc_sf.tif", "NLCD Tree Canopy Cover")
+        export(tcc, geom, RAW_NLCD / "nlcd_tcc_sf.tif", "NLCD Tree Canopy Cover")
 
     LOGGER.info("Done. Land Cover -> scenario_lulc_masked.py --lulc "
-                "data/urban-mental-health/inputs/nlcd_landcover_sf.tif ; "
+                "data/urban-mental-health/raw/nlcd/nlcd_landcover_sf.tif ; "
                 "TCC -> fit_tcc_ndvi.py")
 
 

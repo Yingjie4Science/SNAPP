@@ -40,16 +40,19 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("scenario_lulc_masked")
 
-INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
+UMH = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health"
+INPUTS = UMH / "inputs"
 DEFAULT_BASE = INPUTS / "sf_ndvi_2024_gee.tif"
 DEFAULT_OUT = INPUTS / "sf_ndvi_scenario_lulc.tif"
+DEFAULT_LULC = UMH / "raw" / "nlcd" / "nlcd_landcover_sf.tif"
 GREENABLE_DEFAULT = [21, 22, 31]
 
 
 def main():
     ap = argparse.ArgumentParser(description="LULC-masked greening scenario (ndvi_alt).")
     ap.add_argument("--ndvi-base", type=Path, default=DEFAULT_BASE)
-    ap.add_argument("--lulc", type=Path, required=True, help="NLCD Land Cover raster.")
+    ap.add_argument("--lulc", type=Path, default=DEFAULT_LULC,
+                    help="NLCD Land Cover raster (default: raw/nlcd/nlcd_landcover_sf.tif).")
     ap.add_argument("--output", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--greenable", type=int, nargs="+", default=GREENABLE_DEFAULT,
                     help="NLCD codes eligible for greening.")

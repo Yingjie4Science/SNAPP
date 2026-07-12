@@ -37,6 +37,7 @@ LOGGER = logging.getLogger("fit_tcc_ndvi")
 
 BASE_DIR = Path(__file__).resolve().parents[3]
 INPUTS = BASE_DIR / "data" / "urban-mental-health" / "inputs"
+RAW_NLCD = BASE_DIR / "data" / "urban-mental-health" / "raw" / "nlcd"
 OUT_MD = BASE_DIR / "docs" / "tcc_ndvi_regression.md"
 
 
@@ -54,7 +55,7 @@ def tract_means(arr, geoms, shape, transform):
 def main():
     ap = argparse.ArgumentParser(description="Fit tract-mean NDVI ~ tract-mean NLCD TCC.")
     ap.add_argument("--ndvi", type=Path, default=INPUTS / "sf_ndvi_2024_gee.tif")
-    ap.add_argument("--tcc", type=Path, default=INPUTS / "nlcd_tcc_sf.tif")
+    ap.add_argument("--tcc", type=Path, default=RAW_NLCD / "nlcd_tcc_sf.tif")
     ap.add_argument("--aoi", type=Path, default=INPUTS / "sf_aoi.gpkg")
     cli = ap.parse_args()
     for p in (cli.ndvi, cli.tcc, cli.aoi):

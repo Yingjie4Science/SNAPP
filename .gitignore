@@ -17,6 +17,8 @@ __pycache__/
 venv/
 env/
 *.egg-info/
+.pytest_cache/
+.ipynb_checkpoints/
 
 # OS / editor cruft
 .DS_Store
@@ -26,3 +28,8 @@ env/
 .vscode/*
 !.vscode/settings.json
 !.vscode/extensions.json
+
+# generated outputs
+docs/results_summary.md
+docs/tcc_ndvi_regression.md
+figures/*.png

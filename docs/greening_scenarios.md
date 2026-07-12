@@ -68,7 +68,7 @@ Getting the data is now scripted too (via GEE, like the NDVI step):
 python src/inputs/ndvi/fetch_nlcd_gee.py
 
 # 2C. LULC-masked scenario:
-python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/urban-mental-health/inputs/nlcd_landcover_sf.tif
+python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/urban-mental-health/raw/nlcd/nlcd_landcover_sf.tif
 
 # 2D. fit TCC->NDVI, then run the canopy-target scenario with the printed slope/intercept:
 python src/inputs/ndvi/fit_tcc_ndvi.py          # writes docs/tcc_ndvi_regression.md + prints the command
