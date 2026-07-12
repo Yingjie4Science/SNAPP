@@ -8,8 +8,9 @@ TWO PREVALENCE SOURCES (choose with --source):
   local  (default) Your CDC PLACES shapefile at
          data/urban-mental-health/raw/cdc_places/prevalence_rate_usa_2021.shp
          (fields include GEOID + DEPRESS = crude % prevalence, 2021). Offline.
-  api    US Census TIGER/Line 2024 tracts + CDC PLACES 2024 release pulled live
-         from Socrata (dataset cwsq-ngmh, measure DEPRESSION). Needs internet.
+  api    US Census cartographic tracts (cb_2024, per project convention — see
+         docs/data_boundaries.md) + CDC PLACES 2024 release pulled live from
+         Socrata (dataset cwsq-ngmh, measure DEPRESSION). Needs internet.
 
 In both cases DEPRESS/Data_Value (a percent) becomes `risk_rate` (a 0-1 ratio),
 and outputs are projected to EPSG:26910 (meters) — the filenames run_model.py
@@ -53,8 +54,8 @@ METRIC_CRS = "EPSG:26910"          # NAD83 / UTM 10N (meters) — good for SF
 SF_COUNTY_FIPS = "06075"           # state 06 (CA) + county 075 (San Francisco)
 SF_COUNTYFP = "075"                # county-only code (TIGER field COUNTYFP)
 
-# --- api route sources ---
-TRACTS_URL = "https://www2.census.gov/geo/tiger/TIGER2024/TRACT/tl_2024_06_tract.zip"
+# --- api route sources (cartographic boundary files; see docs/data_boundaries.md) ---
+TRACTS_URL = "https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_06_tract_500k.zip"
 PLACES_URL = "https://chronicdata.cdc.gov/resource/cwsq-ngmh.json"
 DEPRESSION = "DEPRESSION"
 

@@ -17,16 +17,23 @@ METHOD (mirrors the notebook, counties instead of places)
 LAYERS
     --metro-layer  : your metro shapefile (e.g. the notebook's
         data/aoi/cb_2020_us_metro_combined_metdiv_no_overlap.shp) for an exact
-        match. If omitted, TIGER CBSA is downloaded and filtered to Metropolitan
-        Statistical Areas (LSAD == 'M1').
+        match. If omitted, the Census CBSA file is downloaded (cartographic
+        cb_*_500k by default) and filtered to Metropolitan Statistical Areas
+        (LSAD == 'M1').
     --county-layer : a county polygon layer; if omitted, TIGER counties download.
-    Metro id/name columns are auto-detected (GEOID_METR/NAME_METRO or CBSAFP/NAME).
+    --cartographic : DEFAULT — use generalized cb_<year>_us_*_500k files (GENZ
+        path); project convention (see docs/data_boundaries.md). Lighter and
+        shoreline-clipped; matches the notebook's cb_2020 style (pair with
+        --year 2020). Use --no-cartographic for full-res TIGER tl_. Metro id/name
+        columns auto-detected (GEOID_METR/NAME_METRO or CBSAFP/NAME).
 
 REQUIREMENTS  (conda env `snapp`): geopandas, pandas, requests
 USAGE
     python src/national/build_metro_counties.py \
         --metro-layer data/aoi/cb_2020_us_metro_combined_metdiv_no_overlap.shp
-    python src/national/build_metro_counties.py           # TIGER CBSA fallback
+    python src/national/build_metro_counties.py                    # cb_2024 500k (default)
+    python src/national/build_metro_counties.py --year 2020        # cb_2020 (match notebook)
+    python src/national/build_metro_counties.py --no-cartographic  # full-res TIGER tl_
 """
 
 import argparse
@@ -65,15 +72,33 @@ def read_zip_shapefile(url: str) -> "gpd.GeoDataFrame":
         return gpd.read_file(next(Path(tmp).glob("*.shp")))
 
 
+def census_url(kind: str, year: int, cartographic: bool) -> str:
+    """URL for a Census 'county' or 'cbsa' layer.
+
+    cartographic=True -> generalized cartographic-boundary file
+    (cb_<year>_us_<kind>_500k, GENZ path; matches the notebook's cb_2020 style).
+    cartographic=False -> full-resolution TIGER/Line (tl_<year>_us_<kind>).
+    """
+    if cartographic:
+        return f"{TIGER}/GENZ{year}/shp/cb_{year}_us_{kind}_500k.zip"
+    sub = {"county": "COUNTY", "cbsa": "CBSA"}[kind]
+    return f"{TIGER}/TIGER{year}/{sub}/tl_{year}_us_{kind}.zip"
+
+
 def detect(cols, candidates):
     return next((c for c in candidates if c in cols), None)
 
 
 def main():
     ap = argparse.ArgumentParser(description="Counties within/overlapping Metro areas.")
-    ap.add_argument("--year", type=int, default=2024, help="TIGER/Line year (fallback layers).")
-    ap.add_argument("--metro-layer", type=Path, help="Metro polygon layer (else TIGER CBSA M1).")
-    ap.add_argument("--county-layer", type=Path, help="County polygon layer (else TIGER county).")
+    ap.add_argument("--year", type=int, default=2024, help="Census vintage for fallback layers.")
+    ap.add_argument("--cartographic", action=argparse.BooleanOptionalAction, default=True,
+                    help="Use generalized cartographic-boundary files "
+                         "(cb_<year>_us_*_500k) — DEFAULT and project convention "
+                         "(see docs/data_boundaries.md). Use --no-cartographic for "
+                         "full-res TIGER tl_.")
+    ap.add_argument("--metro-layer", type=Path, help="Metro polygon layer (else Census CBSA M1).")
+    ap.add_argument("--county-layer", type=Path, help="County polygon layer (else Census county).")
     ap.add_argument("--metros", nargs="*", help="Restrict to metro id(s) or NAME substrings.")
     ap.add_argument("--keep-dc", action="store_true", help="Keep DC (STATEFP 11).")
     ap.add_argument("--out", type=Path, default=OUT_GPKG)
@@ -82,13 +107,13 @@ def main():
 
     # --- county layer ---
     counties = (gpd.read_file(cli.county_layer) if cli.county_layer
-                else read_zip_shapefile(f"{TIGER}/TIGER{cli.year}/COUNTY/tl_{cli.year}_us_county.zip"))
+                else read_zip_shapefile(census_url("county", cli.year, cli.cartographic)))
 
     # --- metro layer ---
     if cli.metro_layer:
         metros = gpd.read_file(cli.metro_layer)          # assume already metros
     else:
-        cbsa = read_zip_shapefile(f"{TIGER}/TIGER{cli.year}/CBSA/tl_{cli.year}_us_cbsa.zip")
+        cbsa = read_zip_shapefile(census_url("cbsa", cli.year, cli.cartographic))
         metros = cbsa[cbsa["LSAD"] == "M1"].copy()        # Metropolitan Statistical Areas
     m_id = detect(metros.columns, ["GEOID_METR", "CBSAFP", "GEOID"])
     m_name = detect(metros.columns, ["NAME_METRO", "NAME"])

@@ -242,7 +242,7 @@ exact filenames `run_model.py` expects.
 Data sources:
 
 - **Greenness (NDVI):** Landsat via [Google Earth Engine](https://developers.google.com/earth-engine/datasets) (default) or [Copernicus NDVI 300 m / Sentinel-2 via CDSE](https://land.copernicus.eu/).
-- **AOI:** [US Census TIGER/Line census tracts](https://www.census.gov/geographies/mapping-files/time-series/geo/tiger-line-file.html).
+- **AOI / boundaries:** US Census **cartographic** boundary files (`cb_*_500k`) — tracts, counties, metros/CBSAs. Project convention (generalized, shoreline-clipped); see [`docs/data_boundaries.md`](docs/data_boundaries.md).
 - **Depression prevalence:** [CDC PLACES, census-tract 2024 release](https://data.cdc.gov/500-Cities-Places/) (dataset `cwsq-ngmh`, measure `DEPRESSION`).
 - **Population:** [WorldPop "Global 2015–2030" (Global2), R2025A, listing id=135](https://hub.worldpop.org/geodata/listing?id=135) — constrained US 100 m population, per year 2015–2030 (default 2024). License: CC BY 4.0 — cite WorldPop.
 - **Effect size:** Liu et al. (2023), *Environmental Research* 231:116303, [DOI 10.1016/j.envres.2023.116303](https://doi.org/10.1016/j.envres.2023.116303).
