@@ -36,3 +36,4 @@ env/
 docs/results_summary.md
 docs/tcc_ndvi_regression.md
 figures/*.png
+results/snapp_qgis.qgz
