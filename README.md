@@ -292,8 +292,11 @@ clipping the national WorldPop raster, into a per-county run folder.
 `run_national.sh` loops `config/regions.csv`:
 
 ```bash
-# 1. AOI layer + county list (keeps counties >=30% inside a metro; tune --min-overlap)
+# 1. AOI layer + county list. Two membership methods:
+#    (a) area overlap (default): keeps counties >=30% inside a metro (tune --min-overlap)
 python src/national/build_metro_counties.py --metro-layer <your_metro.shp> --year 2020
+#    (b) EXACT official CBSA->county crosswalk (no geometry heuristic):
+python src/national/build_metro_counties.py --crosswalk
 # 2. per-county NDVI (prerequisite — run_national.sh does NOT do this):
 python src/inputs/ndvi/ndvi_gee_national.py            # -> data/national/ndvi/<GEOID>_ndvi.tif
 # 3. loop counties: build inputs + run the model

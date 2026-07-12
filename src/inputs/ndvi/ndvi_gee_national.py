@@ -46,6 +46,25 @@ DEFAULT_REGIONS = BASE_DIR / "data" / "national" / "counties.gpkg"
 DEFAULT_OUT = BASE_DIR / "data" / "national" / "ndvi"
 OUT_CRS = "EPSG:5070"          # CONUS Albers, matches the national run
 SCALE_M = 30
+MIN_TIF_BYTES = 1024           # a real GeoTIFF is far bigger; guards 0-byte/partial files
+
+
+def is_complete(path: Path) -> bool:
+    """True only if the NDVI file exists AND looks like a valid, non-empty raster.
+
+    Guards against a run that died mid-download leaving a truncated/0-byte .tif,
+    which the old exists()-only check would have wrongly treated as done.
+    """
+    if not path.exists() or path.stat().st_size < MIN_TIF_BYTES:
+        return False
+    try:
+        import rasterio
+        with rasterio.open(path) as ds:
+            return ds.count >= 1 and ds.width > 0 and ds.height > 0
+    except ImportError:
+        return True            # size check passed and rasterio unavailable
+    except Exception:
+        return False           # unreadable/corrupt -> redo it
 
 
 def main():
@@ -80,8 +99,11 @@ def main():
     for i, (_, row) in enumerate(gdf.iterrows(), 1):
         geoid = str(row[gcol])
         out = cli.out_dir / f"{geoid}_ndvi.tif"
-        if out.exists() and not cli.overwrite and not cli.to_drive:
-            LOGGER.info("[%d/%d] %s exists — skip.", i, n, geoid); continue
+        if is_complete(out) and not cli.overwrite and not cli.to_drive:
+            LOGGER.info("[%d/%d] %s exists (valid) — skip.", i, n, geoid); continue
+        if out.exists() and not cli.to_drive:      # present but partial/corrupt -> redo
+            LOGGER.warning("[%d/%d] %s exists but is empty/unreadable — re-downloading.",
+                           i, n, geoid)
         geom = ee.Geometry(row.geometry.__geo_interface__)
         img = ndvi_gee.yearly_p90(ndvi_gee.build_ndvi_collection(geom), geom, cli.year)
         if cli.to_drive:
