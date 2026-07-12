@@ -39,7 +39,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("ndvi_sentinel2")
 
 BASE_DIR = Path(__file__).resolve().parents[4]
-OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_s2_10m.tif"
+OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "ndvi_base_sentinel2.tif"
 
 # San Francisco bounding box (WGS84). Widen for the whole Bay Area if needed.
 SF_EXTENT = {"west": -122.55, "south": 37.70, "east": -122.35, "north": 37.83}

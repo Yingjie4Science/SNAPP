@@ -14,7 +14,7 @@ REQUIREMENTS  (conda env `snapp`): natcap.invest, rasterio, numpy, pyyaml
 USAGE
     # first generate the scenarios you want, e.g.:
     #   python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable
-    #   python src/inputs/ndvi/scenario_lulc_masked.py --lulc .../nlcd_landcover_sf.tif
+    #   python src/inputs/ndvi/scenario_lulc_masked.py --lulc .../nlcd_landcover.tif
     #   python src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60
     python src/urban_mental_health/run_scenarios.py
 Outputs:
@@ -40,9 +40,9 @@ COST_FILE = run_model.INPUTS / "health_cost_rate.txt"
 
 # Default scenario set if config.yaml has no `scenarios:` block.
 DEFAULT_SCENARIOS = {
-    "greenable": "sf_ndvi_scenario.tif",
-    "lulc_masked": "sf_ndvi_scenario_lulc.tif",
-    "canopy_target": "sf_ndvi_scenario_canopy.tif",
+    "greenable": "ndvi_scenario.tif",
+    "lulc_masked": "ndvi_scenario_lulc.tif",
+    "canopy_target": "ndvi_scenario_canopy.tif",
 }
 
 

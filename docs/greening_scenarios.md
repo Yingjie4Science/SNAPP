@@ -57,7 +57,7 @@ pixels unchanged.** Report results against a 30% canopy-target headline.
 | D — canopy-target (policy headline) | `src/inputs/ndvi/scenario_canopy_target.py --target-ndvi 0.60` (or `--canopy-target 30 --tcc-slope … --tcc-intercept …`) | a target NDVI, or a TCC→NDVI regression (fit tract-mean NDVI on NLCD TCC) |
 
 Each writes an `ndvi_alt` raster to `data/urban-mental-health/inputs/`
-(`sf_ndvi_scenario_lulc.tif` / `sf_ndvi_scenario_canopy.tif` / `sf_ndvi_scenario.tif`).
+(`ndvi_scenario_lulc.tif` / `ndvi_scenario_canopy.tif` / `ndvi_scenario.tif`).
 Point the model at the one you want via `config.yaml → inputs.ndvi_alt`, then run
 `run_model.py`.
 
@@ -68,7 +68,7 @@ Getting the data is now scripted too (via GEE, like the NDVI step):
 python src/inputs/ndvi/fetch_nlcd_gee.py
 
 # 2C. LULC-masked scenario:
-python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/urban-mental-health/raw/nlcd/nlcd_landcover_sf.tif
+python src/inputs/ndvi/scenario_lulc_masked.py --lulc data/urban-mental-health/raw/nlcd/nlcd_landcover.tif
 
 # 2D. fit TCC->NDVI, then run the canopy-target scenario with the printed slope/intercept:
 python src/inputs/ndvi/fit_tcc_ndvi.py          # writes docs/tcc_ndvi_regression.md + prints the command

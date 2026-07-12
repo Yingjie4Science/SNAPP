@@ -205,7 +205,7 @@ python src/inputs/ndvi/ndvi_gee.py                 # 30 m: Landsat JJAS p90 via 
 # backups (see src/inputs/ndvi/alternatives/): Copernicus 300 m or Sentinel-2 via CDSE
 
 # AOI + baseline prevalence (depression): local CDC shapefile by default, or --source api
-python src/inputs/build_aoi_prevalence.py      # -> sf_aoi.gpkg, baseline_prevalence.gpkg
+python src/inputs/build_aoi_prevalence.py      # -> aoi.gpkg, baseline_prevalence.gpkg
 
 # population raster (adult-scaled: prevalence is adult, so scale total pop to >=18):
 python src/inputs/fetch_population.py --adult-fraction 0.86   # SF adult share

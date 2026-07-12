@@ -10,7 +10,7 @@ WHY
 
 FLOW
     data/sf-ndvi-2024/processed/*.nc  --(annual mean)-->  ndvi_base GeoTIFF
-    default output: data/urban-mental-health/inputs/sf_ndvi_2024_mean.tif
+    default output: data/urban-mental-health/inputs/ndvi_base_copernicus.tif
 
 REQUIREMENTS
     pip install xarray netCDF4 rioxarray rasterio
@@ -38,7 +38,7 @@ LOGGER = logging.getLogger("composite_ndvi")
 # --- project paths (this file lives in <project>/src/inputs/ndvi/) ---
 BASE_DIR = Path(__file__).resolve().parents[4]
 DEFAULT_IN = BASE_DIR / "data" / "sf-ndvi-2024" / "processed"
-DEFAULT_OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_mean.tif"
+DEFAULT_OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "ndvi_base_copernicus.tif"
 
 # Coordinate name candidates, in priority order.
 LON_NAMES = ("lon", "longitude", "x")

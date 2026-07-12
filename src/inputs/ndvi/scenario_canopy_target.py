@@ -42,9 +42,9 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("scenario_canopy_target")
 
 INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
-DEFAULT_BASE = INPUTS / "sf_ndvi_2024_gee.tif"
-DEFAULT_AOI = INPUTS / "sf_aoi.gpkg"
-DEFAULT_OUT = INPUTS / "sf_ndvi_scenario_canopy.tif"
+DEFAULT_BASE = INPUTS / "ndvi_base.tif"
+DEFAULT_AOI = INPUTS / "aoi.gpkg"
+DEFAULT_OUT = INPUTS / "ndvi_scenario_canopy.tif"
 
 
 def resolve_target(cli) -> float:

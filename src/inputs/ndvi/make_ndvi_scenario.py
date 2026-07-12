@@ -22,7 +22,7 @@ USAGE
     python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable --delta 0.10 --target 0.60
 
     # use a different baseline (e.g. the openEO / composite raster):
-    python src/inputs/ndvi/make_ndvi_scenario.py --input data/urban-mental-health/inputs/sf_ndvi_2024_mean.tif
+    python src/inputs/ndvi/make_ndvi_scenario.py --input data/urban-mental-health/inputs/ndvi_base_copernicus.tif
 """
 
 import argparse
@@ -41,8 +41,8 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("make_ndvi_scenario")
 
 INPUTS = Path(__file__).resolve().parents[3] / "data" / "urban-mental-health" / "inputs"
-DEFAULT_IN = INPUTS / "sf_ndvi_2024_gee.tif"      # the GEE baseline (route in use)
-DEFAULT_OUT = INPUTS / "sf_ndvi_scenario.tif"     # matches run_model.py's ndvi_alt
+DEFAULT_IN = INPUTS / "ndvi_base.tif"      # the GEE baseline (route in use)
+DEFAULT_OUT = INPUTS / "ndvi_scenario.tif"     # matches run_model.py's ndvi_alt
 
 
 def main():

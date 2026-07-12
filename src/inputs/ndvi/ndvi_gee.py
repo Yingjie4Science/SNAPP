@@ -44,7 +44,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("ndvi_gee")
 
 BASE_DIR = Path(__file__).resolve().parents[3]
-OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "sf_ndvi_2024_gee.tif"
+OUT = BASE_DIR / "data" / "urban-mental-health" / "inputs" / "ndvi_base.tif"
 
 # Default Earth Engine Cloud project (override with --project or env EE_PROJECT).
 DEFAULT_EE_PROJECT = "gee-planet-natcap"
@@ -153,7 +153,7 @@ def main():
                     "Track it at https://code.earthengine.google.com/tasks", desc)
     else:
         out = cli.output if cli.year == 2024 else cli.output.with_name(
-            f"sf_ndvi_{cli.year}_gee.tif")
+            f"ndvi_base_{cli.year}.tif")
         out.parent.mkdir(parents=True, exist_ok=True)
         LOGGER.info("Downloading NDVI -> %s (scale %dm, %s)...", out, SCALE_M, OUT_CRS)
         geemap.ee_export_image(ndvi, filename=str(out), scale=SCALE_M,

@@ -21,7 +21,7 @@ REQUIREMENTS:
     pip install -r requirements.txt
 
 USAGE:
-    python download_sf_ndvi_2024.py
+    python src/inputs/ndvi/alternatives/download.py
 
 Register a free CDSE account: https://dataspace.copernicus.eu  (see README).
 """

@@ -36,13 +36,13 @@ scenario:
 # Scenarios compared by run_scenarios.py (label -> ndvi_alt filename in inputs/).
 # Missing files are skipped, so generate the ones you want first.
 scenarios:
-  greenable: "sf_ndvi_scenario.tif"
-  lulc_masked: "sf_ndvi_scenario_lulc.tif"
-  canopy_target: "sf_ndvi_scenario_canopy.tif"
+  greenable: "ndvi_scenario.tif"
+  lulc_masked: "ndvi_scenario_lulc.tif"
+  canopy_target: "ndvi_scenario_canopy.tif"
 
 inputs:                        # filenames under data/urban-mental-health/inputs/
-  ndvi_base: "sf_ndvi_2024_gee.tif"
-  ndvi_alt: "sf_ndvi_scenario.tif"
-  aoi: "sf_aoi.gpkg"
+  ndvi_base: "ndvi_base.tif"
+  ndvi_alt: "ndvi_scenario.tif"
+  aoi: "aoi.gpkg"
   prevalence: "baseline_prevalence.gpkg"
-  population: "sf_population.tif"
+  population: "population.tif"

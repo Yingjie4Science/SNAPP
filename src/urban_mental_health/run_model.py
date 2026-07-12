@@ -121,8 +121,8 @@ def build_args() -> dict:
         # "n_workers": -1,                # optional: -1 = run in the main process
 
         # --- spatial inputs (filenames + params from config.yaml if present) ---
-        "aoi_path": str(INPUTS / _INP.get("aoi", "sf_aoi.gpkg")),         # projected METERS
-        "population_raster": str(INPUTS / _INP.get("population", "sf_population.tif")),
+        "aoi_path": str(INPUTS / _INP.get("aoi", "aoi.gpkg")),         # projected METERS
+        "population_raster": str(INPUTS / _INP.get("population", "population.tif")),
         "search_radius": float(_MODEL.get("search_radius_m", 300)),      # meters (> 0)
 
         # --- exposure-response ---
@@ -141,8 +141,8 @@ def build_args() -> dict:
 
         # --- scenario option: compare baseline vs. alternate NDVI ---
         "model_option": _MODEL.get("model_option", "ndvi"),      # 'ndvi' or 'lulc'
-        "ndvi_base": str(INPUTS / _INP.get("ndvi_base", "sf_ndvi_2024_gee.tif")),
-        "ndvi_alt": str(INPUTS / _INP.get("ndvi_alt", "sf_ndvi_scenario.tif")),
+        "ndvi_base": str(INPUTS / _INP.get("ndvi_base", "ndvi_base.tif")),
+        "ndvi_alt": str(INPUTS / _INP.get("ndvi_alt", "ndvi_scenario.tif")),
 
         # If instead model_option == 'lulc', supply these and drop the ndvi_* keys:
         # "lulc_base": str(INPUTS / "lulc_base.tif"),

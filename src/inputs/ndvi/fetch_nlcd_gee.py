@@ -85,16 +85,16 @@ def main():
         if lc is None:
             lc = ee.ImageCollection(cli.lc_collection).mosaic()  # fallback
         lc = lc.select(cli.lc_band).clip(geom)
-        export(lc, geom, RAW_NLCD / "nlcd_landcover_sf.tif", "NLCD Land Cover")
+        export(lc, geom, RAW_NLCD / "nlcd_landcover.tif", "NLCD Land Cover")
 
     if cli.only != "landcover":
         tcc = (ee.ImageCollection(cli.tcc_collection).select(cli.tcc_band)
                .filterBounds(geom).sort("system:time_start", False).first())
         tcc = tcc.clip(geom)
-        export(tcc, geom, RAW_NLCD / "nlcd_tcc_sf.tif", "NLCD Tree Canopy Cover")
+        export(tcc, geom, RAW_NLCD / "nlcd_tcc.tif", "NLCD Tree Canopy Cover")
 
     LOGGER.info("Done. Land Cover -> scenario_lulc_masked.py --lulc "
-                "data/urban-mental-health/raw/nlcd/nlcd_landcover_sf.tif ; "
+                "data/urban-mental-health/raw/nlcd/nlcd_landcover.tif ; "
                 "TCC -> fit_tcc_ndvi.py")
 
 

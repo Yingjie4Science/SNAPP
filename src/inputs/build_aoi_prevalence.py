@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Build two InVEST inputs for San Francisco:
-  1. sf_aoi.gpkg               - census-tract AOI, projected in meters
+  1. aoi.gpkg               - census-tract AOI, projected in meters
   2. baseline_prevalence.gpkg  - same tracts + a `risk_rate` field (depression)
 
 TWO PREVALENCE SOURCES (choose with --source):
@@ -144,7 +144,7 @@ def main():
         aoi, prevalence = build_api(cli.value_type)
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
-    aoi_path = OUT_DIR / "sf_aoi.gpkg"
+    aoi_path = OUT_DIR / "aoi.gpkg"
     prev_path = OUT_DIR / "baseline_prevalence.gpkg"
     aoi.to_file(aoi_path, driver="GPKG")
     prevalence.to_file(prev_path, driver="GPKG")

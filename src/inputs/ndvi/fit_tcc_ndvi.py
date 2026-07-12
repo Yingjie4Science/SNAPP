@@ -9,9 +9,9 @@ The slope/intercept let scenario_canopy_target.py translate a canopy goal (e.g.
     scenario_canopy_target.py --canopy-target 30 --tcc-slope <slope> --tcc-intercept <intercept>
 
 INPUTS
-    --ndvi   baseline NDVI raster (default sf_ndvi_2024_gee.tif)
-    --tcc    NLCD TCC raster (from fetch_nlcd_gee.py: nlcd_tcc_sf.tif)
-    --aoi    tract polygons (default sf_aoi.gpkg)
+    --ndvi   baseline NDVI raster (default ndvi_base.tif)
+    --tcc    NLCD TCC raster (from fetch_nlcd_gee.py: nlcd_tcc.tif)
+    --aoi    tract polygons (default aoi.gpkg)
 
 REQUIREMENTS  (conda env `snapp`): geopandas, rioxarray, rasterio, numpy
 USAGE
@@ -54,9 +54,9 @@ def tract_means(arr, geoms, shape, transform):
 
 def main():
     ap = argparse.ArgumentParser(description="Fit tract-mean NDVI ~ tract-mean NLCD TCC.")
-    ap.add_argument("--ndvi", type=Path, default=INPUTS / "sf_ndvi_2024_gee.tif")
-    ap.add_argument("--tcc", type=Path, default=RAW_NLCD / "nlcd_tcc_sf.tif")
-    ap.add_argument("--aoi", type=Path, default=INPUTS / "sf_aoi.gpkg")
+    ap.add_argument("--ndvi", type=Path, default=INPUTS / "ndvi_base.tif")
+    ap.add_argument("--tcc", type=Path, default=RAW_NLCD / "nlcd_tcc.tif")
+    ap.add_argument("--aoi", type=Path, default=INPUTS / "aoi.gpkg")
     cli = ap.parse_args()
     for p in (cli.ndvi, cli.tcc, cli.aoi):
         if not p.exists():

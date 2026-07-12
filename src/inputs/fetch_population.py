@@ -58,8 +58,8 @@ LOGGER = logging.getLogger("fetch_population")
 BASE_DIR = Path(__file__).resolve().parents[2]
 INPUTS = BASE_DIR / "data" / "urban-mental-health" / "inputs"
 CACHE = INPUTS / "_worldpop"                         # downloaded national file lives here
-DEFAULT_AOI = INPUTS / "sf_aoi.gpkg"                 # from build_aoi_prevalence.py
-DEFAULT_OUT = INPUTS / "sf_population.tif"
+DEFAULT_AOI = INPUTS / "aoi.gpkg"                 # from build_aoi_prevalence.py
+DEFAULT_OUT = INPUTS / "population.tif"
 METRIC_CRS = "EPSG:26910"                            # match the AOI (meters)
 
 # WorldPop "Global 2015-2030" (Global2), constrained 100 m, listing id=135.
