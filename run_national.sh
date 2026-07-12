@@ -6,7 +6,8 @@
 #   - counties-in-metro AOI layer  (build_metro_counties.py -> data/national/counties.gpkg)
 #   - config/regions.csv           (county GEOID list; also written by build_metro_counties.py)
 #   - national WorldPop raster      (in data/urban-mental-health/inputs/_worldpop/)
-#   - per-county NDVI rasters named <GEOID>_ndvi.tif in --ndvi-dir (GEE loop)
+#   - per-county NDVI rasters named <GEOID>_ndvi.tif in --ndvi-dir
+#     (generate first: python src/inputs/ndvi/ndvi_gee_national.py)
 #   - a societal cost value:        python src/inputs/estimate_health_cost.py
 #
 # Usage:

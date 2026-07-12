@@ -57,6 +57,7 @@ LOGGER = logging.getLogger("build_metro_counties")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 OUT_GPKG = BASE_DIR / "data" / "national" / "counties.gpkg"
+OUT_METRO = BASE_DIR / "data" / "national" / "metro.gpkg"
 REGIONS_CSV = BASE_DIR / "config" / "regions.csv"
 TIGER = "https://www2.census.gov/geo/tiger"
 # Non-mainland STATEFP to drop (matches the notebook): AK, HI, PR, GU, VI, AS, MP.
@@ -103,6 +104,8 @@ def main():
     ap.add_argument("--keep-dc", action="store_true", help="Keep DC (STATEFP 11).")
     ap.add_argument("--out", type=Path, default=OUT_GPKG)
     ap.add_argument("--regions-csv", type=Path, default=REGIONS_CSV)
+    ap.add_argument("--metro-out", type=Path, default=OUT_METRO,
+                    help="Save a copy of the metro layer used (provenance/reuse).")
     cli = ap.parse_args()
 
     # --- county layer ---
@@ -127,6 +130,11 @@ def main():
         sys.exit("No metros matched; check --metros / --metro-layer.")
     metros = metros[[c for c in (m_id, m_name, "geometry") if c]].copy()
     LOGGER.info("Metros: %d", len(metros))
+
+    # Save a copy of the metro layer used (so it's persisted, not re-downloaded).
+    cli.metro_out.parent.mkdir(parents=True, exist_ok=True)
+    metros.to_file(cli.metro_out, driver="GPKG")
+    LOGGER.info("Saved metro layer -> %s", cli.metro_out)
 
     # --- counties within/overlapping metros ---
     counties = counties.to_crs(metros.crs)

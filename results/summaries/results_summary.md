@@ -1,6 +1,6 @@
 # Model results summary (SF)
 
-_Generated 2026-07-11 from `preventable_cases_cost_sum_sf_2024.csv`._
+_Generated 2026-07-12 from `preventable_cases_cost_sum_sf_2024.csv`._
 
 ## Headline
 
@@ -19,8 +19,8 @@ _Generated 2026-07-11 from `preventable_cases_cost_sum_sf_2024.csv`._
 
 | effect_size | preventable_cases | cost_low | cost_central | cost_high |
 |---|---:|---:|---:|---:|
-| 0.887 | 13,851 | $0 | $0 | $0 |
-| 0.93 | 8,482 | $0 | $0 | $0 |
-| 0.977 | 2,753 | $0 | $0 | $0 |
+| 0.887 | 11,912 | $0 | $0 | $0 |
+| 0.93 | 7,294 | $0 | $0 | $0 |
+| 0.977 | 2,368 | $0 | $0 | $0 |
 
 ![Preventable cases per tract](../figures/preventable_cases_map.png)

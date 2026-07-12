@@ -25,7 +25,8 @@ SNAPP/
 ├── src/
 │   ├── inputs/                        # everything that builds a model input
 │   │   ├── ndvi/                      # greenness: baseline NDVI + greening scenarios
-│   │   │   ├── ndvi_gee.py            # 30 m Landsat JJAS p90 NDVI via GEE (ACTIVE baseline)
+│   │   │   ├── ndvi_gee.py            # 30 m Landsat JJAS p90 NDVI via GEE (ACTIVE baseline, SF)
+│   │   │   ├── ndvi_gee_national.py   # per-county NDVI loop for the national run
 │   │   │   ├── make_ndvi_scenario.py  # ndvi_alt: uniform / greenable
 │   │   │   ├── scenario_lulc_masked.py   # ndvi_alt: LULC-masked greening (primary)
 │   │   │   ├── scenario_canopy_target.py # ndvi_alt: per-tract canopy/NDVI target
@@ -291,6 +292,11 @@ clipping the national WorldPop raster, into a per-county run folder.
 `run_national.sh` loops `config/regions.csv`:
 
 ```bash
+# 1. AOI layer + county list
+python src/national/build_metro_counties.py --metro-layer <your_metro.shp> --year 2020
+# 2. per-county NDVI (prerequisite — run_national.sh does NOT do this):
+python src/inputs/ndvi/ndvi_gee_national.py            # -> data/national/ndvi/<GEOID>_ndvi.tif
+# 3. loop counties: build inputs + run the model
 bash run_national.sh data/national/counties.gpkg data/national/ndvi
 # args: <counties-in-metro layer>  <dir of per-county <GEOID>_ndvi.tif>
 ```
