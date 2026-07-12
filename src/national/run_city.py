@@ -3,11 +3,11 @@
 Run the Urban Mental Health model for ONE US city (national-scale driver).
 
 This is the per-city worker behind `run_national.sh`. It reuses the same data
-sources as the SF pipeline but parameterized by a Census place GEOID, and writes
+sources as the SF pipeline but parameterized by a county GEOID, and writes
 to a per-city workspace so cities can be processed independently / in parallel.
 
 Key differences from the SF scripts (see docs/scaling_to_national.md):
-  - AOI = one city polygon selected from a national "places" layer by GEOID.
+  - AOI = one county polygon selected from a national counties-in-metro layer by GEOID.
   - CRS = EPSG:5070 (NAD83 / Conus Albers, meters) — valid across CONUS, unlike
     the SF-only UTM zone 10N used in the single-city scripts.
   - Prevalence tracts are selected by spatial intersection with the city.
@@ -18,7 +18,7 @@ Key differences from the SF scripts (see docs/scaling_to_national.md):
     generated here if not supplied.
 
 INPUTS (national, shared across cities)
-  --places        national Census "places" polygon layer (field GEOID_PLAC/GEOID)
+  --regions       national AOI polygon layer (counties in metros; field GEOID)
   --prevalence    national CDC PLACES tract shapefile (fields GEOID, DEPRESS)
   --population    national WorldPop US people-per-pixel raster
   --ndvi-dir      folder with per-city NDVI, file named <GEOID>_ndvi.tif
@@ -29,7 +29,7 @@ REQUIREMENTS  (conda env `snapp`)
 
 USAGE
   python src/national/run_city.py --geoid 0667000 \
-      --places data/national/places.gpkg \
+      --regions data/national/counties.gpkg \
       --prevalence data/urban-mental-health/raw/cdc_places/prevalence_rate_usa_2021.shp \
       --population data/urban-mental-health/inputs/_worldpop/usa_pop_2024_CN_100m_R2025A_v1.tif \
       --ndvi-dir data/national/ndvi
@@ -64,7 +64,7 @@ def pick_geoid_col(gdf) -> str:
     for c in ("GEOID_PLAC", "GEOID", "PLACEFP", "GEOID20"):
         if c in gdf.columns:
             return c
-    sys.exit(f"No GEOID column found in places layer (have {list(gdf.columns)}).")
+    sys.exit(f"No GEOID column found in regions layer (have {list(gdf.columns)}).")
 
 
 def build_city_inputs(cli, city_ws: Path) -> dict:
@@ -72,12 +72,12 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     inputs = city_ws / "inputs"
     inputs.mkdir(parents=True, exist_ok=True)
 
-    # --- 1. City AOI from the national places layer ---
-    places = gpd.read_file(cli.places)
-    gcol = pick_geoid_col(places)
-    city = places[places[gcol].astype(str) == cli.geoid]
+    # --- 1. County AOI from the national counties-in-metro layer ---
+    regions = gpd.read_file(cli.regions)
+    gcol = pick_geoid_col(regions)
+    city = regions[regions[gcol].astype(str) == cli.geoid]
     if city.empty:
-        sys.exit(f"GEOID {cli.geoid} not found in {cli.places}.")
+        sys.exit(f"GEOID {cli.geoid} not found in {cli.regions}.")
     city = city.to_crs(NATIONAL_CRS)
     aoi_path = inputs / "aoi.gpkg"
     city[[gcol, "geometry"]].to_file(aoi_path, driver="GPKG")
@@ -133,8 +133,8 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
 
 def main():
     ap = argparse.ArgumentParser(description="Run Urban Mental Health model for one city.")
-    ap.add_argument("--geoid", required=True, help="Census place GEOID (e.g. 0667000).")
-    ap.add_argument("--places", type=Path, required=True, help="National places polygon layer.")
+    ap.add_argument("--geoid", required=True, help="County GEOID, 5-digit FIPS (e.g. 06075).")
+    ap.add_argument("--regions", type=Path, required=True, help="National AOI layer (counties in metros).")
     ap.add_argument("--prevalence", type=Path,
                     default=BASE_DIR / "data/urban-mental-health/raw/cdc_places/prevalence_rate_usa_2021.shp")
     ap.add_argument("--population", type=Path, required=True, help="National WorldPop raster.")

@@ -25,6 +25,7 @@
 - [ ] Rotate the CDSE password (was briefly exposed); update `.env`.
 
 ## Later
-- [ ] National run: supply a national "places" layer + per-city NDVI, then `run_national.sh`.
+- [ ] National run: build counties-in-metro AOI (`build_metro_counties.py`, ideally with
+      your metro layer) + supply per-county NDVI, then `run_national.sh`.
 - [ ] Regionalize cost (`--wage-factor`, MEPS region) for non-SF cities.
 - [ ] CI (GitHub Actions) running `pytest` on push.

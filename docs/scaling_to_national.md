@@ -16,8 +16,10 @@ already national. Here's what changes when you scale to all US urban areas.
 
 ## What needs to change
 
-1. **Define the urban AOIs.** Replace the single SF box/tracts with a national
-   set of cities — e.g. Census **Urban Areas (2020)**, **Places**, or **CBSAs**.
+1. **Define the AOIs = counties in metros.** `build_metro_counties.py` selects
+   US **counties that fall within/overlap a Metro (CBSA)** and writes
+   `data/national/counties.gpkg` + `config/regions.csv`. (Project decision: the
+   study unit is the county intersecting a metro, not the Census "place" layer.)
    Iterate over them (one AOI per city), as your GEE script does.
 
 2. **Use a national equal-area CRS.** The scripts hardcode `EPSG:26910` (UTM 10N),
@@ -52,22 +54,22 @@ already national. Here's what changes when you scale to all US urban areas.
 ## Suggested engineering shape
 
 ```
-config/cities.csv                # list of AOIs (GEOID_PLAC, name) to process
-src/run_city.py                  # build inputs + run model for ONE city id
-run_national.sh                  # loop config/cities.csv -> src/run_city.py
-data/urban-mental-health/
-  └── workspace/<GEOID_PLAC>/    # per-city outputs, aggregated at the end
+src/national/build_metro_counties.py   # AOI: counties overlapping metros
+config/regions.csv                      # county GEOIDs (written by the builder)
+src/national/run_city.py                # build inputs + run model for ONE county
+run_national.sh                         # loop config/regions.csv -> run_city.py
+data/urban-mental-health/runs/national/<GEOID>/   # per-county outputs
 ```
 
-Parameterize the existing scripts by `--aoi`/`--geoid`/`--crs` (most already
-accept paths), drive them from a cities list, and parallelize across cities
-(they're independent). Cache the shared national rasters (WorldPop, NDVI tiles)
-so each city reads a window rather than re-downloading.
+Parameterize by `--geoid`/`--regions`/`--crs`, drive from `config/regions.csv`,
+and parallelize across counties (they're independent). Cache the shared national
+rasters (WorldPop, NDVI tiles) so each county reads a window rather than
+re-downloading.
 
 ## Bottom line
 
-Scaling is mostly (a) swapping the SF AOI for a national city list, (b) moving to
-`EPSG:5070`, and (c) wrapping the per-city steps in a loop with per-city
-workspaces — not new science. The prevalence, population, cost, and effect-size
-inputs are already national. I can scaffold `run_city.py` + `run_national.sh`
-and a `config/cities.csv` when you're ready.
+Scaling is mostly (a) building the counties-in-metro AOI layer, (b) moving to
+`EPSG:5070`, and (c) wrapping the per-county steps in a loop with per-county run
+folders — not new science. The prevalence, population, cost, and effect-size
+inputs are already national. The scaffolding (`build_metro_counties.py`,
+`run_city.py`, `run_national.sh`, `config/regions.csv`) is in place.

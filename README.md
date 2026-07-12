@@ -18,8 +18,8 @@ SNAPP/
 ├── requirements.txt          # pip alternative
 ├── tests/                    # pytest smoke tests (cost math, config, scenario)
 ├── run_pipeline.sh           # SF: run all steps end to end
-├── run_national.sh           # national: loop config/cities.csv, run per city
-├── config/cities.csv         # list of US cities (place GEOIDs) for the national run
+├── run_national.sh           # national: loop config/regions.csv, run per county
+├── config/regions.csv        # county GEOIDs (counties in metros) for the national run
 ├── docs/                     # societal-cost synthesis, cost_studies.csv, scaling notes
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
@@ -39,7 +39,8 @@ SNAPP/
 │   │   ├── fetch_population.py        # WorldPop US 100 m -> adult pop, clip to AOI
 │   │   └── estimate_health_cost.py    # societal (Greenberg) or direct (MEPS)
 │   ├── national/
-│   │   └── run_city.py                # run the model for ONE city (EPSG:5070)
+│   │   ├── build_metro_counties.py    # AOI layer: counties overlapping metros -> counties.gpkg
+│   │   └── run_city.py                # run the model for ONE county (EPSG:5070)
 │   └── urban_mental_health/
 │       ├── run_model.py               # runs the InVEST Urban Mental Health model
 │       ├── run_scenarios.py           # run all greening scenarios -> comparison CSV
@@ -274,21 +275,29 @@ pipeline.
 
 ## Scaling to a national multi-city study
 
-The SF pipeline generalizes to all US cities. `src/national/run_city.py` runs the
-model for one Census **place** (by GEOID), using a CONUS-wide CRS (**EPSG:5070**),
-selecting prevalence tracts by spatial intersection, windowed-clipping the
-national WorldPop raster, and writing to a per-city workspace.
-`run_national.sh` loops `config/cities.csv`:
+The SF pipeline generalizes to all US metro **counties**. First build the AOI
+layer — counties that fall within/overlap a Metro (CBSA) — with
+`build_metro_counties.py` (pass your own metro layer to match the notebook, or
+let it download TIGER CBSA):
 
 ```bash
-bash run_national.sh data/national/places.gpkg data/national/ndvi
-# args: <national places layer>  <dir of per-city <GEOID>_ndvi.tif>
+python src/national/build_metro_counties.py --metro-layer <your_metro.shp>
+#   -> data/national/counties.gpkg  +  config/regions.csv (county GEOIDs)
 ```
 
-What you provide once: a national "places" polygon layer, and per-city NDVI
-rasters from the GEE city loop (your Code Editor script already iterates cities).
-Prevalence (national CDC tract shapefile), population (WorldPop US), cost, and
-effect size are already national. Full rationale and steps:
+Then `run_city.py` runs the model for one county (by GEOID), in CONUS-wide CRS
+(**EPSG:5070**), selecting prevalence tracts by spatial intersection, windowed-
+clipping the national WorldPop raster, into a per-county run folder.
+`run_national.sh` loops `config/regions.csv`:
+
+```bash
+bash run_national.sh data/national/counties.gpkg data/national/ndvi
+# args: <counties-in-metro layer>  <dir of per-county <GEOID>_ndvi.tif>
+```
+
+What you provide once: a metro layer (for the AOI build) and per-county NDVI
+rasters from the GEE loop. Prevalence (national CDC tract shapefile), population
+(WorldPop US), cost, and effect size are already national. Full rationale:
 `docs/scaling_to_national.md`.
 
 ## Backup NDVI route (Copernicus / CDSE)

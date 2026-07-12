@@ -1,8 +1,0 @@
-# US cities (Census "place" GEOIDs) to process in the national run.
-# GEOID_PLAC = 2-digit state FIPS + 5-digit place code. Edit as needed.
-GEOID_PLAC,NAME_PLACE
-0667000,San Francisco city
-2743000,Minneapolis city
-3651000,New York city
-0644000,Los Angeles city
-1714000,Chicago city

@@ -1,0 +1,8 @@
+# County GEOIDs (5-digit FIPS) to process in the national run.
+# Overwritten by build_metro_counties.py (all counties in metros). Edit to subset.
+GEOID,NAME
+06075,San Francisco
+36061,New York
+17031,Cook
+04013,Maricopa
+53033,King
