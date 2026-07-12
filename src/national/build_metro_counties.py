@@ -5,14 +5,22 @@ Metropolitan area (Metro / metdiv). County-based adaptation of
 00b1-aoi-places-in-metro.ipynb (which used *places*); per project decision the
 study unit here is the county intersecting a metro.
 
-METHOD (mirrors the notebook, counties instead of places)
+METHOD (counties instead of the notebook's places)
     - Load a metro layer and a county layer.
-    - sjoin(counties, metros, how='inner', predicate='intersects')  -> counties
-      touching/overlapping a metro; drop_duplicates on county GEOID.
+    - Compute, per county, the fraction of its AREA inside a metro (equal-area
+      EPSG:5070); keep counties with overlap >= --min-overlap (default 0.30).
+      This drops border-touches (0% area) and generalization slivers that a plain
+      'intersects' wrongly includes. Each kept county is labelled with its
+      dominant (largest-overlap) metro and its overlap_frac.
     - Exclude non-mainland STATEFP ['02','15','60','66','69','72','78'] (AK, HI,
       PR, GU, VI, AS, MP); optionally drop DC ('11').
     - Write data/national/counties.gpkg + config/regions.csv (GEOID list that
       run_national.sh loops).
+
+    Note: CBSAs are officially unions of *whole counties*, so the most rigorous
+    membership is the Census delineation crosswalk (county FIPS -> CBSA), not a
+    geometry test. The area-overlap threshold is the robust geometric equivalent
+    when working from dissolved metro polygons.
 
 LAYERS
     --metro-layer  : your metro shapefile (e.g. the notebook's
@@ -101,6 +109,11 @@ def main():
     ap.add_argument("--metro-layer", type=Path, help="Metro polygon layer (else Census CBSA M1).")
     ap.add_argument("--county-layer", type=Path, help="County polygon layer (else Census county).")
     ap.add_argument("--metros", nargs="*", help="Restrict to metro id(s) or NAME substrings.")
+    ap.add_argument("--min-overlap", type=float, default=0.30,
+                    help="Keep a county only if this fraction of its area falls inside a "
+                         "metro (0-1). Filters out border-touches/slivers. Default 0.30; "
+                         "result is insensitive across ~0.05-0.90 since metros are whole "
+                         "counties. Set 0 to keep any intersection (old behavior).")
     ap.add_argument("--keep-dc", action="store_true", help="Keep DC (STATEFP 11).")
     ap.add_argument("--out", type=Path, default=OUT_GPKG)
     ap.add_argument("--regions-csv", type=Path, default=REGIONS_CSV)
@@ -128,7 +141,9 @@ def main():
             or (m_name and any(k in str(r[m_name]).lower() for k in keys)), axis=1)].copy()
     if metros.empty:
         sys.exit("No metros matched; check --metros / --metro-layer.")
-    metros = metros[[c for c in (m_id, m_name, "geometry") if c]].copy()
+    # Rename metro id/name to fixed names (avoids clashing with the county GEOID).
+    metros = metros.rename(columns={m_id: "metro_id", m_name: "metro_name"})
+    metros = metros[[c for c in ("metro_id", "metro_name", "geometry") if c in metros.columns]].copy()
     LOGGER.info("Metros: %d", len(metros))
 
     # Save a copy of the metro layer used (so it's persisted, not re-downloaded).
@@ -136,11 +151,30 @@ def main():
     metros.to_file(cli.metro_out, driver="GPKG")
     LOGGER.info("Saved metro layer -> %s", cli.metro_out)
 
-    # --- counties within/overlapping metros ---
+    # --- county<->metro overlap fraction (equal-area) ---
+    # Keep a county only if >= --min-overlap of its AREA lies inside a metro. This
+    # drops border-touches (0% area) and generalization slivers that a plain
+    # 'intersects' would wrongly include.
+    EA = "EPSG:5070"                                        # Conus Albers, equal-area
     counties = counties.to_crs(metros.crs)
-    sel = gpd.sjoin(counties, metros, how="inner", predicate="intersects")
-    sel = (sel.drop(columns=[c for c in sel.columns if c.startswith("index_")])
-              .drop_duplicates(subset="GEOID"))
+    c_ea = counties[["GEOID", "geometry"]].to_crs(EA)
+    c_ea["county_area"] = c_ea.geometry.area
+    m_ea = metros.to_crs(EA)
+
+    inter = gpd.overlay(c_ea, m_ea, how="intersection", keep_geom_type=True)
+    inter["ia"] = inter.geometry.area
+    # Total in-metro area per county, and the dominant (largest-overlap) metro.
+    ov = inter.groupby("GEOID")["ia"].sum().rename("overlap_area")
+    dom = (inter.sort_values("ia").drop_duplicates("GEOID", keep="last")
+                 .set_index("GEOID")[["metro_id", "metro_name"]])
+    frac = (ov / c_ea.set_index("GEOID")["county_area"]).rename("overlap_frac")
+    stats = dom.join(frac).reset_index()
+    stats = stats[stats["overlap_frac"] >= cli.min_overlap]
+    LOGGER.info("Counties passing overlap >= %.0f%%: %d (of %d touching a metro)",
+                100 * cli.min_overlap, len(stats), inter["GEOID"].nunique())
+
+    sel = counties.merge(stats, on="GEOID", how="inner")
+    sel["overlap_frac"] = sel["overlap_frac"].round(4)
 
     # --- mainland filter ---
     drop = set(MAINLAND_EXCLUDE) | ({"11"} if not cli.keep_dc else set())
@@ -148,8 +182,8 @@ def main():
     LOGGER.info("Counties in metros (mainland): %d across %d states",
                 len(sel), sel["STATEFP"].nunique())
 
-    cols = ["GEOID", "NAME", "STATEFP", m_id, m_name, "geometry"]
-    sel = sel[[c for c in cols if c and c in sel.columns]]
+    cols = ["GEOID", "NAME", "STATEFP", "metro_id", "metro_name", "overlap_frac", "geometry"]
+    sel = sel[[c for c in cols if c in sel.columns]]
     cli.out.parent.mkdir(parents=True, exist_ok=True)
     sel.to_file(cli.out, driver="GPKG")
     LOGGER.info("Wrote AOI layer -> %s", cli.out)
