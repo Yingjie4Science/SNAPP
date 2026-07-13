@@ -53,6 +53,47 @@ def load_sum_csv(workspace: Path = WORKSPACE, suffix: str = "sf_2024"):
     return per_tract, total_cases, total_cost, path
 
 
+def _config_model():
+    try:
+        import yaml
+        p = BASE_DIR / "config.yaml"
+        if p.exists():
+            return (yaml.safe_load(p.read_text()) or {}).get("model", {})
+    except Exception:
+        pass
+    return {}
+
+
+def p0_sensitivity_lines(central_cases):
+    """How the OR->RR conversion (and thus central cases) moves with baseline risk p0.
+
+    Cases scale ~ -ln(RR) in the small-dNDVI regime, so we scale the model's
+    central preventable_cases by ln(RR_p0)/ln(RR_used) to show robustness.
+    """
+    import math
+
+    def or_to_rr(o, p0):
+        return o / (1.0 - p0 + p0 * o)
+
+    m = _config_model()
+    or_c = float(m.get("effect_size_or", 0.931))
+    p0_used = float(m.get("baseline_risk_p0", 0.20))
+    rr_used = or_to_rr(or_c, p0_used)
+    out = ["", "## p0 sensitivity (OR->RR conversion)", "",
+           f"Baseline risk p0 used: **{p0_used:.3f}** (population-weighted PLACES "
+           f"prevalence); central OR {or_c:.3f} -> RR {rr_used:.4f}. The RR is nearly "
+           f"flat in p0, but preventable cases scale with -ln(RR), so they move "
+           f"~±6% per 0.05 change in p0 — hence pinning p0 to the data (compute_p0.py):",
+           "",
+           "| p0 | RR | approx. preventable cases |", "|---:|---:|---:|"]
+    for p in (0.10, 0.15, 0.20, 0.25, 0.30):
+        rr = or_to_rr(or_c, p)
+        cases = (central_cases * math.log(rr) / math.log(rr_used)) if (central_cases and rr_used != 1) else float("nan")
+        mark = "  ← used" if abs(p - p0_used) < 1e-9 else ""
+        out.append(f"| {p:.2f}{mark} | {rr:.4f} | {cases:,.0f} |")
+    return out
+
+
 def read_sensitivity():
     if not SENS.exists():
         return None
@@ -157,6 +198,8 @@ def main():
                          f"${float(r.get('cost_low_17000',0)):,.0f} | "
                          f"${float(r.get('cost_central_21280',0)):,.0f} | "
                          f"${float(r.get('cost_high_23000',0)):,.0f} |")
+
+    lines += p0_sensitivity_lines(total_cases)
 
     if cli.map:
         fig = draw_map()

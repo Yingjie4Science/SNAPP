@@ -37,15 +37,39 @@ RR = OR / (1 − p0 + p0 · OR)
 ```
 
 where `p0` is the baseline risk in the reference (least-green) group, approximated
-by the population prevalence of depression. We use **p0 = 0.20** (US adult
-depression prevalence, order-of-magnitude from CDC PLACES). The result is
-insensitive to p0 across the plausible range:
+by the population prevalence of depression.
 
-| p0 | RR (from OR 0.931) |
-|---|---|
-| 0.15 | 0.941 |
-| 0.20 | 0.944 |
-| 0.25 | 0.947 |
+### How p0 is set (data-driven)
+
+We do **not** hand-pick p0. `src/inputs/compute_p0.py` derives it as the
+**population-weighted mean of the same CDC PLACES `risk_rate` layer the model
+uses** (same outcome definition, same geography), then rewrites the RR values in
+`config.yaml`. This keeps the conversion self-consistent — the OR is applied to,
+and converted at, the identical prevalence surface. It lands near **0.20** for
+both SF and the US metro AOI. Run it after building model inputs:
+
+```
+python src/inputs/compute_p0.py                 # updates config.yaml
+python src/inputs/effect_size.py --p0-sweep     # show p0 sensitivity table
+```
+
+### Sensitivity to p0
+
+The RR itself is nearly flat in p0 (0.941 at 0.15 → 0.947 at 0.25). **But**
+preventable cases scale with `−ln(RR)`, and because RR is close to 1 that log
+amplifies small RR changes: **cases move ~±6% per 0.05 change in p0.**
+
+| p0 | RR (from OR 0.931) | ~cases vs p0=0.20 |
+|---|---|---|
+| 0.10 | 0.9375 | +12% |
+| 0.15 | 0.9407 | +6% |
+| 0.20 | 0.9440 | 0 (ref) |
+| 0.25 | 0.9473 | −6% |
+| 0.30 | 0.9507 | −12% |
+
+So p0 is not a throwaway constant: it is worth pinning to the data (which we do)
+and reporting a sensitivity row (which `summarize_results.py` now emits). It
+remains smaller than the effect-size CI and cost bands, but it is not negligible.
 
 Converted values used in the pipeline (p0 = 0.20):
 

@@ -58,6 +58,9 @@ def main():
                     default=float(cfg.get("baseline_risk_p0", 0.20)),
                     help="Baseline risk (prevalence) for the conversion. Default from "
                          "config baseline_risk_p0, else 0.20.")
+    ap.add_argument("--p0-sweep", nargs="*", type=float,
+                    help="Show RR (and %% change in cases) across a p0 grid. Bare flag "
+                         "uses 0.10 0.15 0.20 0.25 0.30; or pass your own values.")
     cli = ap.parse_args()
 
     ors = cli.ors
@@ -65,6 +68,20 @@ def main():
         ors = [cfg.get("effect_size_or", 0.931),
                cfg.get("effect_size_or_low", 0.887),
                cfg.get("effect_size_or_high", 0.977)]
+
+    if cli.p0_sweep is not None:
+        import math
+        grid = cli.p0_sweep or [0.10, 0.15, 0.20, 0.25, 0.30]
+        or_c = float(ors[0])
+        ref = or_to_rr(or_c, cli.p0)
+        print(f"p0 sensitivity for central OR {or_c:.3f} (ref p0={cli.p0}):")
+        print(f"{'p0':>6}  {'RR':>8}  {'~% cases vs ref':>16}")
+        for p in grid:
+            rr = or_to_rr(or_c, p)
+            # small-dNDVI regime: preventable cases ~ proportional to -ln(RR)
+            pct = 100.0 * (math.log(rr) / math.log(ref) - 1.0)
+            print(f"{p:6.2f}  {rr:8.4f}  {pct:+15.1f}%")
+        return
 
     print(f"p0 = {cli.p0}")
     print(f"{'OR':>8}  {'RR':>8}")
