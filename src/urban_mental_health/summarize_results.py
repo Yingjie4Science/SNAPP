@@ -31,8 +31,17 @@ WORKSPACE = UMH / "runs" / "sf_baseline"                  # base model run
 TOTAL_GREENNESS_WS = UMH / "runs" / "sf_total_greenness"  # existing-greenness run
 RESULTS = BASE_DIR / "results"
 SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
+SCENARIOS = RESULTS / "summaries" / "scenario_comparison.csv"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_MD = RESULTS / "summaries" / "results_summary.md"
+
+SCENARIO_NAMES = {
+    "uniform_005": "Uniform +0.05 NDVI (reference)",
+    "greenable_005": "Greenable-only +0.05 NDVI",
+    "lulc_masked": "LULC-masked feasible greening",
+    "canopy_30pct": "30% canopy target",
+    "best_potential_p95": "Within-city p95 potential",
+}
 
 # Canonical APA (7th ed.) bibliography for the whole project. Keep in sync with
 # docs/references.md and make_manuscript_figures.py. Alphabetical by author.
@@ -147,6 +156,22 @@ def read_sensitivity():
         return list(csv.DictReader(fh))
 
 
+def read_scenarios():
+    """Read the comparable investment-scenario results, if they have been run."""
+    if not SCENARIOS.exists():
+        return []
+    with open(SCENARIOS) as fh:
+        rows = list(csv.DictReader(fh))
+    for row in rows:
+        try:
+            row["preventable_cases"] = float(row["preventable_cases"])
+            cost_key = next(k for k in row if k.startswith("preventable_cost_usd"))
+            row["preventable_cost_usd"] = float(row[cost_key])
+        except (KeyError, TypeError, ValueError):
+            row["preventable_cases"] = row["preventable_cost_usd"] = None
+    return rows
+
+
 def effect_ci():
     """95% CI on preventable cases implied by the effect-size 95% CI.
 
@@ -226,6 +251,32 @@ def draw_counterfactual_bar(marg_cases, tot_cases, marg_cost, tot_cost):
         ax.text(b.get_x() + b.get_width() / 2, v, lab, ha="center", va="bottom", fontsize=9)
     ax.margins(y=0.18)
     out = RESULTS / "figures" / "counterfactual_comparison.png"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(out, dpi=200, bbox_inches="tight")
+    plt.close(fig)
+    LOGGER.info("Wrote %s", out)
+    return out
+
+
+def draw_scenario_bar(rows):
+    """Bar chart of alternative, mutually comparable greening rules."""
+    _, plt = _mpl()
+    rows = [r for r in rows if r.get("preventable_cases") is not None]
+    if plt is None or not rows:
+        return None
+    labels = [SCENARIO_NAMES.get(r["scenario"], r["scenario"]) for r in rows]
+    values = [r["preventable_cases"] for r in rows]
+    fig, ax = plt.subplots(figsize=(7.2, 4.2))
+    bars = ax.bar(range(len(rows)), values, color="#2c7fb8", width=0.65)
+    ax.set_xticks(range(len(rows)))
+    ax.set_xticklabels(labels, rotation=20, ha="right")
+    ax.set_ylabel("Preventable depression cases / year")
+    ax.set_title("Alternative greening scenarios (same health and cost assumptions)")
+    for bar, value in zip(bars, values):
+        ax.text(bar.get_x() + bar.get_width() / 2, value, f"{value:,.0f}",
+                ha="center", va="bottom", fontsize=8)
+    ax.margins(y=0.16)
+    out = RESULTS / "figures" / "scenario_comparison.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200, bbox_inches="tight")
     plt.close(fig)
@@ -446,6 +497,7 @@ def main():
     if path is None:
         raise SystemExit(f"No summary CSV in {WORKSPACE/'output'}. Run the model first.")
     tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
+    scenario_rows = read_scenarios()
     rate = float(COST_FILE.read_text().strip()) if COST_FILE.exists() else None
     implied = (total_cost / total_cases) if (total_cost and total_cases) else None
     city = _config_context().get("city_name", "San Francisco")
@@ -473,6 +525,7 @@ def main():
             "Avoided societal cost from added greenery, by neighborhood",
             "Avoided cost / yr ($)", "map_marginal_cost.png", cmap="PuBuGn")
         F["bar"] = draw_counterfactual_bar(total_cases, tg_cases, total_cost, tg_cost)
+        F["scenarios"] = draw_scenario_bar(scenario_rows)
         F["sens"] = draw_sensitivity_range()
         F["scatter"] = draw_scatter()
 
@@ -544,6 +597,36 @@ def main():
     else:
         L += ["_The \"greenery we already have\" run wasn't found — generate it with "
               "`run_model.py --total-greenness` to enable this comparison._", ""]
+
+    # ---- Alternative investment scenarios ----
+    L += ["## Alternative investment scenarios", ""]
+    if scenario_rows:
+        L += ["These scenarios use the same exposure-response, baseline depression, population, and "
+              "societal-cost assumptions. They differ only in where and how much greening is allowed; "
+              "therefore, their differences are scenario assumptions rather than independent statistical "
+              "estimates.", ""]
+        L += img("scenarios", "Preventable cases under alternative greening scenarios.")
+        L += ["| Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |",
+              "|---|---|---:|---:|"]
+        rules = {
+            "uniform_005": "Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere.",
+            "greenable_005": "Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen.",
+            "lulc_masked": "Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65.",
+            "canopy_30pct": "Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target.",
+            "best_potential_p95": "Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential.",
+        }
+        for r in scenario_rows:
+            cases, cost = r.get("preventable_cases"), r.get("preventable_cost_usd")
+            if cases is None:
+                continue
+            label = SCENARIO_NAMES.get(r["scenario"], r["scenario"])
+            L.append(f"| {label} | {rules.get(r['scenario'], 'See config.yaml.')} | "
+                     f"{cases:,.0f} | ${cost:,.0f} |")
+        L += ["", "The LULC-masked and canopy-target scenarios are the most decision-relevant; "
+              "the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.", ""]
+    else:
+        L += ["_Alternative scenarios have not been run. Run `run_scenarios.py` after generating "
+              "the scenario rasters to populate this comparison._", ""]
 
     # ---- Where benefits concentrate ----
     L += ["## Where the benefits concentrate", "",

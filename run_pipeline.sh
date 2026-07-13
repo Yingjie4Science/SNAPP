@@ -33,10 +33,24 @@ step() { echo; echo "==> $1"; }
 if [ -z "$SKIP_NDVI" ]; then
     step "1/10  Baseline NDVI (GEE Landsat JJAS p90)"
     python src/inputs/ndvi/ndvi_gee.py
-    step "2/10  Greening scenarios (marginal + within-city best-potential p95)"
+    step "2/12  Greening scenario rasters (reference, feasible, and ambitious)"
     python src/inputs/ndvi/make_ndvi_scenario.py
+    python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable \
+        --output data/urban-mental-health/inputs/ndvi_scenario_greenable.tif
     python src/inputs/ndvi/make_ndvi_scenario.py --mode best_potential --percentile 95 \
         --output data/urban-mental-health/inputs/ndvi_scenario_bestpot.tif
+    if [ -f data/urban-mental-health/raw/nlcd/nlcd_landcover.tif ]; then
+        python src/inputs/ndvi/scenario_lulc_masked.py
+    else
+        echo "   LULC-masked scenario skipped (NLCD land-cover raster unavailable)."
+    fi
+    if [ -f data/urban-mental-health/raw/nlcd/nlcd_tcc.tif ]; then
+        # SF-specific 30% canopy target from the checked-in TCC-to-NDVI fit.
+        python src/inputs/ndvi/scenario_canopy_target.py --canopy-target 30 \
+            --tcc-slope 0.01892 --tcc-intercept 0.07464
+    else
+        echo "   Canopy-target scenario skipped (NLCD canopy raster unavailable)."
+    fi
 else
     step "1-2/10  NDVI steps skipped (--skip-ndvi); reusing existing rasters"
 fi
@@ -65,7 +79,7 @@ python src/inputs/estimate_health_cost.py
 step "6/10  Data-driven p0 (population-weighted PLACES prevalence -> refresh config RRs)"
 python src/inputs/compute_p0.py
 
-step "7/10  Model — marginal greening scenario"
+step "7/12  Model — marginal greening reference scenario"
 python src/urban_mental_health/run_model.py ${VALIDATE_ONLY}
 
 if [ -n "$VALIDATE_ONLY" ]; then
@@ -73,13 +87,16 @@ if [ -n "$VALIDATE_ONLY" ]; then
     exit 0
 fi
 
-step "8/10  Model — total value of existing greenness (NDVI=0 counterfactual)"
+step "8/12  Model — total value of existing greenness (NDVI=0 counterfactual)"
 python src/urban_mental_health/run_model.py --total-greenness
 
-step "9/10  Sensitivity (effect_size x cost)"
+step "9/12  Model — five alternative investment scenarios"
+python src/urban_mental_health/run_scenarios.py
+
+step "10/12  Sensitivity (effect_size x cost)"
 python src/urban_mental_health/run_sensitivity.py
 
-step "10/10  Summary + figures (maps, counterfactual bar, sensitivity range, scatter)"
+step "11/12  Summary + figures (maps, counterfactual bar, scenario comparison, sensitivity range, scatter)"
 python src/urban_mental_health/summarize_results.py --map
 
 step "10b  Equity analysis (concentration index vs neighborhood income; needs internet)"

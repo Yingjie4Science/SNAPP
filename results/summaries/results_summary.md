@@ -34,6 +34,23 @@ The first guides investment; the second is an accounting of a benefit the city a
 <td width="50%"><img src="../figures/map_existing_greenness_cases.png" width="100%"><br><sub>Greenery already present</sub></td>
 </tr></table>
 
+## Alternative investment scenarios
+
+These scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions. They differ only in where and how much greening is allowed; therefore, their differences are scenario assumptions rather than independent statistical estimates.
+
+![Preventable cases under alternative greening scenarios.](../figures/scenario_comparison.png)
+<sub>Preventable cases under alternative greening scenarios.</sub>
+
+| Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |
+|---|---|---:|---:|
+| Uniform +0.05 NDVI (reference) | Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere. | 4,867 | $103,573,428 |
+| Greenable-only +0.05 NDVI | Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen. | 4,700 | $100,026,235 |
+| LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | $12,681,043 |
+| 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | $751,537,448 |
+| Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | $830,202,625 |
+
+The LULC-masked and canopy-target scenarios are the most decision-relevant; the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.
+
 ## Where the benefits concentrate
 
 Benefits are largest where many people live near low greenery and depression rates are high. The map shows avoided cost by neighborhood; the scatter shows that higher-prevalence neighborhoods gain more from greening.

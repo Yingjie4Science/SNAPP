@@ -1,3 +1,6 @@
-scenario,ndvi_alt,preventable_cases,"preventable_cost_usd (@ $21,280/case)"
-greenable,ndvi_scenario.tif,7294.2,155219531
-lulc_masked,ndvi_scenario_lulc.tif,895.3,19052445
+scenario,ndvi_alt,preventable_cases,preventable_cost_usd,cost_per_case_usd
+uniform_005,ndvi_scenario.tif,4867.2,103573428,21280
+greenable_005,ndvi_scenario_greenable.tif,4700.5,100026235,21280
+lulc_masked,ndvi_scenario_lulc.tif,595.9,12681043,21280
+canopy_30pct,ndvi_scenario_canopy.tif,35316.6,751537448,21280
+best_potential_p95,ndvi_scenario_bestpot.tif,39013.3,830202625,21280

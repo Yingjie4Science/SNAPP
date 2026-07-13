@@ -83,11 +83,12 @@ def main():
     COMPARISON_CSV.parent.mkdir(parents=True, exist_ok=True)
     with open(COMPARISON_CSV, "w", newline="") as fh:
         w = csv.writer(fh)
-        w.writerow(["scenario", "ndvi_alt", "preventable_cases",
-                    f"preventable_cost_usd (@ ${cost:,.0f}/case)" if cost else "preventable_cost_usd"])
+        w.writerow(["scenario", "ndvi_alt", "preventable_cases", "preventable_cost_usd",
+                    "cost_per_case_usd"])
         for label, fname, cases, total_cost in rows:
             w.writerow([label, fname, round(cases, 1),
-                        round(total_cost) if total_cost is not None else ""])
+                        round(total_cost) if total_cost is not None else "",
+                        round(cost) if cost is not None else ""])
     LOGGER.info("Wrote %s", COMPARISON_CSV)
     LOGGER.info("Compare scenarios there; cost uses the central health_cost_rate. "
                 "For a full grid, also run run_sensitivity.py per scenario.")
