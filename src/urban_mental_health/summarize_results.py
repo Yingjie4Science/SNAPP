@@ -72,6 +72,9 @@ APA_REFERENCES = [
     "The global, regional and national preventable burden of depression attributable to "
     "greenness and inequalities: A scenario-based health impact analysis. *Journal of "
     "Global Health, 15*, Article 04280. https://doi.org/10.7189/jogh.15.04280",
+    "Wu, J., Ruan, J., Di, W., Ying, J., Zhou, J., Luo, Z., Rudan, I., & Song, P. (2026). "
+    "The global burden of hypertension preventable by urban greenness. *Nature Health.* "
+    "https://doi.org/10.1038/s44360-026-00090-5",
     "Zhang, J., & Yu, K. F. (1998). What's the relative risk? A method of correcting the "
     "odds ratio in cohort studies of common outcomes. *JAMA, 280*(19), 1690–1691. "
     "https://doi.org/10.1001/jama.280.19.1690",
@@ -142,6 +145,28 @@ def read_sensitivity():
         return None
     with open(SENS) as fh:
         return list(csv.DictReader(fh))
+
+
+def effect_ci():
+    """95% CI on preventable cases implied by the effect-size 95% CI.
+
+    The effect_size bounds (RR 0.908–0.982) are the Liu et al. (2023) odds-ratio
+    95% CI converted to RRs, so the preventable-case values at those bounds ARE a
+    95% confidence interval. The most-protective RR (lowest) gives the upper case
+    bound and vice-versa. Returns (cases_low, cases_high) or None.
+    """
+    sens = read_sensitivity()
+    if not sens:
+        return None
+    pts = {}
+    for r in sens:
+        try:
+            pts[float(r["effect_size"])] = float(r["preventable_cases"])
+        except (KeyError, ValueError, TypeError):
+            pass
+    if len(pts) < 2:
+        return None
+    return pts[max(pts)], pts[min(pts)]   # (low = least protective RR, high = most protective)
 
 
 def _mpl():
@@ -241,11 +266,12 @@ def baseline_check_lines(total_cases):
     implied_baseline = total_cases / frac
     census_pool = adult * p0
     ratio = implied_baseline / census_pool
-    out = ["", "### Baseline & population check", "",
-           f"- Marginal preventable fraction (model): **{100*frac:.2f}%** of baseline "
-           f"cases at +{delta:g} NDVI (RR {rr:.3f}).",
+    out = ["", "### Baseline, PAF & population check", "",
+           f"- **Population-attributable fraction (PAF): {100*frac:.2f}%** — the share of "
+           f"baseline depression preventable at +{delta:g} NDVI (RR {rr:.3f}). Dimensionless, "
+           f"so it is directly comparable across places regardless of size or age structure.",
            f"- Model-implied baseline depression cases: **{implied_baseline:,.0f}** "
-           f"(= preventable / preventable-fraction).",
+           f"(= preventable / PAF).",
            f"- Census-based adult depression pool: **{census_pool:,.0f}** "
            f"({adult:,.0f} adults × {p0:.1%})."]
     if ratio > 1.15:
@@ -385,6 +411,9 @@ def context_lines(total_cases, total_cost, tg_cases, tg_cost):
                    f"({total_cases/pop*1000:.1f} per 1,000 residents).")
     if adult:
         pool = adult * p0
+        out.append(f"- Preventable **rate: {1000*total_cases/adult:.1f} cases per 1,000 "
+                   f"adults** — the age-structure-independent metric for comparing places "
+                   f"(see PAF note below).")
         line = (f"- Estimated adult depression pool ≈ **{pool:,.0f}** ({adult:,.0f} adults × "
                 f"{p0:.1%}); marginal greening averts **{100*total_cases/pool:.1f}%** of it")
         if tg_cases:
@@ -422,6 +451,11 @@ def main():
     city = _config_context().get("city_name", "San Francisco")
     cost_m = (total_cost or 0) / 1e6
     tg_m = (tg_cost or 0) / 1e6
+    ci = effect_ci()                                   # (cases_low, cases_high) 95% CI, or None
+    ci_txt = f" (95% CI: {ci[0]:,.0f}–{ci[1]:,.0f})" if ci else ""
+    cpc = (total_cost / total_cases) if (total_cases and total_cost) else None  # cost per case
+    cost_ci_txt = (f" (95% CI: ${ci[0]*cpc/1e6:,.0f}–${ci[1]*cpc/1e6:,.0f}M)"
+                   if (ci and cpc) else "")
 
     # --- Build figures first so each can be placed in its section ---
     F = {}
@@ -469,7 +503,8 @@ def main():
     if total_cases:
         s = (f"Adding a modest amount of greenery across {city} — a **+0.05 rise in the "
              f"NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan "
-             f"— could prevent about **{total_cases:,.0f} cases of depression per year**")
+             f"— could prevent about **{total_cases:,.0f} cases of depression per year**"
+             f"{ci_txt}")
         s += f", worth roughly **${cost_m:,.0f} million** in avoided societal cost." if total_cost else "."
         if tg_cases:
             s += (f" Separately, the greenery {city} *already has* is estimated to prevent "
@@ -478,9 +513,10 @@ def main():
 
     # ---- Headline ----
     L += ["## Headline numbers", "",
-          f"- **{total_cases:,.0f}** depression cases prevented per year (from added greenery)"
+          f"- **{total_cases:,.0f}** depression cases prevented per year{ci_txt} (from added greenery)"
           if total_cases else "- cases: n/a",
-          f"- **${total_cost:,.0f}** avoided societal cost per year" if total_cost else "- cost: n/a",
+          f"- **${total_cost:,.0f}** avoided societal cost per year{cost_ci_txt}"
+          if total_cost else "- cost: n/a",
           f"- Neighborhoods analyzed: **{len(per_tract)}** census tracts"]
     if per_tract:
         L += [f"- Per neighborhood: **{mean(per_tract):.0f}** cases prevented on average "
@@ -522,9 +558,13 @@ def main():
 
     # ---- Reliability ----
     L += ["", "## How reliable are these numbers?", "",
-          "The estimate rests on two main assumptions — how strongly greenery affects "
-          "depression (the *effect size*) and the cost per case. The chart and table show "
-          "how the result shifts across plausible values.", ""]
+          "Two sources of spread, and they are different in kind:", "",
+          "- **Statistical 95% CI (cases).** The effect-size bounds (RR 0.908–0.982) are the "
+          "Liu et al. (2023) odds-ratio 95% CI, converted to risk ratios. Propagating them "
+          f"gives the headline confidence interval{(' of ' + f'{ci[0]:,.0f}–{ci[1]:,.0f} cases') if ci else ''}.",
+          "- **Cost scenario band ($17k–$23k per case).** This is a range of defensible "
+          "cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range.",
+          "", "The chart and table below show both together.", ""]
     L += img("sens", "How avoided cost changes with the effect size and cost-per-case range.")
     sens = read_sensitivity()
     if sens:
@@ -551,7 +591,13 @@ def main():
     L += ["- Population is adult-scaled (depression rates are for adults); the baseline "
           "check above confirms it against census figures.",
           "- The greening scenario and effect size are assumptions — read the headline "
-          "with the ranges above, not as a single certain number."]
+          "with the ranges above, not as a single certain number.",
+          "- **Cross-place comparability:** we report the **PAF** and **cases per 1,000 "
+          "adults**, which are independent of a place's size and age structure. A full "
+          "*age-standardized* rate (as in Wu et al., 2026) is **not feasible here**: CDC "
+          "PLACES gives a single adult (18+) depression rate per tract, not 5-year age-"
+          "specific rates, and the effect size isn't age-specific — so the PAF and the "
+          "crude adult rate are the appropriate comparators."]
 
     # ---- Glossary ----
     L += ["", "## Glossary", "",

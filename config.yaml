@@ -52,6 +52,7 @@ scenarios:
   greenable: "ndvi_scenario.tif"
   lulc_masked: "ndvi_scenario_lulc.tif"
   canopy_target: "ndvi_scenario_canopy.tif"
+  best_potential: "ndvi_scenario_bestpot.tif"   # level up to this city's own p95 NDVI
 
 # City reference figures, for contextualizing results (cases vs population, cost
 # vs GDP). Per-place — update when analyzing another city.

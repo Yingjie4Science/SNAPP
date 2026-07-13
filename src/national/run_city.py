@@ -169,6 +169,8 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     pop_proj.attrs.pop("_FillValue", None)          # avoid xarray _FillValue clash
     pop_path = inputs / "population.tif"
     pop_proj.rio.to_raster(pop_path, driver="GTiff", compress="LZW")
+    # Record adult population so the aggregator can report a per-1,000-adult rate.
+    (city_ws / "adult_pop.txt").write_text(f"{float(pop_proj.sum(skipna=True)):.0f}\n")
 
     # --- 4. NDVI: baseline from the per-city GEE export; scenario derived here ---
     ndvi_base = cli.ndvi_dir / f"{cli.geoid}_ndvi.tif"

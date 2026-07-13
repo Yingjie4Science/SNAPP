@@ -33,8 +33,10 @@ step() { echo; echo "==> $1"; }
 if [ -z "$SKIP_NDVI" ]; then
     step "1/10  Baseline NDVI (GEE Landsat JJAS p90)"
     python src/inputs/ndvi/ndvi_gee.py
-    step "2/10  Greening scenario (ndvi_alt)"
+    step "2/10  Greening scenarios (marginal + within-city best-potential p95)"
     python src/inputs/ndvi/make_ndvi_scenario.py
+    python src/inputs/ndvi/make_ndvi_scenario.py --mode best_potential --percentile 95 \
+        --output data/urban-mental-health/inputs/ndvi_scenario_bestpot.tif
 else
     step "1-2/10  NDVI steps skipped (--skip-ndvi); reusing existing rasters"
 fi
@@ -80,6 +82,10 @@ python src/urban_mental_health/run_sensitivity.py
 step "10/10  Summary + figures (maps, counterfactual bar, sensitivity range, scatter)"
 python src/urban_mental_health/summarize_results.py --map
 
+step "10b  Equity analysis (concentration index vs neighborhood income; needs internet)"
+python src/urban_mental_health/equity_analysis.py \
+    || echo "   equity step skipped (ACS fetch failed?); rerun equity_analysis.py or pass --ses-file."
+
 step "Sanity checks (population total + output-vs-AOI tract count)"
 python3 - <<'PY'
 import sqlite3, glob, sys
@@ -100,5 +106,7 @@ if g:
     print("   OK: model output matches the clean AOI.")
 PY
 
-echo; echo "==> Done. Results in results/summaries/results_summary.md + results/figures/;"
-echo "    model runs in data/urban-mental-health/runs/sf_baseline (+ sf_total_greenness)."
+echo; echo "==> Done. Results in results/summaries/ (results_summary.md, equity_summary.md)"
+echo "    + results/figures/; model runs in data/urban-mental-health/runs/sf_baseline"
+echo "    (+ sf_total_greenness). The best-potential scenario raster is built; compare"
+echo "    scenarios with: python src/urban_mental_health/run_scenarios.py"

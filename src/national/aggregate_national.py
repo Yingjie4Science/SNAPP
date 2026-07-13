@@ -92,12 +92,24 @@ def collect() -> list:
             LOGGER.warning("%s: no summary CSV yet — skipping.", geoid)
             continue
         tracts, cases, cost = rec
+        # Adult population (from run_city) -> age-structure-independent rate per 1,000.
+        adult_pop, rate = None, None
+        pf = RUNS / geoid / "adult_pop.txt"
+        if pf.exists():
+            try:
+                adult_pop = float(pf.read_text().strip())
+                if adult_pop > 0 and cases is not None:
+                    rate = 1000.0 * cases / adult_pop
+            except ValueError:
+                pass
         rows.append({
             "GEOID": geoid,
             "name": names.get(geoid, ""),
             "tracts": tracts,
             "preventable_cases": cases,
             "avoided_cost": cost,
+            "adult_population": round(adult_pop) if adult_pop else "",
+            "preventable_per_1000_adults": round(rate, 2) if rate is not None else "",
         })
     rows.sort(key=lambda d: (d["preventable_cases"] or 0), reverse=True)
     return rows
@@ -107,7 +119,8 @@ def write_csv(rows):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     with open(OUT_CSV, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["GEOID", "name", "tracts",
-                                           "preventable_cases", "avoided_cost"])
+                                           "preventable_cases", "avoided_cost",
+                                           "adult_population", "preventable_per_1000_adults"])
         w.writeheader()
         for r in rows:
             w.writerow(r)
