@@ -33,9 +33,11 @@ USAGE
     # or point at a file you already downloaded (WorldPop / GHS-POP / GPW):
     python src/inputs/fetch_population.py --pop /path/to/usa_pop_2024.tif
 
-CAVEAT
-    Reprojecting counts (people/pixel) is only approximately count-preserving.
-    Fine for wiring/testing; for rigorous totals use an area-weighted reprojection.
+NOTE ON COUNTS
+    WorldPop is people-per-pixel (counts). Bilinear reprojection across a CRS +
+    pixel-size change does not conserve the total, so after reprojecting we
+    rescale to preserve the true clipped population sum (mass conservation).
+    Remember to pass --adult-fraction (e.g. 0.86 for SF) since prevalence is adult.
 """
 
 import argparse
@@ -158,8 +160,19 @@ def main():
     clipped = pop_window.rio.clip(aoi_in_pop_crs.geometry, aoi_in_pop_crs.crs, drop=True)
 
     # 3) Reproject to the metric CRS the model needs (population must be in meters).
+    #    IMPORTANT: WorldPop is people-PER-PIXEL (counts). Bilinear reprojection
+    #    across a CRS + pixel-size change does NOT conserve the total (it inflated
+    #    SF ~15%). So we rescale the reprojected raster to preserve the true clipped
+    #    population sum (mass conservation).
     LOGGER.info("Reprojecting to %s...", METRIC_CRS)
+    pre_sum = float(clipped.sum(skipna=True))
     projected = clipped.rio.reproject(METRIC_CRS, resampling=Resampling.bilinear)
+    post_sum = float(projected.sum(skipna=True))
+    if post_sum > 0 and pre_sum > 0:
+        factor = pre_sum / post_sum
+        projected = (projected * factor).rio.write_crs(METRIC_CRS)
+        LOGGER.info("Mass conservation: reprojection sum %.0f -> rescaled x%.4f to %.0f",
+                    post_sum, factor, pre_sum)
     projected.rio.write_nodata(float("nan"), inplace=True)
     # The source raster carries a _FillValue in BOTH .attrs and .encoding; xarray's
     # writer refuses that clash, so drop the attrs copy (nodata stays in encoding).

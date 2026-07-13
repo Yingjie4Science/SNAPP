@@ -87,7 +87,7 @@ def main():
     with open(SUMMARY_CSV, "w", newline="") as fh:
         w = csv.writer(fh)
         w.writerow(["effect_size_label", "effect_size", "preventable_cases",
-                    *[f"cost_{k}" for k in COST_RATES]])
+                    *COST_RATES.keys()])   # keys already carry the 'cost_' prefix
         for label, es, cases in rows:
             costs = [round(cases * c) for c in COST_RATES.values()]
             w.writerow([label, es, round(cases, 1), *costs])

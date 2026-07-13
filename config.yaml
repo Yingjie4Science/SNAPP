@@ -53,6 +53,15 @@ scenarios:
   lulc_masked: "ndvi_scenario_lulc.tif"
   canopy_target: "ndvi_scenario_canopy.tif"
 
+# City reference figures, for contextualizing results (cases vs population, cost
+# vs GDP). Per-place — update when analyzing another city.
+context:
+  city_name: "San Francisco"
+  population_total: 830235       # SF city/county, 2024 Census est.
+  population_adult: 716727       # 18+, 2024 Census est.
+  gdp_usd: 250000000000          # SF County all-industries GDP, ~2023 BEA
+                                 # (FRED GDPALL06075); APPROXIMATE — refine with exact value.
+
 inputs:                        # filenames under data/urban-mental-health/inputs/
   ndvi_base: "ndvi_base.tif"
   ndvi_alt: "ndvi_scenario.tif"

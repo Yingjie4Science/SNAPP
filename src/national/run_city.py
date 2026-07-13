@@ -153,7 +153,14 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     minx, miny, maxx, maxy = city_in_pop.total_bounds
     pop_win = pop.rio.clip_box(minx, miny, maxx, maxy)
     pop_clip = pop_win.rio.clip(city_in_pop.geometry, city_in_pop.crs, drop=True)
+    # Reproject people-per-pixel counts, then rescale to preserve the clipped total
+    # (bilinear reprojection across CRS/resolution is NOT count-preserving; it
+    # inflated SF ~15%). Mass conservation before adult scaling.
+    pre_sum = float(pop_clip.sum(skipna=True))
     pop_proj = pop_clip.rio.reproject(NATIONAL_CRS, resampling=Resampling.bilinear)
+    post_sum = float(pop_proj.sum(skipna=True))
+    if post_sum > 0 and pre_sum > 0:
+        pop_proj = (pop_proj * (pre_sum / post_sum)).rio.write_crs(NATIONAL_CRS)
     frac = resolve_adult_fraction(cli)              # CDC PLACES prevalence is ADULT (18+);
     if frac != 1.0:                                  # scale all-ages WorldPop to adults so
         crs = pop_proj.rio.crs                        # cases aren't ~20% high

@@ -137,12 +137,28 @@ def main():
     ap.add_argument("--value-type", default="Crude prevalence",
                     choices=["Crude prevalence", "Age-adjusted prevalence"],
                     help="PLACES Data_Value_Type (api source only).")
+    ap.add_argument("--drop-nodata", action=argparse.BooleanOptionalAction, default=True,
+                    help="Drop tracts with no depression value — these are the water / "
+                         "uninhabited tracts (e.g. SF's Farallon Islands + bay, GEOIDs "
+                         "06075980401/990100/990200). They carry zero population so this "
+                         "does not change results; it just gives a clean city footprint and "
+                         "maps. Use --no-drop-nodata to keep every legal tract.")
     cli = ap.parse_args()
 
     if cli.source == "local":
         aoi, prevalence = build_local(cli.prevalence_shp)
     else:
         aoi, prevalence = build_api(cli.value_type)
+
+    # Drop no-data (water/uninhabited) tracts so the AOI is the true city footprint.
+    if cli.drop_nodata:
+        keep = prevalence["risk_rate"].notna()
+        dropped = prevalence.loc[~keep, "GEOID"].astype(str).tolist()
+        prevalence = prevalence[keep].copy()
+        aoi = aoi[aoi["GEOID"].astype(str).isin(prevalence["GEOID"].astype(str))].copy()
+        if dropped:
+            LOGGER.info("Dropped %d no-data tract(s) (water/uninhabited): %s",
+                        len(dropped), ", ".join(dropped))
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     aoi_path = OUT_DIR / "aoi.gpkg"
