@@ -6,12 +6,12 @@ This report estimates how much depression could be prevented — and how much mo
 
 ## In brief
 
-Adding a modest amount of greenery across San Francisco — a **+0.05 rise in the NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan — could prevent about **4,867 cases of depression per year**, worth roughly **$104 million** in avoided societal cost. Separately, the greenery San Francisco *already has* is estimated to prevent about **21,321 cases per year** versus a bare city.
+Adding a modest amount of greenery across San Francisco — a **+0.05 rise in the NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan — could prevent about **4,867 cases of depression per year** (95% CI: 1,549–8,073), worth roughly **$104 million** in avoided societal cost. Separately, the greenery San Francisco *already has* is estimated to prevent about **21,321 cases per year** versus a bare city.
 
 ## Headline numbers
 
-- **4,867** depression cases prevented per year (from added greenery)
-- **$103,573,424** avoided societal cost per year
+- **4,867** depression cases prevented per year (95% CI: 1,549–8,073) (from added greenery)
+- **$103,573,424** avoided societal cost per year (95% CI: $33–$172M)
 - Neighborhoods analyzed: **241** census tracts
 - Per neighborhood: **20** cases prevented on average (range 1–65).
 
@@ -47,6 +47,7 @@ Benefits are largest where many people live near low greenery and depression rat
 To make the San Francisco result intuitive:
 
 - Preventable cases are **0.59%** of total population (5.9 per 1,000 residents).
+- Preventable **rate: 6.8 cases per 1,000 adults** — the age-structure-independent metric for comparing places (see PAF note below).
 - Estimated adult depression pool ≈ **146,212** (716,727 adults × 20.4%); marginal greening averts **3.3%** of it, and existing greenness accounts for **15%**.
 - Avoided societal cost is **0.041%** of San Francisco GDP (~$250B); existing-greenness value is **0.18%** of GDP.
 - Avoided cost per resident: **$125/year**.
@@ -54,7 +55,12 @@ To make the San Francisco result intuitive:
 
 ## How reliable are these numbers?
 
-The estimate rests on two main assumptions — how strongly greenery affects depression (the *effect size*) and the cost per case. The chart and table show how the result shifts across plausible values.
+Two sources of spread, and they are different in kind:
+
+- **Statistical 95% CI (cases).** The effect-size bounds (RR 0.908–0.982) are the Liu et al. (2023) odds-ratio 95% CI, converted to risk ratios. Propagating them gives the headline confidence interval of 1,549–8,073 cases.
+- **Cost scenario band ($17k–$23k per case).** This is a range of defensible cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range.
+
+The chart and table below show both together.
 
 ![How avoided cost changes with the effect size and cost-per-case range.](../figures/sensitivity_range.png)
 <sub>How avoided cost changes with the effect size and cost-per-case range.</sub>
@@ -77,10 +83,10 @@ Baseline risk p0 used: **0.204** (population-weighted PLACES prevalence); centra
 | 0.25 | 0.9473 | 4,593 |
 | 0.30 | 0.9507 | 4,295 |
 
-### Baseline & population check
+### Baseline, PAF & population check
 
-- Marginal preventable fraction (model): **2.84%** of baseline cases at +0.05 NDVI (RR 0.944).
-- Model-implied baseline depression cases: **171,359** (= preventable / preventable-fraction).
+- **Population-attributable fraction (PAF): 2.84%** — the share of baseline depression preventable at +0.05 NDVI (RR 0.944). Dimensionless, so it is directly comparable across places regardless of size or age structure.
+- Model-implied baseline depression cases: **171,359** (= preventable / PAF).
 - Census-based adult depression pool: **146,212** (716,727 adults × 20.4%).
 - ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~839,995 (vs 716,727 adults). Check that population was adult-scaled AND clipped to the AOI polygon (not a bounding box). Fixing it scales the headline down by ~15%.
 
@@ -98,6 +104,7 @@ _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — s
 - Cost bookkeeping: implied $21,280/case vs configured $21,280 — OK.
 - Population is adult-scaled (depression rates are for adults); the baseline check above confirms it against census figures.
 - The greening scenario and effect size are assumptions — read the headline with the ranges above, not as a single certain number.
+- **Cross-place comparability:** we report the **PAF** and **cases per 1,000 adults**, which are independent of a place's size and age structure. A full *age-standardized* rate (as in Wu et al., 2026) is **not feasible here**: CDC PLACES gives a single adult (18+) depression rate per tract, not 5-year age-specific rates, and the effect size isn't age-specific — so the PAF and the crude adult rate are the appropriate comparators.
 
 ## Glossary
 
@@ -130,6 +137,8 @@ Vidal Yáñez, D., Pereira, E., Cirach, M., Daher, C., Nieuwenhuijsen, M., & Mue
 WorldPop. (2025). *Global 2015–2030 constrained population estimates (Global2), Release R2025A* [Data set]. University of Southampton. https://hub.worldpop.org/geodata/listing?id=135
 
 Wu, J., Di, W., Ruan, J., Li, S., Ying, J., Zhou, J., Rudan, I., & Song, P. (2025). The global, regional and national preventable burden of depression attributable to greenness and inequalities: A scenario-based health impact analysis. *Journal of Global Health, 15*, Article 04280. https://doi.org/10.7189/jogh.15.04280
+
+Wu, J., Ruan, J., Di, W., Ying, J., Zhou, J., Luo, Z., Rudan, I., & Song, P. (2026). The global burden of hypertension preventable by urban greenness. *Nature Health.* https://doi.org/10.1038/s44360-026-00090-5
 
 Zhang, J., & Yu, K. F. (1998). What's the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. *JAMA, 280*(19), 1690–1691. https://doi.org/10.1001/jama.280.19.1690
 
