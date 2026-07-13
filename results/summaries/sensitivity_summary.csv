@@ -1,4 +1,4 @@
-effect_size_label,effect_size,preventable_cases,cost_cost_low_17000,cost_cost_central_21280,cost_cost_high_23000
-es_low_rr_0.908,0.908,9642.9,163929390,205201024,221786821
-es_central_rr_0.944,0.944,5813.9,98836755,123720361,133720315
-es_high_rr_0.982,0.982,1850.6,31460156,39380713,42563740
+effect_size_label,effect_size,preventable_cases,cost_low_17000,cost_central_21280,cost_high_23000
+es_low_rr_0.908,0.908,8078.5,137333944,171909784,185804748
+es_central_rr_0.944,0.944,4870.7,82801771,103648334,112025925
+es_high_rr_0.982,0.982,1550.4,26356163,32991715,35658339
