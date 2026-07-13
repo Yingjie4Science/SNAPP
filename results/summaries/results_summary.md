@@ -4,10 +4,10 @@ _Generated 2026-07-13 from `preventable_cases_cost_sum_sf_2024.csv`._
 
 ## Headline
 
-- Preventable depression cases/year: **4,871**
-- Avoided societal cost/year: **$103,648,344**
-- Tracts analyzed: **244**
-- Per-tract cases: mean 20.0, median 19.4, min 0.0, max 65.2
+- Preventable depression cases/year: **4,867**
+- Avoided societal cost/year: **$103,573,424**
+- Tracts analyzed: **241**
+- Per-tract cases: mean 20.2, median 19.6, min 0.6, max 64.5
 
 ## QA checks
 
@@ -19,8 +19,8 @@ _Generated 2026-07-13 from `preventable_cases_cost_sum_sf_2024.csv`._
 
 Two distinct questions, reported side by side:
 
-- **Marginal greening** (current NDVI -> +scenario): **4,871** preventable cases/yr, **$103,648,344**/yr.
-- **Total value of existing greenness** (bare NDVI=0 -> current): **21,340** cases/yr already averted, **$454,106,219**/yr.
+- **Marginal greening** (current NDVI -> +scenario): **4,867** preventable cases/yr, **$103,573,424**/yr.
+- **Total value of existing greenness** (bare NDVI=0 -> current): **21,321** cases/yr already averted, **$453,715,456**/yr.
 
 The first is the benefit of *adding* greenness (policy-relevant marginal effect); the second is an ecosystem-service accounting of greenness already present. The NDVI=0 figure extrapolates the exposure-response well beyond observed data, so treat it as an upper-bound accounting number, not a prediction of what removing all vegetation would do.
 
@@ -37,9 +37,9 @@ Putting the San Francisco result in perspective:
 ## Baseline & population check
 
 - Marginal preventable fraction (model): **2.84%** of baseline cases at +0.05 NDVI (RR 0.944).
-- Model-implied baseline depression cases: **171,483** (= preventable / preventable-fraction).
+- Model-implied baseline depression cases: **171,359** (= preventable / preventable-fraction).
 - Census-based adult depression pool: **146,212** (716,727 adults × 20.4%).
-- ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~840,602 (vs 716,727 adults). Check that population was adult-scaled AND clipped to the AOI polygon (not a bounding box). Fixing it scales the headline down by ~15%.
+- ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~839,995 (vs 716,727 adults). Check that population was adult-scaled AND clipped to the AOI polygon (not a bounding box). Fixing it scales the headline down by ~15%.
 
 ## Literature benchmark
 
@@ -54,9 +54,9 @@ _Refs: Liu et al. 2023 Environ. Res. 231:116303; Barcelona Eixos Verds HIA (Muel
 
 | effect_size | preventable_cases | cost_low | cost_central | cost_high |
 |---|---:|---:|---:|---:|
-| 0.908 | 8,078 | $137,333,944 | $171,909,784 | $185,804,748 |
-| 0.944 | 4,871 | $82,801,771 | $103,648,334 | $112,025,925 |
-| 0.982 | 1,550 | $26,356,163 | $32,991,715 | $35,658,339 |
+| 0.908 | 8,073 | $137,234,774 | $171,785,647 | $185,670,577 |
+| 0.944 | 4,867 | $82,741,930 | $103,573,428 | $111,944,964 |
+| 0.982 | 1,549 | $26,337,096 | $32,967,848 | $35,632,542 |
 
 ## p0 sensitivity (OR->RR conversion)
 
@@ -64,11 +64,11 @@ Baseline risk p0 used: **0.204** (population-weighted PLACES prevalence); centra
 
 | p0 | RR | approx. preventable cases |
 |---:|---:|---:|
-| 0.10 | 0.9375 | 5,487 |
-| 0.15 | 0.9407 | 5,191 |
-| 0.20 | 0.9440 | 4,894 |
-| 0.25 | 0.9473 | 4,597 |
-| 0.30 | 0.9507 | 4,298 |
+| 0.10 | 0.9375 | 5,483 |
+| 0.15 | 0.9407 | 5,187 |
+| 0.20 | 0.9440 | 4,891 |
+| 0.25 | 0.9473 | 4,593 |
+| 0.30 | 0.9507 | 4,295 |
 
 ## Figures
 
