@@ -17,14 +17,14 @@ model:
   # OR 0.931, 95% CI 0.887-0.977 per +0.1 NDVI, depression). Converted OR->RR at
   # baseline risk p0 via src/inputs/effect_size.py (Zhang & Yu 1998). Recompute
   # with effect_size.py if you change p0. Full detail: docs/effect_size.md.
-  effect_size: 0.944          # RR central   (from OR 0.931 at p0=0.20)
-  effect_size_low: 0.908      # RR bound      (from OR 0.887 = more protective)
-  effect_size_high: 0.982     # RR bound      (from OR 0.977 = least protective)
+  effect_size: 0.944          # RR central (OR 0.931 at p0=0.204); derived by compute_p0.py
+  effect_size_low: 0.908      # RR bound (OR 0.887 = more protective)
+  effect_size_high: 0.982     # RR bound (OR 0.977 = least protective)
   # Published odds ratios + p0, kept for provenance / recomputation:
   effect_size_or: 0.931
   effect_size_or_low: 0.887
   effect_size_or_high: 0.977
-  baseline_risk_p0: 0.20      # US adult depression prevalence used for OR->RR
+  baseline_risk_p0: 0.204      # population-weighted PLACES prevalence (compute_p0.py)
   model_option: "ndvi"        # 'ndvi' or 'lulc'
 
 population:
