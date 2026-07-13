@@ -533,6 +533,21 @@ def main():
     cpc = (total_cost / total_cases) if (total_cases and total_cost) else None  # cost per case
     cost_ci_txt = (f" (95% CI: ${ci[0]*cpc/1e6:,.0f}–${ci[1]*cpc/1e6:,.0f}M)"
                    if (ci and cpc) else "")
+    context = _config_context()
+    population_total = context.get("population_total")
+    population_adult = context.get("population_adult")
+    gdp = context.get("gdp_usd")
+    p0 = float(_config_model().get("baseline_risk_p0", 0.204))
+    depression_pool = population_adult * p0 if population_adult else None
+
+    def scale_metrics(cases, cost):
+        """Common denominators used for every row in the scenario table."""
+        return (
+            f"{1000 * cases / population_adult:.1f}" if (cases and population_adult) else "—",
+            f"{100 * cases / depression_pool:.1f}%" if (cases and depression_pool) else "—",
+            f"${cost / population_total:,.0f}" if (cost and population_total) else "—",
+            f"{100 * cost / gdp:.3f}%" if (cost and gdp) else "—",
+        )
 
     # --- Build figures first so each can be placed in its section ---
     F = {}
@@ -609,9 +624,10 @@ def main():
               "greening is allowed. The existing-greenness row is included for context, but it is "
               "an accounting counterfactual (today's greenness versus a bare city), not an investment "
               "option or a plausible removal forecast.", ""]
-        L += img("scenarios", "Investment scenarios plus the existing-greenness accounting counterfactual.")
-        L += ["| Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |",
-              "|---|---|---:|---:|"]
+        L += img("scenarios", "Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.")
+        L += ["**Table 1. Scenario comparison with common population and economic anchors.**", "",
+              "| Scenario | Spatial rule | Cases / yr | Cases / 1,000 adults | Share of adult depression pool | Avoided cost / yr | Cost / resident / yr | Share of city GDP |",
+              "|---|---|---:|---:|---:|---:|---:|---:|"]
         rules = {
             "uniform_005": "Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere.",
             "greenable_005": "Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen.",
@@ -624,11 +640,23 @@ def main():
             if cases is None:
                 continue
             label = SCENARIO_NAMES.get(r["scenario"], r["scenario"])
+            per_1k, pool_share, per_resident, gdp_share = scale_metrics(cases, cost)
             L.append(f"| {label} | {rules.get(r['scenario'], 'See config.yaml.')} | "
-                     f"{cases:,.0f} | ${cost:,.0f} |")
+                     f"{cases:,.0f} | {per_1k} | {pool_share} | ${cost:,.0f} | "
+                     f"{per_resident} | {gdp_share} |")
         if tg_cases:
-            L.append(f"| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | {tg_cases:,.0f} | ${tg_cost:,.0f} |")
-        L += ["", "The LULC-masked and canopy-target scenarios are the most decision-relevant; "
+            per_1k, pool_share, per_resident, gdp_share = scale_metrics(tg_cases, tg_cost)
+            L.append(f"| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | {tg_cases:,.0f} | {per_1k} | {pool_share} | ${tg_cost:,.0f} | {per_resident} | {gdp_share} |")
+        pool_text = f"{depression_pool:,.0f}" if depression_pool else "the configured adult depression pool"
+        adult_text = f"{population_adult:,.0f}" if population_adult else "the configured adult population"
+        pop_text = f"{population_total:,.0f}" if population_total else "the configured total population"
+        gdp_text = f"${gdp / 1e9:,.0f}B" if gdp else "the configured city GDP"
+        L += ["", f"<sub>Table 1 legend. All values are annual central estimates, not confidence intervals. "
+              f"Cases per 1,000 adults use {adult_text} adults. The adult depression pool is "
+              f"{pool_text} ({p0:.1%} prevalence). Cost per resident uses {pop_text} residents; "
+              f"GDP shares use {gdp_text}. Costs use the configured ${rate:,.0f} per case. "
+              "The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>",
+              "", "The LULC-masked and canopy-target scenarios are the most decision-relevant; "
               "the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.", ""]
     else:
         L += ["_Alternative scenarios have not been run. Run `run_scenarios.py` after generating "
@@ -666,8 +694,14 @@ def main():
     else:
         L += ["_Run `equity_analysis.py` to add income and SVI equity diagnostics._", ""]
 
-    # ---- Perspective ----
-    L += context_lines(total_cases, total_cost, tg_cases, tg_cost)
+    # ---- Common scale definitions (not tied to one scenario) ----
+    L += ["## Interpreting the scale columns", "",
+          "The population, depression-pool, resident-cost, and GDP measures in Table 1 are "
+          "calculated separately for **every** scenario using the same city-wide denominators. "
+          "They are included in the table precisely to avoid treating the uniform +0.05 reference "
+          "scenario as the only result. Compare investment scenarios primarily on their spatial "
+          "feasibility and these standardized benefit metrics; interpret the existing-greenness row "
+          "only as the current stock of modeled benefit.", ""]
 
     # ---- Reliability ----
     L += ["", "## How reliable are these numbers?", "",

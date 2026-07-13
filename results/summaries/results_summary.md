@@ -19,17 +19,21 @@ Adding a modest amount of greenery across San Francisco — a **+0.05 rise in th
 
 The five investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
 
-![Investment scenarios plus the existing-greenness accounting counterfactual.](../figures/scenario_comparison.png)
-<sub>Investment scenarios plus the existing-greenness accounting counterfactual.</sub>
+![Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.](../figures/scenario_comparison.png)
+<sub>Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.</sub>
 
-| Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |
-|---|---|---:|---:|
-| Uniform +0.05 NDVI (reference) | Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere. | 4,867 | $103,573,428 |
-| Greenable-only +0.05 NDVI | Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen. | 4,700 | $100,026,235 |
-| LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | $12,681,043 |
-| 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | $751,537,448 |
-| Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | $830,202,625 |
-| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 21,321 | $453,715,456 |
+**Table 1. Scenario comparison with common population and economic anchors.**
+
+| Scenario | Spatial rule | Cases / yr | Cases / 1,000 adults | Share of adult depression pool | Avoided cost / yr | Cost / resident / yr | Share of city GDP |
+|---|---|---:|---:|---:|---:|---:|---:|
+| Uniform +0.05 NDVI (reference) | Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere. | 4,867 | 6.8 | 3.3% | $103,573,428 | $125 | 0.041% |
+| Greenable-only +0.05 NDVI | Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen. | 4,700 | 6.6 | 3.2% | $100,026,235 | $120 | 0.040% |
+| LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | 0.8 | 0.4% | $12,681,043 | $15 | 0.005% |
+| 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | 49.3 | 24.2% | $751,537,448 | $905 | 0.301% |
+| Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | 54.4 | 26.7% | $830,202,625 | $1,000 | 0.332% |
+| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 21,321 | 29.7 | 14.6% | $453,715,456 | $546 | 0.181% |
+
+<sub>Table 1 legend. All values are annual central estimates, not confidence intervals. Cases per 1,000 adults use 716,727 adults. The adult depression pool is 146,212 (20.4% prevalence). Cost per resident uses 830,235 residents; GDP shares use $250B. Costs use the configured $21,280 per case. The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>
 
 The LULC-masked and canopy-target scenarios are the most decision-relevant; the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.
 
@@ -54,17 +58,10 @@ For income, a negative index favors lower-income tracts. For SVI, a positive ind
 ![Income and SVI concentration curves](../figures/equity_concentration_curves.png)
 <sub>Each curve is ranked separately; above the diagonal means concentration toward the lower end of that specific rank.</sub>
 
+## Interpreting the scale columns
 
-## Putting the numbers in perspective
+The population, depression-pool, resident-cost, and GDP measures in Table 1 are calculated separately for **every** scenario using the same city-wide denominators. They are included in the table precisely to avoid treating the uniform +0.05 reference scenario as the only result. Compare investment scenarios primarily on their spatial feasibility and these standardized benefit metrics; interpret the existing-greenness row only as the current stock of modeled benefit.
 
-To make the San Francisco result intuitive:
-
-- Preventable cases are **0.59%** of total population (5.9 per 1,000 residents).
-- Preventable **rate: 6.8 cases per 1,000 adults** — the age-structure-independent metric for comparing places (see PAF note below).
-- Estimated adult depression pool ≈ **146,212** (716,727 adults × 20.4%); marginal greening averts **3.3%** of it, and existing greenness accounts for **15%**.
-- Avoided societal cost is **0.041%** of San Francisco GDP (~$250B); existing-greenness value is **0.18%** of GDP.
-- Avoided cost per resident: **$125/year**.
-- (Population/GDP anchors live in config.yaml `context:` — update per city; GDP is an approximate BEA figure.)
 
 ## How reliable are these numbers?
 
