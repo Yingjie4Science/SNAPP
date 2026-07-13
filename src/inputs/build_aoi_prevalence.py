@@ -163,9 +163,16 @@ def main():
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     aoi_path = OUT_DIR / "aoi.gpkg"
     prev_path = OUT_DIR / "baseline_prevalence.gpkg"
-    aoi.to_file(aoi_path, driver="GPKG")
-    prevalence.to_file(prev_path, driver="GPKG")
-    LOGGER.info("Wrote AOI -> %s", aoi_path)
+    # Delete any existing file first. A GeoPackage can hold MULTIPLE layers, and
+    # geopandas.to_file APPENDS a layer rather than replacing the file — so an old
+    # layer (e.g. a stale 'sf_aoi') would linger and get read by the model instead
+    # of the new one. Removing the file guarantees a single, correct layer.
+    for p in (aoi_path, prev_path):
+        if p.exists():
+            p.unlink()
+    aoi.to_file(aoi_path, driver="GPKG", layer="aoi")
+    prevalence.to_file(prev_path, driver="GPKG", layer="baseline_prevalence")
+    LOGGER.info("Wrote AOI (%d tracts) -> %s", len(aoi), aoi_path)
     LOGGER.info("Wrote prevalence (field 'risk_rate') -> %s", prev_path)
     LOGGER.info("These match run_model.py's aoi_path and baseline_prevalence_vector.")
 

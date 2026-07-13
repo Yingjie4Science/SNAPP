@@ -42,6 +42,18 @@ fi
 step "3/10  AOI + depression prevalence (cartographic cb_2024; drops water tracts)"
 python src/inputs/build_aoi_prevalence.py --source api
 
+step "3b  Verify AOI has a single clean layer (catches stale sf_aoi before modeling)"
+python3 - <<'PY'
+import sqlite3, sys
+f = "data/urban-mental-health/inputs/aoi.gpkg"
+layers = [r[0] for r in sqlite3.connect(f).execute("SELECT table_name FROM gpkg_contents")]
+n = sqlite3.connect(f).execute(f"SELECT count(*) FROM '{layers[0]}'").fetchone()[0]
+print(f"   AOI layers={layers}  tracts={n}")
+if len(layers) != 1:
+    sys.exit(f"ERROR: aoi.gpkg has {len(layers)} layers {layers} — a stale layer is present "
+             "and the model may read the wrong one. Delete aoi.gpkg in Finder, then re-run.")
+PY
+
 step "4/10  Population (WorldPop US 100 m -> SF adults; mass-conserving)"
 python src/inputs/fetch_population.py --adult-fraction 0.86
 
@@ -68,8 +80,25 @@ python src/urban_mental_health/run_sensitivity.py
 step "10/10  Summary + figures (maps, counterfactual bar, sensitivity range, scatter)"
 python src/urban_mental_health/summarize_results.py --map
 
-step "Population sanity check (expect ~717k SF adults, not ~1.0M)"
-python -c "import rasterio,numpy as np;a=rasterio.open('data/urban-mental-health/inputs/population.tif').read(1,masked=True);print('   pop sum = %.0f'%np.nansum(a))"
+step "Sanity checks (population total + output-vs-AOI tract count)"
+python3 - <<'PY'
+import sqlite3, glob, sys
+import rasterio, numpy as np
+a = rasterio.open("data/urban-mental-health/inputs/population.tif").read(1, masked=True)
+print("   pop sum = %.0f  (expect ~717k SF adults, not ~1.0M)" % np.nansum(a))
+aoi = "data/urban-mental-health/inputs/aoi.gpkg"
+al = [r[0] for r in sqlite3.connect(aoi).execute("SELECT table_name FROM gpkg_contents")][0]
+na = sqlite3.connect(aoi).execute(f"SELECT count(*) FROM '{al}'").fetchone()[0]
+g = sorted(glob.glob("data/urban-mental-health/runs/sf_baseline/output/*sum*.gpkg"))
+if g:
+    c = sqlite3.connect(g[0])
+    t = [r[0] for r in c.execute("SELECT table_name FROM gpkg_contents")][0]
+    no = c.execute(f"SELECT count(*) FROM '{t}'").fetchone()[0]
+    print(f"   AOI tracts={na}  model-output tracts={no}")
+    if no != na:
+        sys.exit(f"ERROR: output tracts {no} != AOI {na} — model read a stale/other AOI layer.")
+    print("   OK: model output matches the clean AOI.")
+PY
 
 echo; echo "==> Done. Results in results/summaries/results_summary.md + results/figures/;"
 echo "    model runs in data/urban-mental-health/runs/sf_baseline (+ sf_total_greenness)."
