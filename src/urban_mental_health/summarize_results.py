@@ -32,6 +32,8 @@ TOTAL_GREENNESS_WS = UMH / "runs" / "sf_total_greenness"  # existing-greenness r
 RESULTS = BASE_DIR / "results"
 SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
 SCENARIOS = RESULTS / "summaries" / "scenario_comparison.csv"
+EQUITY = RESULTS / "summaries" / "equity_metrics.csv"
+EQUITY_FIG = RESULTS / "figures" / "equity_concentration_curves.png"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_MD = RESULTS / "summaries" / "results_summary.md"
 
@@ -46,6 +48,10 @@ SCENARIO_NAMES = {
 # Canonical APA (7th ed.) bibliography for the whole project. Keep in sync with
 # docs/references.md and make_manuscript_figures.py. Alphabetical by author.
 APA_REFERENCES = [
+    "Centers for Disease Control and Prevention/Agency for Toxic Substances and Disease Registry/"
+    "Geospatial Research, Analysis, and Services Program. (2024). *CDC/ATSDR Social "
+    "Vulnerability Index 2022 Database* [Data set]. "
+    "https://www.atsdr.cdc.gov/place-health/php/svi/svi-data-documentation-download.html",
     "Centers for Disease Control and Prevention. (2024). *PLACES: Local data for better "
     "health (census tract and county data)* [Data set]. https://www.cdc.gov/places",
     "Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, "
@@ -172,6 +178,20 @@ def read_scenarios():
     return rows
 
 
+def read_equity_metrics():
+    """Return the machine-readable income/SVI equity results, if available."""
+    if not EQUITY.exists():
+        return []
+    with open(EQUITY) as fh:
+        rows = list(csv.DictReader(fh))
+    for row in rows:
+        try:
+            row["concentration_index"] = float(row["concentration_index"])
+        except (KeyError, TypeError, ValueError):
+            row["concentration_index"] = None
+    return rows
+
+
 def effect_ci():
     """95% CI on preventable cases implied by the effect-size 95% CI.
 
@@ -258,20 +278,24 @@ def draw_counterfactual_bar(marg_cases, tot_cases, marg_cost, tot_cost):
     return out
 
 
-def draw_scenario_bar(rows):
-    """Bar chart of alternative, mutually comparable greening rules."""
+def draw_scenario_bar(rows, existing_cases=None):
+    """One chart for investment scenarios plus the existing-greenness accounting case."""
     _, plt = _mpl()
     rows = [r for r in rows if r.get("preventable_cases") is not None]
+    if existing_cases is not None:
+        rows = list(rows) + [{"scenario": "existing_greenness", "preventable_cases": existing_cases}]
     if plt is None or not rows:
         return None
-    labels = [SCENARIO_NAMES.get(r["scenario"], r["scenario"]) for r in rows]
+    labels = ["Existing greenness\n(accounting)" if r["scenario"] == "existing_greenness"
+              else SCENARIO_NAMES.get(r["scenario"], r["scenario"]) for r in rows]
     values = [r["preventable_cases"] for r in rows]
     fig, ax = plt.subplots(figsize=(7.2, 4.2))
-    bars = ax.bar(range(len(rows)), values, color="#2c7fb8", width=0.65)
+    colors = ["#31a354" if r["scenario"] == "existing_greenness" else "#2c7fb8" for r in rows]
+    bars = ax.bar(range(len(rows)), values, color=colors, width=0.65)
     ax.set_xticks(range(len(rows)))
     ax.set_xticklabels(labels, rotation=20, ha="right")
     ax.set_ylabel("Preventable depression cases / year")
-    ax.set_title("Alternative greening scenarios (same health and cost assumptions)")
+    ax.set_title("Greening scenarios and existing-greenness accounting")
     for bar, value in zip(bars, values):
         ax.text(bar.get_x() + bar.get_width() / 2, value, f"{value:,.0f}",
                 ha="center", va="bottom", fontsize=8)
@@ -498,6 +522,7 @@ def main():
         raise SystemExit(f"No summary CSV in {WORKSPACE/'output'}. Run the model first.")
     tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
     scenario_rows = read_scenarios()
+    equity_rows = read_equity_metrics()
     rate = float(COST_FILE.read_text().strip()) if COST_FILE.exists() else None
     implied = (total_cost / total_cases) if (total_cost and total_cases) else None
     city = _config_context().get("city_name", "San Francisco")
@@ -525,7 +550,7 @@ def main():
             "Avoided societal cost from added greenery, by neighborhood",
             "Avoided cost / yr ($)", "map_marginal_cost.png", cmap="PuBuGn")
         F["bar"] = draw_counterfactual_bar(total_cases, tg_cases, total_cost, tg_cost)
-        F["scenarios"] = draw_scenario_bar(scenario_rows)
+        F["scenarios"] = draw_scenario_bar(scenario_rows, tg_cases)
         F["sens"] = draw_sensitivity_range()
         F["scatter"] = draw_scatter()
 
@@ -576,36 +601,15 @@ def main():
               f"(range {min(per_tract):.0f}–{max(per_tract):.0f})."]
     L += [""]
 
-    # ---- Two scenarios: bar + side-by-side maps ----
-    L += ["## Two ways to value greenery", ""]
-    if tg_path and tg_cases:
-        L += ["We answer two different questions:", "",
-              f"1. **Adding greenery** (the policy question) — if greenery rose by +0.05 "
-              f"NDVI everywhere, about **{total_cases:,.0f}** cases/yr"
-              + (f" (${cost_m:,.0f}M)" if total_cost else "") + " would be prevented.",
-              f"2. **Greenery we already have** (its standing value) — versus a bare, "
-              f"vegetation-free city, today's greenery already prevents about "
-              f"**{tg_cases:,.0f}** cases/yr" + (f" (${tg_m:,.0f}M)" if tg_cost else "") + ".",
-              "",
-              "The first guides investment; the second is an accounting of a benefit the "
-              "city already enjoys. The \"bare city\" is a what-if benchmark, not a real "
-              "prospect — read it as an upper bound.", ""]
-        L += img("bar", "The two scenarios compared: depression cases prevented per year.")
-        L += ["**Where the benefits fall** — darker means more cases prevented:", ""]
-        L += pair("marg_map", "exist_map",
-                  "Adding greenery (+0.05 NDVI)", "Greenery already present")
-    else:
-        L += ["_The \"greenery we already have\" run wasn't found — generate it with "
-              "`run_model.py --total-greenness` to enable this comparison._", ""]
-
-    # ---- Alternative investment scenarios ----
-    L += ["## Alternative investment scenarios", ""]
+    # ---- One scenario section: investments plus existing-greenness accounting ----
+    L += ["## Scenario comparison", ""]
     if scenario_rows:
-        L += ["These scenarios use the same exposure-response, baseline depression, population, and "
-              "societal-cost assumptions. They differ only in where and how much greening is allowed; "
-              "therefore, their differences are scenario assumptions rather than independent statistical "
-              "estimates.", ""]
-        L += img("scenarios", "Preventable cases under alternative greening scenarios.")
+        L += ["The five investment scenarios use the same exposure-response, baseline depression, "
+              "population, and societal-cost assumptions; they differ only in where and how much "
+              "greening is allowed. The existing-greenness row is included for context, but it is "
+              "an accounting counterfactual (today's greenness versus a bare city), not an investment "
+              "option or a plausible removal forecast.", ""]
+        L += img("scenarios", "Investment scenarios plus the existing-greenness accounting counterfactual.")
         L += ["| Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |",
               "|---|---|---:|---:|"]
         rules = {
@@ -622,6 +626,8 @@ def main():
             label = SCENARIO_NAMES.get(r["scenario"], r["scenario"])
             L.append(f"| {label} | {rules.get(r['scenario'], 'See config.yaml.')} | "
                      f"{cases:,.0f} | ${cost:,.0f} |")
+        if tg_cases:
+            L.append(f"| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | {tg_cases:,.0f} | ${tg_cost:,.0f} |")
         L += ["", "The LULC-masked and canopy-target scenarios are the most decision-relevant; "
               "the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.", ""]
     else:
@@ -635,6 +641,30 @@ def main():
           "that higher-prevalence neighborhoods gain more from greening.", ""]
     L += img("cost_map", "Avoided societal cost per neighborhood, from added greenery.")
     L += img("scatter", "Higher baseline depression → more cases prevented per neighborhood.")
+
+    # ---- Equity interpretation ----
+    L += ["## Equity implications", ""]
+    if equity_rows:
+        L += ["We assess the distribution of the modeled *rate* of prevented cases using two "
+              "complementary rankings: median household income and CDC/ATSDR Social Vulnerability "
+              "Index (SVI). This is a distributional diagnostic, not evidence that a real project "
+              "will reach vulnerable residents without deliberate siting and implementation.", "",
+              "| Equity lens | Concentration index | Interpretation |",
+              "|---|---:|---|"]
+        for row in equity_rows:
+            label = "Median household income (low → high)" if row.get("measure") == "income" else "CDC/ATSDR SVI (low → high vulnerability)"
+            ci_value = row.get("concentration_index")
+            ci_text = f"{ci_value:+.3f}" if ci_value is not None else "n/a"
+            L.append(f"| {label} | {ci_text} | {row.get('interpretation', 'n/a')} |")
+        L += ["", "For income, a negative index favors lower-income tracts. For SVI, a positive "
+              "index favors more socially vulnerable tracts. Values within ±0.02 are treated as "
+              "no material gradient.", ""]
+        if EQUITY_FIG.exists():
+            L += [f"![Income and SVI concentration curves](../figures/{EQUITY_FIG.name})",
+                  "<sub>Each curve is ranked separately; above the diagonal means concentration "
+                  "toward the lower end of that specific rank.</sub>", ""]
+    else:
+        L += ["_Run `equity_analysis.py` to add income and SVI equity diagnostics._", ""]
 
     # ---- Perspective ----
     L += context_lines(total_cases, total_cost, tg_cases, tg_cost)

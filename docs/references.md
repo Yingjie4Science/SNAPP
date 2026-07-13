@@ -5,6 +5,8 @@ is the single source of truth; `summarize_results.py` (`APA_REFERENCES`) and
 `make_manuscript_figures.py` emit the same list, and the other docs cite these
 works author–date. Keep all copies in sync.
 
+Centers for Disease Control and Prevention/Agency for Toxic Substances and Disease Registry/Geospatial Research, Analysis, and Services Program. (2024). *CDC/ATSDR Social Vulnerability Index 2022 Database* [Data set]. https://www.atsdr.cdc.gov/place-health/php/svi/svi-data-documentation-download.html
+
 Centers for Disease Control and Prevention. (2024). *PLACES: Local data for better health (census tract and county data)* [Data set]. https://www.cdc.gov/places
 
 Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, S. H., & Kessler, R. C. (2021). The economic burden of adults with major depressive disorder in the United States (2010 and 2018). *PharmacoEconomics, 39*(6), 653–665. https://doi.org/10.1007/s40273-021-01019-4

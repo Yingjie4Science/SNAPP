@@ -1,17 +1,19 @@
 # Equity analysis — who benefits from greening
 
-_237 neighborhoods matched to ACS 2023 income._
+_237 tracts matched to ACS 2023 income; 236 matched to CDC/ATSDR 2022 SVI._
 
-## Concentration index
+## Interpretation for decisions
 
-- **CI = +0.020** for the preventable depression *rate* vs. neighborhood median income.
-- The benefit concentrates in **evenly across the income gradient**.
-- CI ranges −1…+1; 0 = perfectly even. Negative = the greening benefit is larger where incomes are lower (an equity win).
+- **Income:** CI **+0.020** — no material gradient detected.
+- **Social vulnerability (SVI):** CI **-0.028** — benefits concentrate in less socially vulnerable neighborhoods (equity concern).
+- **Bottom line:** the result describes the distribution of modeled benefit, not whether investments reach residents who need them most. Use it alongside project siting, community engagement, and anti-displacement safeguards.
 
-![Concentration curve](../figures/equity_concentration_curve.png)
-<sub>Concentration curve (CI = +0.020). Above the diagonal = benefit concentrated among lower-income residents.</sub>
+CI ranges from −1 to +1; values within ±0.02 are treated here as no material gradient. For income, negative means benefit is concentrated among lower-income tracts. For SVI, positive means benefit is concentrated among more vulnerable tracts.
 
-## By income decile (1 = poorest)
+![Concentration curves](../figures/equity_concentration_curves.png)
+<sub>Curves above the diagonal indicate concentration among the lower end of the rank. For income that means lower income; for SVI that means lower vulnerability.</sub>
+
+## By income decile (1 = lowest income)
 
 | decile | mean tract income | preventable cases / 1,000 adults | % of total cases |
 |---:|---:|---:|---:|
@@ -26,4 +28,23 @@ _237 neighborhoods matched to ACS 2023 income._
 | 9 | $209,746 | 6.5 | 9.9% |
 | 10 | $243,295 | 6.3 | 10.5% |
 
-_Method: population-weighted health concentration index (Kakwani et al., 1997); framing after Wu et al. (2026). Income is a proxy for deprivation; swap in CDC SVI or ADI via --ses-file if preferred._
+## By SVI decile (1 = least vulnerable)
+
+| decile | mean CDC SVI percentile | preventable cases / 1,000 adults | % of total cases |
+|---:|---:|---:|---:|
+| 1 | 0.062 | 16.6 | 9.6% |
+| 2 | 0.154 | 6.7 | 10.8% |
+| 3 | 0.268 | 6.4 | 11.1% |
+| 4 | 0.378 | 6.1 | 9.3% |
+| 5 | 0.461 | 5.9 | 12.9% |
+| 6 | 0.539 | 7.0 | 9.8% |
+| 7 | 0.628 | 6.0 | 9.9% |
+| 8 | 0.709 | 5.0 | 9.6% |
+| 9 | 0.791 | 5.8 | 8.9% |
+| 10 | 0.940 | 6.2 | 8.1% |
+
+## Method and limits
+
+Population-weighted health concentration indices use preventable cases per adult, not total cases, so large tracts do not mechanically dominate. Income uses ACS 2023 median household income. CDC/ATSDR 2022 SVI uses 16 ACS social factors across four themes; its overall percentile (RPL_THEMES) is ranked nationally, so it is a broader deprivation lens than income alone.
+
+_Sources: Kakwani et al. (1997); CDC/ATSDR Social Vulnerability Index 2022; Wu et al. (2026)._

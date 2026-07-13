@@ -1,0 +1,3 @@
+measure,rank_direction,concentration_index,interpretation,matched_tracts
+income,low income to high income,0.019774,no material gradient detected,237
+svi,low vulnerability to high vulnerability,-0.028288,benefits concentrate in less socially vulnerable neighborhoods (equity concern),236

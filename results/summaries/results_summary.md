@@ -15,31 +15,12 @@ Adding a modest amount of greenery across San Francisco — a **+0.05 rise in th
 - Neighborhoods analyzed: **241** census tracts
 - Per neighborhood: **20** cases prevented on average (range 1–65).
 
-## Two ways to value greenery
+## Scenario comparison
 
-We answer two different questions:
+The five investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
 
-1. **Adding greenery** (the policy question) — if greenery rose by +0.05 NDVI everywhere, about **4,867** cases/yr ($104M) would be prevented.
-2. **Greenery we already have** (its standing value) — versus a bare, vegetation-free city, today's greenery already prevents about **21,321** cases/yr ($454M).
-
-The first guides investment; the second is an accounting of a benefit the city already enjoys. The "bare city" is a what-if benchmark, not a real prospect — read it as an upper bound.
-
-![The two scenarios compared: depression cases prevented per year.](../figures/counterfactual_comparison.png)
-<sub>The two scenarios compared: depression cases prevented per year.</sub>
-
-**Where the benefits fall** — darker means more cases prevented:
-
-<table><tr>
-<td width="50%"><img src="../figures/map_marginal_cases.png" width="100%"><br><sub>Adding greenery (+0.05 NDVI)</sub></td>
-<td width="50%"><img src="../figures/map_existing_greenness_cases.png" width="100%"><br><sub>Greenery already present</sub></td>
-</tr></table>
-
-## Alternative investment scenarios
-
-These scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions. They differ only in where and how much greening is allowed; therefore, their differences are scenario assumptions rather than independent statistical estimates.
-
-![Preventable cases under alternative greening scenarios.](../figures/scenario_comparison.png)
-<sub>Preventable cases under alternative greening scenarios.</sub>
+![Investment scenarios plus the existing-greenness accounting counterfactual.](../figures/scenario_comparison.png)
+<sub>Investment scenarios plus the existing-greenness accounting counterfactual.</sub>
 
 | Scenario | Spatial rule | Preventable cases / yr | Avoided societal cost / yr |
 |---|---|---:|---:|
@@ -48,6 +29,7 @@ These scenarios use the same exposure-response, baseline depression, population,
 | LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | $12,681,043 |
 | 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | $751,537,448 |
 | Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | $830,202,625 |
+| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 21,321 | $453,715,456 |
 
 The LULC-masked and canopy-target scenarios are the most decision-relevant; the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.
 
@@ -57,6 +39,20 @@ Benefits are largest where many people live near low greenery and depression rat
 
 ![Avoided societal cost per neighborhood, from added greenery.](../figures/map_marginal_cost.png)
 <sub>Avoided societal cost per neighborhood, from added greenery.</sub>
+
+## Equity implications
+
+We assess the distribution of the modeled *rate* of prevented cases using two complementary rankings: median household income and CDC/ATSDR Social Vulnerability Index (SVI). This is a distributional diagnostic, not evidence that a real project will reach vulnerable residents without deliberate siting and implementation.
+
+| Equity lens | Concentration index | Interpretation |
+|---|---:|---|
+| Median household income (low → high) | +0.020 | no material gradient detected |
+| CDC/ATSDR SVI (low → high vulnerability) | -0.028 | benefits concentrate in less socially vulnerable neighborhoods (equity concern) |
+
+For income, a negative index favors lower-income tracts. For SVI, a positive index favors more socially vulnerable tracts. Values within ±0.02 are treated as no material gradient.
+
+![Income and SVI concentration curves](../figures/equity_concentration_curves.png)
+<sub>Each curve is ranked separately; above the diagonal means concentration toward the lower end of that specific rank.</sub>
 
 
 ## Putting the numbers in perspective
@@ -132,6 +128,8 @@ _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — s
 - **Effect size (risk ratio)** — how much depression risk changes per +0.1 NDVI.
 
 ## References
+
+Centers for Disease Control and Prevention/Agency for Toxic Substances and Disease Registry/Geospatial Research, Analysis, and Services Program. (2024). *CDC/ATSDR Social Vulnerability Index 2022 Database* [Data set]. https://www.atsdr.cdc.gov/place-health/php/svi/svi-data-documentation-download.html
 
 Centers for Disease Control and Prevention. (2024). *PLACES: Local data for better health (census tract and county data)* [Data set]. https://www.cdc.gov/places
 
