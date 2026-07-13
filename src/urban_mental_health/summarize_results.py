@@ -79,7 +79,7 @@ def p0_sensitivity_lines(central_cases):
     or_c = float(m.get("effect_size_or", 0.931))
     p0_used = float(m.get("baseline_risk_p0", 0.20))
     rr_used = or_to_rr(or_c, p0_used)
-    out = ["", "## p0 sensitivity (OR->RR conversion)", "",
+    out = ["", "### Sensitivity to the baseline-risk assumption (p0)", "",
            f"Baseline risk p0 used: **{p0_used:.3f}** (population-weighted PLACES "
            f"prevalence); central OR {or_c:.3f} -> RR {rr_used:.4f}. The RR is nearly "
            f"flat in p0, but preventable cases scale with -ln(RR), so they move "
@@ -198,7 +198,7 @@ def baseline_check_lines(total_cases):
     implied_baseline = total_cases / frac
     census_pool = adult * p0
     ratio = implied_baseline / census_pool
-    out = ["", "## Baseline & population check", "",
+    out = ["", "### Baseline & population check", "",
            f"- Marginal preventable fraction (model): **{100*frac:.2f}%** of baseline "
            f"cases at +{delta:g} NDVI (RR {rr:.3f}).",
            f"- Model-implied baseline depression cases: **{implied_baseline:,.0f}** "
@@ -290,7 +290,7 @@ def literature_benchmark_lines(total_cases):
     rr = float(m.get("effect_size", 0.944))
     per01 = 100 * (1 - rr)
     return [
-        "", "## Literature benchmark", "",
+        "", "## How this compares with other studies", "",
         f"- **Greening magnitude.** Our +0.05 NDVI scenario is close to the Barcelona "
         f"\"Eixos Verds\" green-corridor plan, whose HIA modelled an average **+0.059 NDVI** — "
         f"so the dose is realistic, not arbitrary.",
@@ -330,8 +330,8 @@ def context_lines(total_cases, total_cost, tg_cases, tg_cost):
     adult = ctx.get("population_adult")
     gdp = ctx.get("gdp_usd")
     p0 = float(_config_model().get("baseline_risk_p0", 0.204))
-    out = ["", "## Context & reference numbers", "",
-           f"Putting the {city} result in perspective:", ""]
+    out = ["", "## Putting the numbers in perspective", "",
+           f"To make the {city} result intuitive:", ""]
     if pop:
         out.append(f"- Preventable cases are **{100*total_cases/pop:.2f}%** of total population "
                    f"({total_cases/pop*1000:.1f} per 1,000 residents).")
@@ -359,125 +359,167 @@ def context_lines(total_cases, total_cost, tg_cases, tg_cost):
 
 
 def main():
-    ap = argparse.ArgumentParser(description="Summarize + QA model outputs.")
+    ap = argparse.ArgumentParser(description="Summarize model outputs into a readable report.")
     ap.add_argument("--map", action="store_true",
-                    help="Also render figures: per-tract maps (marginal cases, existing-"
-                         "greenness cases, marginal cost) + a two-counterfactual bar chart.")
+                    help="Render figures (maps, counterfactual bar, sensitivity range, "
+                         "scatter) and embed them in the relevant sections.")
     cli = ap.parse_args()
 
     per_tract, total_cases, total_cost, path = load_sum_csv()
     if path is None:
         raise SystemExit(f"No summary CSV in {WORKSPACE/'output'}. Run the model first.")
-
+    tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
     rate = float(COST_FILE.read_text().strip()) if COST_FILE.exists() else None
     implied = (total_cost / total_cases) if (total_cost and total_cases) else None
+    city = _config_context().get("city_name", "San Francisco")
+    cost_m = (total_cost or 0) / 1e6
+    tg_m = (tg_cost or 0) / 1e6
 
-    lines = [
-        "# Model results summary (SF)", "",
-        f"_Generated {date.today().isoformat()} from `{Path(path).name}`._", "",
-        "## Headline", "",
-        f"- Preventable depression cases/year: **{total_cases:,.0f}**" if total_cases else "- cases: n/a",
-        f"- Avoided societal cost/year: **${total_cost:,.0f}**" if total_cost else "- cost: n/a",
-        f"- Tracts analyzed: **{len(per_tract)}**",
-    ]
+    # --- Build figures first so each can be placed in its section ---
+    F = {}
+    if cli.map:
+        F["marg_map"] = draw_choropleth(
+            WORKSPACE, "sum_cases",
+            "Adding greenery (+0.05 NDVI): depression cases prevented, by neighborhood",
+            "Cases prevented / yr", "map_marginal_cases.png")
+        F["exist_map"] = draw_choropleth(
+            TOTAL_GREENNESS_WS, "sum_cases",
+            "Greenery already present: depression cases it prevents, by neighborhood",
+            "Cases prevented / yr", "map_existing_greenness_cases.png", cmap="Greens")
+        F["cost_map"] = draw_choropleth(
+            WORKSPACE, "sum_cost",
+            "Avoided societal cost from added greenery, by neighborhood",
+            "Avoided cost / yr ($)", "map_marginal_cost.png", cmap="PuBuGn")
+        F["bar"] = draw_counterfactual_bar(total_cases, tg_cases, total_cost, tg_cost)
+        F["sens"] = draw_sensitivity_range()
+        F["scatter"] = draw_scatter()
+
+    def img(key, cap):
+        f = F.get(key)
+        return [f"![{cap}](../figures/{f.name})", f"<sub>{cap}</sub>", ""] if f else []
+
+    def pair(k1, k2, c1, c2):
+        a, b = F.get(k1), F.get(k2)
+        if a and b:
+            return ["<table><tr>",
+                    f'<td width="50%"><img src="../figures/{a.name}" width="100%"><br>'
+                    f'<sub>{c1}</sub></td>',
+                    f'<td width="50%"><img src="../figures/{b.name}" width="100%"><br>'
+                    f'<sub>{c2}</sub></td>', "</tr></table>", ""]
+        return img(k1, c1) + img(k2, c2)   # fallback: stacked
+
+    L = [f"# {city}: health benefits of urban greenery", "",
+         f"_Generated {date.today().isoformat()}._", "",
+         "This report estimates how much depression could be prevented — and how much money "
+         f"saved — by increasing greenery (street trees, parks, vegetation) across {city}. "
+         "It combines satellite greenery (the NDVI index), local adult depression rates "
+         "(CDC PLACES) and where people live (WorldPop) via the InVEST Urban Mental Health "
+         "model. Key terms are defined in the glossary at the end.", ""]
+
+    # ---- In brief ----
+    L += ["## In brief", ""]
+    if total_cases:
+        s = (f"Adding a modest amount of greenery across {city} — a **+0.05 rise in the "
+             f"NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan "
+             f"— could prevent about **{total_cases:,.0f} cases of depression per year**")
+        s += f", worth roughly **${cost_m:,.0f} million** in avoided societal cost." if total_cost else "."
+        if tg_cases:
+            s += (f" Separately, the greenery {city} *already has* is estimated to prevent "
+                  f"about **{tg_cases:,.0f} cases per year** versus a bare city.")
+        L += [s, ""]
+
+    # ---- Headline ----
+    L += ["## Headline numbers", "",
+          f"- **{total_cases:,.0f}** depression cases prevented per year (from added greenery)"
+          if total_cases else "- cases: n/a",
+          f"- **${total_cost:,.0f}** avoided societal cost per year" if total_cost else "- cost: n/a",
+          f"- Neighborhoods analyzed: **{len(per_tract)}** census tracts"]
     if per_tract:
-        lines += [
-            f"- Per-tract cases: mean {mean(per_tract):.1f}, median {median(per_tract):.1f}, "
-            f"min {min(per_tract):.1f}, max {max(per_tract):.1f}",
-        ]
+        L += [f"- Per neighborhood: **{mean(per_tract):.0f}** cases prevented on average "
+              f"(range {min(per_tract):.0f}–{max(per_tract):.0f})."]
+    L += [""]
 
-    lines += ["", "## QA checks", ""]
-    if implied and rate:
-        ok = abs(implied - rate) / rate < 0.01
-        lines.append(f"- Implied cost/case ${implied:,.0f} vs health_cost_rate ${rate:,.0f} "
-                     f"— {'OK (matches)' if ok else 'MISMATCH — investigate'}.")
-    lines.append("- Reminder: baseline cases should use ADULT population (prevalence is "
-                 "adult); if population wasn't adult-scaled, totals are overstated ~20%.")
-    lines.append("- Greening scenario and effect size are assumptions — read with the "
-                 "sensitivity range below, not as point truth.")
-
-    # --- Dual counterfactual: value of EXISTING greenness (baseline NDVI=0) ---
-    tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
-    lines += ["", "## Two counterfactuals", ""]
+    # ---- Two scenarios: bar + side-by-side maps ----
+    L += ["## Two ways to value greenery", ""]
     if tg_path and tg_cases:
-        lines += [
-            "Two distinct questions, reported side by side:",
-            "",
-            f"- **Marginal greening** (current NDVI -> +scenario): **{total_cases:,.0f}** "
-            f"preventable cases/yr"
-            + (f", **${total_cost:,.0f}**/yr." if total_cost else "."),
-            f"- **Total value of existing greenness** (bare NDVI=0 -> current): "
-            f"**{tg_cases:,.0f}** cases/yr already averted"
-            + (f", **${tg_cost:,.0f}**/yr." if tg_cost else "."),
-            "",
-            "The first is the benefit of *adding* greenness (policy-relevant marginal "
-            "effect); the second is an ecosystem-service accounting of greenness already "
-            "present. The NDVI=0 figure extrapolates the exposure-response well beyond "
-            "observed data, so treat it as an upper-bound accounting number, not a "
-            "prediction of what removing all vegetation would do.",
-        ]
+        L += ["We answer two different questions:", "",
+              f"1. **Adding greenery** (the policy question) — if greenery rose by +0.05 "
+              f"NDVI everywhere, about **{total_cases:,.0f}** cases/yr"
+              + (f" (${cost_m:,.0f}M)" if total_cost else "") + " would be prevented.",
+              f"2. **Greenery we already have** (its standing value) — versus a bare, "
+              f"vegetation-free city, today's greenery already prevents about "
+              f"**{tg_cases:,.0f}** cases/yr" + (f" (${tg_m:,.0f}M)" if tg_cost else "") + ".",
+              "",
+              "The first guides investment; the second is an accounting of a benefit the "
+              "city already enjoys. The \"bare city\" is a what-if benchmark, not a real "
+              "prospect — read it as an upper bound.", ""]
+        L += img("bar", "The two scenarios compared: depression cases prevented per year.")
+        L += ["**Where the benefits fall** — darker means more cases prevented:", ""]
+        L += pair("marg_map", "exist_map",
+                  "Adding greenery (+0.05 NDVI)", "Greenery already present")
     else:
-        lines.append("_Existing-greenness (NDVI=0) run not found. Generate it with "
-                     "`python src/urban_mental_health/run_model.py --total-greenness`._")
+        L += ["_The \"greenery we already have\" run wasn't found — generate it with "
+              "`run_model.py --total-greenness` to enable this comparison._", ""]
 
-    # --- Context / reference numbers (cases vs population, cost vs GDP) ---
-    lines += context_lines(total_cases, total_cost, tg_cases, tg_cost)
-    lines += baseline_check_lines(total_cases)
-    lines += literature_benchmark_lines(total_cases)
+    # ---- Where benefits concentrate ----
+    L += ["## Where the benefits concentrate", "",
+          "Benefits are largest where many people live near low greenery and depression "
+          "rates are high. The map shows avoided cost by neighborhood; the scatter shows "
+          "that higher-prevalence neighborhoods gain more from greening.", ""]
+    L += img("cost_map", "Avoided societal cost per neighborhood, from added greenery.")
+    L += img("scatter", "Higher baseline depression → more cases prevented per neighborhood.")
 
+    # ---- Perspective ----
+    L += context_lines(total_cases, total_cost, tg_cases, tg_cost)
+
+    # ---- Reliability ----
+    L += ["", "## How reliable are these numbers?", "",
+          "The estimate rests on two main assumptions — how strongly greenery affects "
+          "depression (the *effect size*) and the cost per case. The chart and table show "
+          "how the result shifts across plausible values.", ""]
+    L += img("sens", "How avoided cost changes with the effect size and cost-per-case range.")
     sens = read_sensitivity()
     if sens:
-        lines += ["", "## Sensitivity (effect_size × cost)", "",
-                  "| effect_size | preventable_cases | cost_low | cost_central | cost_high |",
-                  "|---|---:|---:|---:|---:|"]
+        L += ["| effect size (RR) | cases prevented | cost (low) | cost (central) | cost (high) |",
+              "|---|---:|---:|---:|---:|"]
         for r in sens:
-            lines.append(f"| {r.get('effect_size','?')} | "
-                         f"{float(r.get('preventable_cases',0)):,.0f} | "
-                         f"${float(r.get('cost_low_17000',0)):,.0f} | "
-                         f"${float(r.get('cost_central_21280',0)):,.0f} | "
-                         f"${float(r.get('cost_high_23000',0)):,.0f} |")
+            L.append(f"| {r.get('effect_size','?')} | "
+                     f"{float(r.get('preventable_cases',0)):,.0f} | "
+                     f"${float(r.get('cost_low_17000',0)):,.0f} | "
+                     f"${float(r.get('cost_central_21280',0)):,.0f} | "
+                     f"${float(r.get('cost_high_23000',0)):,.0f} |")
+    L += p0_sensitivity_lines(total_cases)
+    L += baseline_check_lines(total_cases)
 
-    lines += p0_sensitivity_lines(total_cases)
+    # ---- Literature ----
+    L += literature_benchmark_lines(total_cases)
 
-    if cli.map:
-        figs = []
-        # Map 1 — marginal greening scenario (per-tract preventable cases).
-        figs.append((draw_choropleth(
-            WORKSPACE, "sum_cases",
-            "Marginal greening (+0.05 NDVI):\npreventable depression cases per tract, SF",
-            "Preventable cases / yr", "map_marginal_cases.png"),
-            "Preventable cases per tract — marginal greening (+0.05 NDVI)"))
-        # Map 2 — total value of existing greenness (NDVI=0 counterfactual).
-        figs.append((draw_choropleth(
-            TOTAL_GREENNESS_WS, "sum_cases",
-            "Existing greenness (vs NDVI=0):\ncases already averted per tract, SF",
-            "Cases averted / yr", "map_existing_greenness_cases.png", cmap="Greens"),
-            "Cases already averted by existing greenness per tract (NDVI=0 counterfactual)"))
-        # Map 3 — avoided societal cost per tract (marginal).
-        figs.append((draw_choropleth(
-            WORKSPACE, "sum_cost",
-            "Marginal greening: avoided societal cost per tract, SF",
-            "Avoided cost / yr ($)", "map_marginal_cost.png", cmap="PuBuGn"),
-            "Avoided societal cost per tract — marginal greening"))
-        # Bar — the two counterfactuals side by side.
-        figs.append((draw_counterfactual_bar(total_cases, tg_cases, total_cost, tg_cost),
-                     "Two counterfactuals: added vs. existing greenness"))
-        # Sensitivity range plot (effect size × cost band).
-        figs.append((draw_sensitivity_range(),
-                     "Avoided cost by effect size, with cost-per-case band as error bars"))
-        # Scatter — where greening pays off (cases vs baseline prevalence).
-        figs.append((draw_scatter(),
-                     "Per-tract preventable cases vs. baseline depression prevalence"))
+    # ---- QA ----
+    L += ["", "## Data-quality checks", ""]
+    if implied and rate:
+        ok = abs(implied - rate) / rate < 0.01
+        L.append(f"- Cost bookkeeping: implied ${implied:,.0f}/case vs configured "
+                 f"${rate:,.0f} — {'OK' if ok else 'MISMATCH, investigate'}.")
+    L += ["- Population is adult-scaled (depression rates are for adults); the baseline "
+          "check above confirms it against census figures.",
+          "- The greening scenario and effect size are assumptions — read the headline "
+          "with the ranges above, not as a single certain number."]
 
-        embeds = [f'\n![{cap}](../figures/{fig.name})' for fig, cap in figs if fig]
-        if embeds:
-            lines += ["", "## Figures", ""] + embeds
-            # (results_summary.md lives in results/summaries/; figures in results/figures/)
+    # ---- Glossary ----
+    L += ["", "## Glossary", "",
+          "- **NDVI** — a satellite greenery index from 0 to 1; higher = more vegetation. "
+          "A +0.05 rise is a modest, realistic increase.",
+          "- **Prevented (preventable) cases** — depression cases expected *not* to occur "
+          "when greenery increases, based on published greenery–depression studies.",
+          "- **Societal cost** — the full annual cost of a depression case (healthcare plus "
+          "lost productivity), not just medical bills.",
+          "- **Census tract** — a neighborhood-sized area (~4,000 people) used for the maps.",
+          "- **Effect size (risk ratio)** — how much depression risk changes per +0.1 NDVI."]
 
     OUT_MD.parent.mkdir(parents=True, exist_ok=True)
-    OUT_MD.write_text("\n".join(lines) + "\n")
+    OUT_MD.write_text("\n".join(L) + "\n")
     LOGGER.info("Wrote %s", OUT_MD)
-    print("\n".join(lines))
+    print("\n".join(L[:40]))
 
 
 if __name__ == "__main__":
