@@ -91,7 +91,7 @@ Baseline risk p0 used: **0.204** (population-weighted PLACES prevalence); centra
 - **Effect magnitude.** Published per-0.1-NDVI depression reductions cluster around **5-8%**; our risk-ratio gives **5.6%** per 0.1 NDVI — at the conservative end, as expected after the OR->RR correction (the higher figures use the OR directly).
 - **Takeaway.** The preventable *fraction* is defensible and literature-consistent; the absolute count depends on the population baseline (see check above).
 
-_Refs: Liu et al. 2023 Environ. Res. 231:116303; Barcelona Eixos Verds HIA (Mueller et al., Environ. Int. 2023); JOGH 2025;15:04280._
+_Full citations [1], [3], [4] in the References section._
 
 ## Data-quality checks
 
@@ -106,3 +106,18 @@ _Refs: Liu et al. 2023 Environ. Res. 231:116303; Barcelona Eixos Verds HIA (Muel
 - **Societal cost** — the full annual cost of a depression case (healthcare plus lost productivity), not just medical bills.
 - **Census tract** — a neighborhood-sized area (~4,000 people) used for the maps.
 - **Effect size (risk ratio)** — how much depression risk changes per +0.1 NDVI.
+
+## References
+
+1. Liu Z, Chen X, Cui H, Ma Y, Gao N, Li X, Meng X, Lin H, Abudou H, Guo L, Liu Q. Green space exposure on depression and anxiety outcomes: a meta-analysis. *Environmental Research.* 2023;231(Pt 3):116303. doi:[10.1016/j.envres.2023.116303](https://doi.org/10.1016/j.envres.2023.116303).
+2. Zhang J, Yu KF. What's the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. *JAMA.* 1998;280(19):1690–1691. doi:[10.1001/jama.280.19.1690](https://doi.org/10.1001/jama.280.19.1690).
+3. Vidal Yáñez D, Pereira E, Cirach M, Daher C, Nieuwenhuijsen M, Mueller N. An urban green space intervention with benefits for mental health: a health impact assessment of the Barcelona "Eixos Verds" Plan. *Environment International.* 2023;174:107880. doi:[10.1016/j.envint.2023.107880](https://doi.org/10.1016/j.envint.2023.107880).
+4. The global, regional, and national preventable burden of depression attributable to greenness and inequalities: a scenario-based health impact analysis. *Journal of Global Health.* 2025;15:04280. doi:[10.7189/jogh.15.04280](https://doi.org/10.7189/jogh.15.04280).
+5. Greenberg PE, Fournier A-A, Sisitsky T, Simes M, Berman R, Koenigsberg SH, Kessler RC. The economic burden of adults with major depressive disorder in the United States (2010 and 2018). *PharmacoEconomics.* 2021;39(6):653–665. doi:[10.1007/s40273-021-01019-4](https://doi.org/10.1007/s40273-021-01019-4).
+6. Greenberg PE, et al. The economic burden of adults with major depressive disorder in the United States (2019). *Advances in Therapy.* 2023. doi:[10.1007/s12325-023-02622-x](https://doi.org/10.1007/s12325-023-02622-x).
+7. König H, König H-H, Konnopka A. The excess costs of depression: a systematic review and meta-analysis. *Epidemiology and Psychiatric Sciences.* 2019;29:e30. doi:[10.1017/S2045796019000180](https://doi.org/10.1017/S2045796019000180).
+8. Natural Capital Project. InVEST: Integrated Valuation of Ecosystem Services and Tradeoffs — Urban Mental Health model. Stanford University; 2024. https://naturalcapitalproject.stanford.edu/software/invest
+9. Centers for Disease Control and Prevention. PLACES: Local Data for Better Health (census-tract and county data), 2024 release. https://www.cdc.gov/places
+10. WorldPop. Global 2015–2030 constrained population estimates (Global2), release R2025A. University of Southampton. https://hub.worldpop.org/geodata/listing?id=135
+11. US Census Bureau. Cartographic Boundary Files, 2024 vintage. https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html
+12. US Bureau of Economic Analysis. Gross Domestic Product by County (San Francisco County, FIPS 06075). https://www.bea.gov/data/gdp/gdp-county-metro-and-other-areas
