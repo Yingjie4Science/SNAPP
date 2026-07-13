@@ -1,6 +1,6 @@
 # San Francisco: health benefits of urban greenery
 
-_Generated 2026-07-13._
+_Generated 2026-07-14._
 
 This report estimates how much depression could be prevented — and how much money saved — by increasing greenery (street trees, parks, vegetation) across San Francisco. It combines satellite greenery (the NDVI index), local adult depression rates (CDC PLACES) and where people live (WorldPop) via the InVEST Urban Mental Health model. Key terms are defined in the glossary at the end.
 
@@ -31,6 +31,9 @@ The five investment scenarios use the same exposure-response, baseline depressio
 | LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | 0.8 | 0.4% | $12,681,043 | $15 | 0.005% |
 | 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | 49.3 | 24.2% | $751,537,448 | $905 | 0.301% |
 | Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | 54.4 | 26.7% | $830,202,625 | $1,000 | 0.332% |
+| Health-priority feasible allocation | Allocate the same feasible-NDVI budget first to tracts with highest modeled cases per feasible NDVI increment. | 476 | 0.7 | 0.3% | $10,135,939 | $12 | 0.004% |
+| Equity-priority feasible allocation | Allocate the same feasible-NDVI budget using health need, SVI, and low-greenness priority. | 309 | 0.4 | 0.2% | $6,584,181 | $8 | 0.003% |
+| Balanced feasible allocation | Allocate the same feasible-NDVI budget using equal health and equity priority weights. | 322 | 0.4 | 0.2% | $6,860,278 | $8 | 0.003% |
 | Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 21,321 | 29.7 | 14.6% | $453,715,456 | $546 | 0.181% |
 
 <sub>Table 1 legend. All values are annual central estimates, not confidence intervals. Cases per 1,000 adults use 716,727 adults. The adult depression pool is 146,212 (20.4% prevalence). Cost per resident uses 830,235 residents; GDP shares use $250B. Costs use the configured $21,280 per case. The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>
@@ -57,6 +60,37 @@ For income, a negative index favors lower-income tracts. For SVI, a positive ind
 
 ![Income and SVI concentration curves](../figures/equity_concentration_curves.png)
 <sub>Each curve is ranked separately; above the diagonal means concentration toward the lower end of that specific rank.</sub>
+
+## Advanced distributional equity
+
+This extension reports **relative inequality** (concentration index, CI) and **absolute inequality** (Slope Index of Inequality, SII) in modeled preventable cases per 1,000 adults. For SVI, positive CI/SII means the modeled benefit is more concentrated in socially vulnerable tracts. Intervals are 95% tract-bootstrap intervals; they quantify geographic sampling variation but do not replace the health-effect sensitivity analysis.
+
+**Table 3. SVI distribution of benefit by scenario.**
+
+| Scenario | SVI CI (95% interval) | SII cases / 1,000 adults (95% interval) | Interpretation |
+|---|---:|---:|---|
+| Uniform +0.05 NDVI (reference) | -0.022 (-0.031, -0.011) | -0.75 (-1.08, -0.39) | vulnerability-under-serving |
+| Greenable-only +0.05 NDVI | -0.012 (-0.022, -0.002) | -0.40 (-0.72, -0.07) | no material gradient |
+| LULC-masked feasible greening | -0.090 (-0.226, +0.024) | -0.38 (-0.88, +0.12) | vulnerability-under-serving |
+| 30% canopy target | +0.029 (+0.013, +0.046) | +7.31 (+3.39, +11.72) | equity-promoting |
+| Within-city p95 potential | +0.020 (+0.005, +0.036) | +5.65 (+1.45, +9.88) | equity-promoting |
+| Health-priority feasible allocation | -0.139 (-0.256, -0.029) | -0.47 (-0.86, -0.09) | vulnerability-under-serving |
+| Equity-priority feasible allocation | +0.306 (+0.182, +0.399) | +0.67 (+0.33, +1.07) | equity-promoting |
+| Balanced feasible allocation | +0.272 (+0.149, +0.382) | +0.62 (+0.28, +1.06) | equity-promoting |
+
+<sub>Table 3 legend. CI is a relative distribution measure; SII is the modeled difference between the least and most socially vulnerable ends of the population-weighted SVI rank. Both use adult-population weights.</sub>
+
+![Figure 3. Relative and absolute SVI inequality across scenarios; error bars show 95% tract-bootstrap intervals.](../figures/equity_svi_inequality_intervals.png)
+<sub>Figure 3. Relative and absolute SVI inequality across scenarios; error bars show 95% tract-bootstrap intervals.</sub>
+
+![Figure 4. Health–equity trade-off. Higher vertical position means more modeled benefit reaches higher-SVI tracts.](../figures/equity_health_pareto.png)
+<sub>Figure 4. Health–equity trade-off. Higher vertical position means more modeled benefit reaches higher-SVI tracts.</sub>
+
+![Figure 5. Equity-priority score for feasible greening, combining modeled cases per feasible NDVI increment, SVI, and baseline greenness deficit.](../figures/equity_priority_map.png)
+<sub>Figure 5. Equity-priority score for feasible greening, combining modeled cases per feasible NDVI increment, SVI, and baseline greenness deficit.</sub>
+
+![Figure 6. Local spatial clusters of the equity-priority score; this is a screening map for place-based planning, not a causal inference map.](../figures/equity_priority_clusters.png)
+<sub>Figure 6. Local spatial clusters of the equity-priority score; this is a screening map for place-based planning, not a causal inference map.</sub>
 
 ## Interpreting the scale columns
 

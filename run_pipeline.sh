@@ -90,18 +90,30 @@ fi
 step "8/12  Model — total value of existing greenness (NDVI=0 counterfactual)"
 python src/urban_mental_health/run_model.py --total-greenness
 
-step "9/12  Model — five alternative investment scenarios"
+step "9/14  Model — standard investment scenarios (creates the health-priority baseline)"
 python src/urban_mental_health/run_scenarios.py
 
-step "10/12  Sensitivity (effect_size x cost)"
+step "10/14  Advanced equity — bootstrap inequality, spatial priority, and allocation scores"
+python src/urban_mental_health/advanced_equity_analysis.py
+
+step "11/14  Matched-budget health, equity, and balanced feasible allocations"
+python src/inputs/ndvi/scenario_equity_allocation.py --budget-fraction 0.50
+
+step "12/14  Model — equity-prioritized allocation scenarios"
+python src/urban_mental_health/run_scenarios.py
+
+step "13/14  Advanced equity — all scenarios"
+python src/urban_mental_health/advanced_equity_analysis.py
+
+step "14/14  Sensitivity (effect_size x cost)"
 python src/urban_mental_health/run_sensitivity.py
 
-step "11/12  Summary + figures (maps, counterfactual bar, scenario comparison, sensitivity range, scatter)"
-python src/urban_mental_health/summarize_results.py --map
-
-step "10b  Equity analysis (concentration index vs neighborhood income; needs internet)"
+step "Basic equity diagnostic (ACS income/SVI; continues if the public API is unavailable)"
 python src/urban_mental_health/equity_analysis.py \
-    || echo "   equity step skipped (ACS fetch failed?); rerun equity_analysis.py or pass --ses-file."
+    || echo "   basic equity step skipped (ACS fetch failed?); rerun equity_analysis.py or pass --ses-file."
+
+step "Summary + figures (maps, scenario comparison, advanced equity, sensitivity range)"
+python src/urban_mental_health/summarize_results.py --map
 
 step "Sanity checks (population total + output-vs-AOI tract count)"
 python3 - <<'PY'

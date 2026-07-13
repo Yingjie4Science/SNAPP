@@ -34,6 +34,13 @@ SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
 SCENARIOS = RESULTS / "summaries" / "scenario_comparison.csv"
 EQUITY = RESULTS / "summaries" / "equity_metrics.csv"
 EQUITY_FIG = RESULTS / "figures" / "equity_concentration_curves.png"
+ADV_EQUITY = RESULTS / "summaries" / "advanced_equity_metrics.csv"
+ADV_EQUITY_FIGS = {
+    "intervals": RESULTS / "figures" / "equity_svi_inequality_intervals.png",
+    "priority": RESULTS / "figures" / "equity_priority_map.png",
+    "pareto": RESULTS / "figures" / "equity_health_pareto.png",
+    "clusters": RESULTS / "figures" / "equity_priority_clusters.png",
+}
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_MD = RESULTS / "summaries" / "results_summary.md"
 
@@ -43,6 +50,9 @@ SCENARIO_NAMES = {
     "lulc_masked": "LULC-masked feasible greening",
     "canopy_30pct": "30% canopy target",
     "best_potential_p95": "Within-city p95 potential",
+    "health_priority_feasible": "Health-priority feasible allocation",
+    "equity_priority_feasible": "Equity-priority feasible allocation",
+    "balanced_priority_feasible": "Balanced feasible allocation",
 }
 
 # Canonical APA (7th ed.) bibliography for the whole project. Keep in sync with
@@ -189,6 +199,21 @@ def read_equity_metrics():
             row["concentration_index"] = float(row["concentration_index"])
         except (KeyError, TypeError, ValueError):
             row["concentration_index"] = None
+    return rows
+
+
+def read_advanced_equity():
+    """Read CI/SII bootstrap results from the advanced distributional module."""
+    if not ADV_EQUITY.exists():
+        return []
+    with open(ADV_EQUITY) as fh:
+        rows = list(csv.DictReader(fh))
+    for row in rows:
+        for key in ("concentration_index", "ci_low", "ci_high", "sii_per_1000", "sii_low", "sii_high"):
+            try:
+                row[key] = float(row[key])
+            except (KeyError, TypeError, ValueError):
+                row[key] = None
     return rows
 
 
@@ -523,6 +548,7 @@ def main():
     tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
     scenario_rows = read_scenarios()
     equity_rows = read_equity_metrics()
+    advanced_equity_rows = read_advanced_equity()
     rate = float(COST_FILE.read_text().strip()) if COST_FILE.exists() else None
     implied = (total_cost / total_cases) if (total_cost and total_cases) else None
     city = _config_context().get("city_name", "San Francisco")
@@ -634,6 +660,9 @@ def main():
             "lulc_masked": "Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65.",
             "canopy_30pct": "Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target.",
             "best_potential_p95": "Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential.",
+            "health_priority_feasible": "Allocate the same feasible-NDVI budget first to tracts with highest modeled cases per feasible NDVI increment.",
+            "equity_priority_feasible": "Allocate the same feasible-NDVI budget using health need, SVI, and low-greenness priority.",
+            "balanced_priority_feasible": "Allocate the same feasible-NDVI budget using equal health and equity priority weights.",
         }
         for r in scenario_rows:
             cases, cost = r.get("preventable_cases"), r.get("preventable_cost_usd")
@@ -693,6 +722,40 @@ def main():
                   "toward the lower end of that specific rank.</sub>", ""]
     else:
         L += ["_Run `equity_analysis.py` to add income and SVI equity diagnostics._", ""]
+
+    # ---- Advanced equity: CI, SII, uncertainty, and allocation trade-offs ----
+    L += ["## Advanced distributional equity", ""]
+    if advanced_equity_rows:
+        svi_rows = [r for r in advanced_equity_rows if r.get("measure") == "svi"]
+        L += ["This extension reports **relative inequality** (concentration index, CI) and "
+              "**absolute inequality** (Slope Index of Inequality, SII) in modeled preventable "
+              "cases per 1,000 adults. For SVI, positive CI/SII means the modeled benefit is more "
+              "concentrated in socially vulnerable tracts. Intervals are 95% tract-bootstrap intervals; "
+              "they quantify geographic sampling variation but do not replace the health-effect "
+              "sensitivity analysis.", "",
+              "**Table 3. SVI distribution of benefit by scenario.**", "",
+              "| Scenario | SVI CI (95% interval) | SII cases / 1,000 adults (95% interval) | Interpretation |",
+              "|---|---:|---:|---|"]
+        for row in svi_rows:
+            label = SCENARIO_NAMES.get(row["scenario"], row["scenario"].replace("_", " "))
+            L.append(f"| {label} | {row['concentration_index']:+.3f} ({row['ci_low']:+.3f}, {row['ci_high']:+.3f}) | "
+                     f"{row['sii_per_1000']:+.2f} ({row['sii_low']:+.2f}, {row['sii_high']:+.2f}) | "
+                     f"{row.get('interpretation', 'n/a')} |")
+        L += ["", "<sub>Table 3 legend. CI is a relative distribution measure; SII is the modeled "
+              "difference between the least and most socially vulnerable ends of the population-weighted "
+              "SVI rank. Both use adult-population weights.</sub>", ""]
+        for key, caption in [
+            ("intervals", "Figure 3. Relative and absolute SVI inequality across scenarios; error bars show 95% tract-bootstrap intervals."),
+            ("pareto", "Figure 4. Health–equity trade-off. Higher vertical position means more modeled benefit reaches higher-SVI tracts."),
+            ("priority", "Figure 5. Equity-priority score for feasible greening, combining modeled cases per feasible NDVI increment, SVI, and baseline greenness deficit."),
+            ("clusters", "Figure 6. Local spatial clusters of the equity-priority score; this is a screening map for place-based planning, not a causal inference map."),
+        ]:
+            fig = ADV_EQUITY_FIGS[key]
+            if fig.exists():
+                L += [f"![{caption}](../figures/{fig.name})", f"<sub>{caption}</sub>", ""]
+    else:
+        L += ["_Run `advanced_equity_analysis.py` after scenario modeling to add CI, SII, "
+              "bootstrap intervals, spatial priority, and allocation trade-offs._", ""]
 
     # ---- Common scale definitions (not tied to one scenario) ----
     L += ["## Interpreting the scale columns", "",

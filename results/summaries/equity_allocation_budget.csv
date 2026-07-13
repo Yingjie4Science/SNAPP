@@ -1,0 +1,4 @@
+scenario,ndvi_alt,budget_fraction,ndvi_increment_budget,ndvi_increment_allocated,unspent,eligible_pixels
+health_priority_feasible,ndvi_scenario_health_priority.tif,0.5,793.7335205078125,793.7335205078125,0.0,19984
+equity_priority_feasible,ndvi_scenario_equity_priority.tif,0.5,793.7335205078125,793.7334594726562,0.0,19984
+balanced_priority_feasible,ndvi_scenario_balanced_priority.tif,0.5,793.7335205078125,793.7335205078125,0.0,19984

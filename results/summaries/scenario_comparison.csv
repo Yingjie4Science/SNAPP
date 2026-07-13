@@ -4,3 +4,6 @@ greenable_005,ndvi_scenario_greenable.tif,4700.5,100026235,21280
 lulc_masked,ndvi_scenario_lulc.tif,595.9,12681043,21280
 canopy_30pct,ndvi_scenario_canopy.tif,35316.6,751537448,21280
 best_potential_p95,ndvi_scenario_bestpot.tif,39013.3,830202625,21280
+health_priority_feasible,ndvi_scenario_health_priority.tif,476.3,10135939,21280
+equity_priority_feasible,ndvi_scenario_equity_priority.tif,309.4,6584181,21280
+balanced_priority_feasible,ndvi_scenario_balanced_priority.tif,322.4,6860278,21280

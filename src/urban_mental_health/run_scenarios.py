@@ -82,7 +82,7 @@ def main():
 
     COMPARISON_CSV.parent.mkdir(parents=True, exist_ok=True)
     with open(COMPARISON_CSV, "w", newline="") as fh:
-        w = csv.writer(fh)
+        w = csv.writer(fh, lineterminator="\n")
         w.writerow(["scenario", "ndvi_alt", "preventable_cases", "preventable_cost_usd",
                     "cost_per_case_usd"])
         for label, fname, cases, total_cost in rows:
