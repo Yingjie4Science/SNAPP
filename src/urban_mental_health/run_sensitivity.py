@@ -3,7 +3,8 @@
 Sensitivity analysis for the Urban Mental Health model (SF).
 
 Varies the two key assumptions and reports how the results move:
-  - effect_size  : 0.887 (low RR = more protective) / 0.93 (central) / 0.977 (high)
+  - effect_size  : RISK RATIOs 0.908 (more protective) / 0.944 (central) / 0.982,
+                   converted OR->RR from Liu 2023 (see docs/effect_size.md)
   - health_cost_rate : $17,000 (low) / $21,280 (pooled central) / $23,000 (high)
 
 Only effect_size changes the number of preventable CASES, so the model is run
@@ -32,7 +33,14 @@ import run_model  # noqa: E402
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("run_sensitivity")
 
-EFFECT_SIZES = {"es_low_0887": 0.887, "es_central_093": 0.93, "es_high_0977": 0.977}
+# Effect sizes are RISK RATIOs (converted OR->RR; see config.yaml + docs/effect_size.md).
+# Pulled from config so there's one source of truth; falls back to the converted defaults.
+_M = run_model._MODEL
+EFFECT_SIZES = {
+    f"es_low_rr_{_M.get('effect_size_low', 0.908)}": float(_M.get("effect_size_low", 0.908)),
+    f"es_central_rr_{_M.get('effect_size', 0.944)}": float(_M.get("effect_size", 0.944)),
+    f"es_high_rr_{_M.get('effect_size_high', 0.982)}": float(_M.get("effect_size_high", 0.982)),
+}
 COST_RATES = {"cost_low_17000": 17000.0, "cost_central_21280": 21280.0, "cost_high_23000": 23000.0}
 
 WS_ROOT = run_model.RUNS / "sf_sensitivity"                 # runs (gitignored)
@@ -84,8 +92,8 @@ def main():
             costs = [round(cases * c) for c in COST_RATES.values()]
             w.writerow([label, es, round(cases, 1), *costs])
     LOGGER.info("Wrote %s", SUMMARY_CSV)
-    LOGGER.info("Interpretation: rows = greenness effect-size scenarios; columns = "
-                "societal cost-per-case bands. Central estimate = es_central_093 x "
+    LOGGER.info("Interpretation: rows = greenness effect-size scenarios (RR); columns = "
+                "societal cost-per-case bands. Central estimate = es_central_rr x "
                 "cost_central_21280.")
 
 

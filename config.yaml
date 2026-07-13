@@ -8,10 +8,23 @@ project:
   aoi_sf_bbox: [-122.55, 37.70, -122.35, 37.83]   # W, S, E, N (WGS84)
 
 model:
-  search_radius_m: 300        # residential greenness exposure radius
-  effect_size: 0.93           # relative risk per +0.1 NDVI (Liu et al. 2023)
-  effect_size_low: 0.887      # sensitivity bound
-  effect_size_high: 0.977     # sensitivity bound
+  # Residential greenness exposure radius (meters). The source evidence is a
+  # meta-analysis pooling studies at 250-1000 m buffers; 300 m is a central,
+  # commonly-studied neighborhood distance. See docs/effect_size.md (radius).
+  search_radius_m: 300
+  # Exposure-response as a RISK RATIO per +0.1 NDVI, which is what InVEST expects.
+  # The published source is an ODDS RATIO (Liu et al. 2023 meta-analysis,
+  # OR 0.931, 95% CI 0.887-0.977 per +0.1 NDVI, depression). Converted OR->RR at
+  # baseline risk p0 via src/inputs/effect_size.py (Zhang & Yu 1998). Recompute
+  # with effect_size.py if you change p0. Full detail: docs/effect_size.md.
+  effect_size: 0.944          # RR central   (from OR 0.931 at p0=0.20)
+  effect_size_low: 0.908      # RR bound      (from OR 0.887 = more protective)
+  effect_size_high: 0.982     # RR bound      (from OR 0.977 = least protective)
+  # Published odds ratios + p0, kept for provenance / recomputation:
+  effect_size_or: 0.931
+  effect_size_or_low: 0.887
+  effect_size_or_high: 0.977
+  baseline_risk_p0: 0.20      # US adult depression prevalence used for OR->RR
   model_option: "ndvi"        # 'ndvi' or 'lulc'
 
 population:

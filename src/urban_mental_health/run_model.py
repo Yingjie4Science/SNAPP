@@ -72,6 +72,10 @@ INPUTS = DATASET_DIR / "inputs"
 # Model runs (large, regenerable, gitignored): one folder per run under runs/.
 RUNS = DATASET_DIR / "runs"
 WORKSPACE = RUNS / "sf_baseline"                         # the base SF run
+# "Total value of existing greenness": counterfactual NDVI=0 vs current greenness
+# (how much depression current greenness ALREADY averts), reported alongside the
+# marginal greening scenario. See docs/greening_scenarios.md (dual counterfactual).
+TOTAL_GREENNESS_WS = RUNS / "sf_total_greenness"
 # Curated, small deliverables (committed): figures / tables / summaries.
 RESULTS = BASE_DIR / "results"
 RESULTS_SUMMARIES = RESULTS / "summaries"
@@ -133,14 +137,15 @@ def build_args() -> dict:
         "search_radius": float(_MODEL.get("search_radius_m", 300)),      # meters (> 0)
 
         # --- exposure-response ---
-        # Relative risk per +0.1 NDVI; must be in (0, 1] (<1 = protective). The
-        # model computes PC = (1 - exp(ln(effect_size)*10*dNDVI)) * baseline_cases.
-        # Default from a depression meta-analysis: OR = 0.931 (95% CI 0.887-0.977)
-        # per +0.1 NDVI. Liu et al. (2023), Environmental Research 231:116303,
-        # DOI 10.1016/j.envres.2023.116303 (PMID 37268208). NOTE it's an odds
-        # ratio used here as a risk ratio — fine for a first pass; revisit for
-        # your exact outcome/region. Sensitivity bounds: 0.887 (low) - 0.977 (high).
-        "effect_size": float(_MODEL.get("effect_size", 0.93)),
+        # RISK RATIO per +0.1 NDVI; must be in (0, 1] (<1 = protective). The model
+        # computes PC = (1 - exp(ln(effect_size)*10*dNDVI)) * baseline_cases, i.e.
+        # effect_size is a per-0.1-NDVI multiplier on RISK. The published source is
+        # an ODDS RATIO: OR 0.931 (95% CI 0.887-0.977) per +0.1 NDVI, depression,
+        # from Liu et al. (2023) Environmental Research 231:116303 (PMID 37268208).
+        # config.yaml stores the OR->RR-converted value (RR 0.944 at p0=0.20) so
+        # we no longer use the OR directly. Conversion: src/inputs/effect_size.py;
+        # rationale + numbers: docs/effect_size.md.
+        "effect_size": float(_MODEL.get("effect_size", 0.944)),
 
         # --- baseline burden ---
         # Polygon vector of admin units; must have a `risk_rate` field (a ratio).
@@ -166,6 +171,35 @@ def build_args() -> dict:
     if cost_file.exists():
         args["health_cost_rate"] = float(cost_file.read_text().strip())
 
+    return args
+
+
+def make_zero_like(src_path: Path, out_path: Path) -> Path:
+    """Write an NDVI raster of all-zeros matching src's grid (nodata preserved).
+
+    Used as the 'no greenness' counterfactual baseline: valid pixels -> 0,
+    nodata stays nodata.
+    """
+    import rioxarray  # noqa: F401
+    da = __import__("rioxarray").open_rasterio(src_path, masked=True)
+    zero = da * 0.0                                   # valid -> 0, NaN -> NaN
+    zero = zero.rio.write_crs(da.rio.crs)
+    zero.rio.write_nodata(float("nan"), inplace=True)
+    zero.attrs.pop("_FillValue", None)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    zero.rio.to_raster(out_path, driver="GTiff", compress="LZW")
+    return out_path
+
+
+def apply_total_greenness(args: dict) -> dict:
+    """Rewire args to value EXISTING greenness: base = NDVI 0, alt = current NDVI."""
+    current = Path(args["ndvi_base"])                 # today's greenness
+    zero_path = make_zero_like(current, INPUTS / "ndvi_zero.tif")
+    args = dict(args)
+    args["ndvi_base"] = str(zero_path)                # counterfactual: bare
+    args["ndvi_alt"] = str(current)                   # scenario: today
+    args["workspace_dir"] = str(TOTAL_GREENNESS_WS)
+    args["results_suffix"] = "sf_total_greenness"
     return args
 
 
@@ -200,6 +234,10 @@ def main():
                         help="Print the model's inputs (from MODEL_SPEC) and exit.")
     parser.add_argument("--validate", action="store_true",
                         help="Validate inputs with the model's validate() and exit.")
+    parser.add_argument("--total-greenness", action="store_true",
+                        help="Value EXISTING greenness instead of a greening scenario: "
+                             "run baseline NDVI=0 vs current NDVI (cases current greenness "
+                             "already averts). Writes to runs/sf_total_greenness.")
     cli = parser.parse_args()
 
     model = load_model()
@@ -209,6 +247,11 @@ def main():
         return
 
     args = build_args()
+    workspace = WORKSPACE
+    if cli.total_greenness:
+        args = apply_total_greenness(args)
+        workspace = TOTAL_GREENNESS_WS
+        LOGGER.info("TOTAL-GREENNESS mode: baseline NDVI=0 vs current greenness.")
     ndvi_prep_note()
 
     # The model's own validator returns a list of (keys, message) warnings.
@@ -226,11 +269,11 @@ def main():
     if cli.validate:
         return
 
-    WORKSPACE.mkdir(parents=True, exist_ok=True)
-    LOGGER.info("Running Urban Mental Health model -> %s", WORKSPACE)
+    workspace.mkdir(parents=True, exist_ok=True)
+    LOGGER.info("Running Urban Mental Health model -> %s", workspace)
     model.execute(args)
     LOGGER.info("Done. Outputs (preventable_cases, summary vector/table, ...) in %s",
-                WORKSPACE)
+                workspace)
 
 
 if __name__ == "__main__":

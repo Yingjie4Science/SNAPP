@@ -56,8 +56,45 @@ NATIONAL_CRS = "EPSG:5070"          # NAD83 / Conus Albers (meters) — CONUS-wi
 WORKSPACE_ROOT = BASE_DIR / "data" / "urban-mental-health" / "runs" / "national"
 
 SEARCH_RADIUS_M = 300.0
+# RISK RATIO per +0.1 NDVI. Converted OR->RR from Liu et al. 2023 (OR 0.931) at
+# p0=0.20; matches config.yaml effect_size. See docs/effect_size.md.
+EFFECT_SIZE_RR = 0.944
 SCENARIO_DELTA = 0.05               # uniform NDVI greening for ndvi_alt
 SCENARIO_CAP = 0.90
+
+
+# State FIPS -> US Census region, for optional per-region cost (regional_cost.py).
+FIPS_REGION = {}
+for _reg, _fips in {
+    "Northeast": "09 23 25 33 44 50 34 36 42",
+    "Midwest": "18 17 26 39 55 19 20 27 29 31 38 46",
+    "South": "10 11 12 13 24 37 45 51 54 01 21 28 47 05 22 40 48",
+    "West": "04 08 16 30 32 35 49 56 02 06 15 41 53",
+}.items():
+    for _f in _fips.split():
+        FIPS_REGION[_f] = _reg
+
+
+def resolve_cost(cli) -> float | None:
+    """Per-region societal cost from config/cost_by_region.csv if available, else flat file.
+
+    Maps the county's state FIPS -> Census region -> cost_rate_usd. Falls back to
+    the single --cost-file value when the region table is missing or unmatched.
+    """
+    import csv
+    f = getattr(cli, "cost_by_region", None)
+    if f and f.exists():
+        region = FIPS_REGION.get(cli.geoid[:2])
+        if region:
+            with open(f) as fh:
+                for r in csv.DictReader(fh):
+                    if (r.get("region") or "").strip() == region:
+                        val = float(r["cost_rate_usd"])
+                        LOGGER.info("[%s] cost $%.0f (region=%s).", cli.geoid, val, region)
+                        return val
+    if cli.cost_file.exists():
+        return float(cli.cost_file.read_text().strip())
+    return None
 
 
 def resolve_adult_fraction(cli) -> float:
@@ -131,12 +168,23 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     if not ndvi_base.exists():
         sys.exit(f"NDVI not found for {cli.geoid}: {ndvi_base}. Run the GEE city loop first.")
     base = rioxarray.open_rasterio(ndvi_base, masked=True).squeeze()
-    alt = (base + SCENARIO_DELTA).clip(max=SCENARIO_CAP).where(~base.isnull())
-    alt = alt.rio.write_crs(base.rio.crs)
-    alt.rio.write_nodata(float("nan"), inplace=True)
-    alt.attrs.pop("_FillValue", None)
-    ndvi_alt = inputs / "ndvi_alt.tif"
-    alt.rio.to_raster(ndvi_alt, driver="GTiff", compress="LZW")
+    if getattr(cli, "total_greenness", False):
+        # Value EXISTING greenness: baseline = NDVI 0 (bare), alt = current NDVI.
+        zero = (base * 0.0).rio.write_crs(base.rio.crs)
+        zero.rio.write_nodata(float("nan"), inplace=True)
+        zero.attrs.pop("_FillValue", None)
+        model_base = inputs / "ndvi_zero.tif"
+        zero.rio.to_raster(model_base, driver="GTiff", compress="LZW")
+        model_alt = ndvi_base                        # today's greenness is the "improved" state
+    else:
+        # Marginal greening scenario: base = current NDVI, alt = current + delta.
+        alt = (base + SCENARIO_DELTA).clip(max=SCENARIO_CAP).where(~base.isnull())
+        alt = alt.rio.write_crs(base.rio.crs)
+        alt.rio.write_nodata(float("nan"), inplace=True)
+        alt.attrs.pop("_FillValue", None)
+        model_alt = inputs / "ndvi_alt.tif"
+        alt.rio.to_raster(model_alt, driver="GTiff", compress="LZW")
+        model_base = ndvi_base
 
     args = {
         "workspace_dir": str(city_ws),
@@ -144,14 +192,15 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
         "aoi_path": str(aoi_path),
         "population_raster": str(pop_path),
         "search_radius": SEARCH_RADIUS_M,
-        "effect_size": 0.93,
+        "effect_size": EFFECT_SIZE_RR,
         "baseline_prevalence_vector": str(prev_path),
         "model_option": "ndvi",
-        "ndvi_base": str(ndvi_base),
-        "ndvi_alt": str(ndvi_alt),
+        "ndvi_base": str(model_base),
+        "ndvi_alt": str(model_alt),
     }
-    if cli.cost_file.exists():
-        args["health_cost_rate"] = float(cli.cost_file.read_text().strip())
+    cost = resolve_cost(cli)
+    if cost is not None:
+        args["health_cost_rate"] = cost
     return args
 
 
@@ -174,9 +223,19 @@ def main():
                     help="Per-county 18+ share lookup (GEOID,adult_fraction) from "
                          "fetch_adult_fraction.py. Used when present; overrides the flat "
                          "value per county. Missing counties fall back to --adult-fraction.")
+    ap.add_argument("--cost-by-region", type=Path,
+                    default=BASE_DIR / "config" / "cost_by_region.csv",
+                    help="Per-region societal cost table (from regional_cost.py). Used when "
+                         "present: maps county state -> Census region -> cost. Falls back to "
+                         "--cost-file otherwise.")
+    ap.add_argument("--total-greenness", action="store_true",
+                    help="Value EXISTING greenness (baseline NDVI=0 vs current) instead of "
+                         "the marginal greening scenario. Writes to a separate runs root.")
     cli = ap.parse_args()
 
-    city_ws = WORKSPACE_ROOT / cli.geoid
+    ws_root = (WORKSPACE_ROOT.parent / "national_total_greenness"
+               if cli.total_greenness else WORKSPACE_ROOT)
+    city_ws = ws_root / cli.geoid
     city_ws.mkdir(parents=True, exist_ok=True)
     LOGGER.info("[%s] building inputs...", cli.geoid)
     args = build_city_inputs(cli, city_ws)

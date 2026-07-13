@@ -28,16 +28,17 @@ LOGGER = logging.getLogger("summarize_results")
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
 WORKSPACE = UMH / "runs" / "sf_baseline"                  # base model run
+TOTAL_GREENNESS_WS = UMH / "runs" / "sf_total_greenness"  # existing-greenness run
 RESULTS = BASE_DIR / "results"
 SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_MD = RESULTS / "summaries" / "results_summary.md"
 
 
-def load_sum_csv():
+def load_sum_csv(workspace: Path = WORKSPACE, suffix: str = "sf_2024"):
     """Return (per_tract_cases[list], total_cases, total_cost, path)."""
-    cands = sorted(glob.glob(str(WORKSPACE / "output" / "*sum*sf_2024*.csv"))) \
-        or sorted(glob.glob(str(WORKSPACE / "output" / "*sum*.csv")))
+    cands = sorted(glob.glob(str(workspace / "output" / f"*sum*{suffix}*.csv"))) \
+        or sorted(glob.glob(str(workspace / "output" / "*sum*.csv")))
     if not cands:
         return None, None, None, None
     path = cands[0]
@@ -120,6 +121,30 @@ def main():
                  "adult); if population wasn't adult-scaled, totals are overstated ~20%.")
     lines.append("- Greening scenario and effect size are assumptions — read with the "
                  "sensitivity range below, not as point truth.")
+
+    # --- Dual counterfactual: value of EXISTING greenness (baseline NDVI=0) ---
+    tg_tract, tg_cases, tg_cost, tg_path = load_sum_csv(TOTAL_GREENNESS_WS, "sf_total_greenness")
+    lines += ["", "## Two counterfactuals", ""]
+    if tg_path and tg_cases:
+        lines += [
+            "Two distinct questions, reported side by side:",
+            "",
+            f"- **Marginal greening** (current NDVI -> +scenario): **{total_cases:,.0f}** "
+            f"preventable cases/yr"
+            + (f", **${total_cost:,.0f}**/yr." if total_cost else "."),
+            f"- **Total value of existing greenness** (bare NDVI=0 -> current): "
+            f"**{tg_cases:,.0f}** cases/yr already averted"
+            + (f", **${tg_cost:,.0f}**/yr." if tg_cost else "."),
+            "",
+            "The first is the benefit of *adding* greenness (policy-relevant marginal "
+            "effect); the second is an ecosystem-service accounting of greenness already "
+            "present. The NDVI=0 figure extrapolates the exposure-response well beyond "
+            "observed data, so treat it as an upper-bound accounting number, not a "
+            "prediction of what removing all vegetation would do.",
+        ]
+    else:
+        lines.append("_Existing-greenness (NDVI=0) run not found. Generate it with "
+                     "`python src/urban_mental_health/run_model.py --total-greenness`._")
 
     sens = read_sensitivity()
     if sens:

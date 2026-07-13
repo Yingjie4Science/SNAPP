@@ -154,3 +154,42 @@ on `preventable_cost`. Use `--basis direct` (~$1,848) only if you explicitly wan
 - Evans-Lacko & Knapp 2016 — [Soc Psychiatry Psychiatr Epidemiol (DOI)](https://doi.org/10.1007/s00127-016-1278-4)
 - [NIMH Major Depression statistics](https://www.nimh.nih.gov/health/statistics/major-depression) · [BLS CPI](https://www.bls.gov/cpi/)
 - MEPS-HC Medical Conditions 2023 — `data/urban-mental-health/raw/meps/`
+
+## Optional: regionalizing the societal cost (national runs)
+
+For the national run we can let cost vary by Census region instead of applying
+one national figure to every county. This is a defensible refinement rather than
+a driver, and it reuses data we already have.
+
+**Method** (`src/inputs/regional_cost.py`). The pooled societal cost splits into a
+direct-medical share (`direct_mdd_treatment` + `direct_comorbid` ≈ 0.35) that
+tracks regional healthcare prices, and a wage-driven share
+(`workplace_productivity` + `suicide_related` ≈ 0.65) that tracks regional wages.
+We scale the national cost by a share-weighted region multiplier:
+
+```
+multiplier_r = 0.35 · (MEPS_r / MEPS_national) + 0.65 · (wage_r / wage_national)
+```
+
+MEPS gives the medical ratio directly (mean expenditure per treated case by
+region). With no wage index supplied, the wage term is held at 1.0, so only the
+medical third is regionalized — a conservative partial regionalization using MEPS
+alone. Multipliers are re-centered to a population-weighted mean of 1.0, so the
+**national total is preserved** and regions only redistribute it.
+
+**Why it's a refinement, not a driver.** Only ~35% of the societal cost is
+regionalized and MEPS regional spread is modest, so regional societal-cost
+differences come out to a few percent — far smaller than the uncertainty in the
+effect size or the societal-vs-direct basis. Use it for spatial fairness in the
+national maps, not as a headline mover.
+
+**Usage.**
+
+```
+python src/inputs/regional_cost.py                       # MEPS-only, writes config/cost_by_region.csv
+python src/inputs/regional_cost.py --wage-index config/wage_index.csv   # also regionalize wages
+# run_city.py auto-detects config/cost_by_region.csv and maps county state -> region.
+```
+
+To go further, supply `config/wage_index.csv` (`region,wage`) from BLS QCEW average
+weekly wages by region; the script will then regionalize the wage-driven 65% too.

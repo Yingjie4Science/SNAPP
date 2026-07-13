@@ -77,3 +77,34 @@ python src/inputs/ndvi/scenario_canopy_target.py --canopy-target 30 --tcc-slope 
 
 `fit_tcc_ndvi.py` regresses per-tract mean NDVI on mean canopy% and reports
 slope/intercept + R²; plug those into the canopy-target scenario.
+
+## Dual counterfactual: marginal greening vs. total value of existing greenness
+
+The model always compares a baseline NDVI to an alternate NDVI, so the *choice of
+baseline* defines the question being answered. We report two:
+
+1. **Marginal greening** (default) — baseline = current NDVI, alternate = current
+   + scenario (`ndvi_alt`). Answers "how much depression would *adding* this
+   greenness prevent?" This is the policy-relevant, defensible headline number,
+   and it stays within the NDVI range where the exposure-response was estimated.
+
+2. **Total value of existing greenness** — baseline = **NDVI 0** (bare), alternate
+   = current NDVI. Answers "how much depression does the greenness we *already
+   have* avert?" This is an ecosystem-service accounting figure, comparable in
+   spirit to the Kula GEP hypertension work's NDVI=0 counterfactual.
+
+Run the second alongside the first:
+
+```
+# SF:
+python src/urban_mental_health/run_model.py --total-greenness   # -> runs/sf_total_greenness
+# National (per county):
+python src/national/run_city.py --geoid <GEOID> ... --total-greenness
+
+python src/urban_mental_health/summarize_results.py             # reports BOTH
+```
+
+Caveat: the NDVI=0 baseline extrapolates the exposure-response far beyond observed
+data (no real city is bare), so present it as an **upper-bound accounting number**,
+not a prediction of vegetation removal. The marginal-greening result remains the
+headline; the existing-greenness number contextualises the stock of benefit.
