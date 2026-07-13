@@ -145,15 +145,25 @@ Run the model at the central value and re-run at low/high for a sensitivity band
 on `preventable_cost`. Use `--basis direct` (~$1,848) only if you explicitly want
 *healthcare-only* savings.
 
-## Sources
+## References
 
-- Greenberg et al. 2015 — [J Clin Psychiatry (DOI)](https://doi.org/10.4088/jcp.14m09298) · [PubMed](https://pubmed.ncbi.nlm.nih.gov/25742202/)
-- Greenberg et al. 2021 — [PharmacoEconomics (DOI)](https://doi.org/10.1007/s40273-021-01019-4) · [PubMed](https://pubmed.ncbi.nlm.nih.gov/33950419/)
-- Greenberg et al. 2023 — [Advances in Therapy (DOI)](https://doi.org/10.1007/s12325-023-02622-x) · [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC10499687/)
-- König et al. 2019 meta-analysis — [Epidemiol Psychiatr Sci (DOI)](https://doi.org/10.1017/s2045796019000180) · [PMC](https://pmc.ncbi.nlm.nih.gov/articles/PMC8061284/)
-- Evans-Lacko & Knapp 2016 — [Soc Psychiatry Psychiatr Epidemiol (DOI)](https://doi.org/10.1007/s00127-016-1278-4)
-- [NIMH Major Depression statistics](https://www.nimh.nih.gov/health/statistics/major-depression) · [BLS CPI](https://www.bls.gov/cpi/)
-- MEPS-HC Medical Conditions 2023 — `data/urban-mental-health/raw/meps/`
+APA 7th edition. Project-wide list: [docs/references.md](references.md).
+
+Agency for Healthcare Research and Quality. (2023). *Medical Expenditure Panel Survey (MEPS): Medical conditions* [Data set]. https://meps.ahrq.gov/
+
+Evans-Lacko, S., & Knapp, M. (2016). Global patterns of workplace productivity for people with depression: Absenteeism and presenteeism costs across eight diverse countries. *Social Psychiatry and Psychiatric Epidemiology, 51*(11), 1525–1537. https://doi.org/10.1007/s00127-016-1278-4
+
+Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Pike, C. T., & Kessler, R. C. (2015). The economic burden of adults with major depressive disorder in the United States (2005 and 2010). *Journal of Clinical Psychiatry, 76*(2), 155–162. https://doi.org/10.4088/JCP.14m09298
+
+Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, S. H., & Kessler, R. C. (2021). The economic burden of adults with major depressive disorder in the United States (2010 and 2018). *PharmacoEconomics, 39*(6), 653–665. https://doi.org/10.1007/s40273-021-01019-4
+
+Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, S. H., & Kessler, R. C. (2023). The economic burden of adults with major depressive disorder in the United States (2019). *Advances in Therapy, 40*(9), 4460–4479. https://doi.org/10.1007/s12325-023-02622-x
+
+König, H., König, H.-H., & Konnopka, A. (2020). The excess costs of depression: A systematic review and meta-analysis. *Epidemiology and Psychiatric Sciences, 29*, Article e30. https://doi.org/10.1017/S2045796019000180
+
+National Institute of Mental Health. (n.d.). *Major depression.* Retrieved 2025, from https://www.nimh.nih.gov/health/statistics/major-depression
+
+U.S. Bureau of Labor Statistics. (2024). *Consumer Price Index (CPI).* https://www.bls.gov/cpi/
 
 ## Optional: regionalizing the societal cost (national runs)
 

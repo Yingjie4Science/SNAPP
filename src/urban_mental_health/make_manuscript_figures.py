@@ -21,7 +21,11 @@ import argparse
 import csv
 import glob
 import logging
+import sys
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from summarize_results import APA_REFERENCES  # canonical APA bibliography  # noqa: E402
 
 import matplotlib as mpl
 mpl.use("Agg")
@@ -176,15 +180,15 @@ def fig4_sensitivity():
 def table1_data_sources():
     TABDIR.mkdir(parents=True, exist_ok=True)
     rows = [
-        ("Greenness (NDVI)", "Landsat C2 L2, JJAS 90th percentile, 30 m", "USGS/GEE", "2024"),
+        ("Greenness (NDVI)", "Landsat C2 L2, JJAS 90th percentile, 30 m", "USGS Landsat (via GEE)", "2024"),
         ("Greening scenarios", "LULC-masked / canopy-target / greenable", "NLCD Land Cover + TCC", "2021/2024"),
-        ("AOI + population units", "Census tracts; WorldPop adult population 100 m", "Census TIGER; WorldPop R2025A", "2024"),
-        ("Depression prevalence", "CDC PLACES crude prevalence (risk_rate)", "CDC PLACES", "2021"),
-        ("Effect size", "RR 0.944 per +0.1 NDVI (0.908-0.982); converted from OR 0.931", "Liu et al. 2023 (Environ. Res.)", "2023"),
-        ("Societal cost / case", "US$21,280 (range 17,000-23,000)", "Greenberg 2018/2019; Konig 2019 meta-analysis", "2024 USD"),
-        ("Model", "InVEST Urban Mental Health", "natcap.invest >=3.19", "-"),
+        ("AOI + population units", "Census tracts; WorldPop adult population 100 m", "U.S. Census Bureau (2024); WorldPop (2025)", "2024"),
+        ("Depression prevalence", "CDC PLACES crude prevalence (risk_rate)", "CDC (2024)", "2024"),
+        ("Effect size", "RR 0.944 per +0.1 NDVI (0.908-0.982); converted from OR 0.931", "Liu et al. (2023); Zhang & Yu (1998)", "2023"),
+        ("Societal cost / case", "US$21,280 (range 17,000-23,000)", "Greenberg et al. (2021, 2023); König et al. (2020)", "2024 USD"),
+        ("Model", "InVEST Urban Mental Health", "Natural Capital Project (2024)", "-"),
     ]
-    hdr = ["Input", "Description", "Source", "Year"]
+    hdr = ["Input", "Description", "Source (author–date; see References)", "Year"]
     with open(TABDIR / "Table1_data_sources.csv", "w", newline="") as fh:
         w = csv.writer(fh); w.writerow(hdr); w.writerows(rows)
     md = ["| " + " | ".join(hdr) + " |", "|" + "|".join(["---"] * len(hdr)) + "|"]
@@ -223,6 +227,16 @@ def table2_results_summary():
     LOGGER.info("Wrote Table2_results_summary.{csv,md}")
 
 
+def write_references():
+    """Write the APA reference list (Markdown) alongside the manuscript tables."""
+    TABDIR.mkdir(parents=True, exist_ok=True)
+    body = "\n\n".join(APA_REFERENCES)
+    (TABDIR / "References.md").write_text(
+        "# References\n\n_APA 7th edition; canonical copy in docs/references.md._\n\n"
+        + body + "\n")
+    LOGGER.info("Wrote References.md")
+
+
 def main():
     ap = argparse.ArgumentParser(description="Manuscript figures + tables.")
     ap.add_argument("--scenario", default="sf_2024", help="results-map run label.")
@@ -230,7 +244,7 @@ def main():
     for fn in (lambda: fig1_study_area(),
                lambda: fig2_results_map(cli.scenario),
                fig3_scenario_comparison, fig4_sensitivity,
-               table1_data_sources, table2_results_summary):
+               table1_data_sources, table2_results_summary, write_references):
         try:
             fn()
         except Exception as e:   # keep going; report which figure failed

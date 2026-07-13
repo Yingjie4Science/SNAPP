@@ -6,10 +6,12 @@ and (2) why we keep a **300 m** exposure radius.
 
 ## Source
 
-Liu, Z. et al. (2023). *Green space exposure on depression and anxiety outcomes:
-a meta-analysis.* **Environmental Research 231:116303.**
-DOI [10.1016/j.envres.2023.116303](https://doi.org/10.1016/j.envres.2023.116303),
-PMID 37268208.
+Liu, Z., Chen, X., Cui, H., Ma, Y., Gao, N., Li, X., Meng, X., Lin, H., Abudou, H.,
+Guo, L., & Liu, Q. (2023). Green space exposure on depression and anxiety outcomes:
+A meta-analysis. *Environmental Research, 231*(Pt 3), Article 116303.
+https://doi.org/10.1016/j.envres.2023.116303
+
+(Full citations for all sources are in [docs/references.md](references.md), APA 7th ed.)
 
 Pooled association for depression: a **0.1-unit increase in NDVI** is linked to
 lower odds of depression, **merged OR = 0.931 (95% CI 0.887–0.977)**. (The same

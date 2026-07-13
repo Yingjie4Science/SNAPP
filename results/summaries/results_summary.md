@@ -86,12 +86,12 @@ Baseline risk p0 used: **0.204** (population-weighted PLACES prevalence); centra
 
 ## How this compares with other studies
 
-- **Greening magnitude.** Our +0.05 NDVI scenario is close to the Barcelona "Eixos Verds" green-corridor plan, whose HIA modelled an average **+0.059 NDVI** — so the dose is realistic, not arbitrary.
-- **Method precedent.** A 2025 global study (J. Global Health) uses the same design — scenario-based preventable depression burden from greenness via a pooled meta-analytic OR and population-attributable fractions — so the approach is established and publishable.
-- **Effect magnitude.** Published per-0.1-NDVI depression reductions cluster around **5-8%**; our risk-ratio gives **5.6%** per 0.1 NDVI — at the conservative end, as expected after the OR->RR correction (the higher figures use the OR directly).
+- **Greening magnitude.** Our +0.05 NDVI scenario is close to the Barcelona "Eixos Verds" green-corridor plan, whose health impact assessment modelled an average **+0.059 NDVI** (Vidal Yáñez et al., 2023) — so the dose is realistic, not arbitrary.
+- **Method precedent.** Wu et al. (2025) use the same design — scenario-based preventable depression burden from greenness via a pooled meta-analytic odds ratio and population-attributable fractions — so the approach is established and publishable.
+- **Effect magnitude.** Published per-0.1-NDVI depression reductions cluster around **5–8%**; our risk ratio gives **5.6%** per 0.1 NDVI (converted from the Liu et al., 2023 odds ratio) — at the conservative end, as expected after the OR→RR correction (the higher figures use the OR directly).
 - **Takeaway.** The preventable *fraction* is defensible and literature-consistent; the absolute count depends on the population baseline (see check above).
 
-_Full citations [1], [3], [4] in the References section._
+_Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — see References._
 
 ## Data-quality checks
 
@@ -109,15 +109,27 @@ _Full citations [1], [3], [4] in the References section._
 
 ## References
 
-1. Liu Z, Chen X, Cui H, Ma Y, Gao N, Li X, Meng X, Lin H, Abudou H, Guo L, Liu Q. Green space exposure on depression and anxiety outcomes: a meta-analysis. *Environmental Research.* 2023;231(Pt 3):116303. doi:[10.1016/j.envres.2023.116303](https://doi.org/10.1016/j.envres.2023.116303).
-2. Zhang J, Yu KF. What's the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. *JAMA.* 1998;280(19):1690–1691. doi:[10.1001/jama.280.19.1690](https://doi.org/10.1001/jama.280.19.1690).
-3. Vidal Yáñez D, Pereira E, Cirach M, Daher C, Nieuwenhuijsen M, Mueller N. An urban green space intervention with benefits for mental health: a health impact assessment of the Barcelona "Eixos Verds" Plan. *Environment International.* 2023;174:107880. doi:[10.1016/j.envint.2023.107880](https://doi.org/10.1016/j.envint.2023.107880).
-4. The global, regional, and national preventable burden of depression attributable to greenness and inequalities: a scenario-based health impact analysis. *Journal of Global Health.* 2025;15:04280. doi:[10.7189/jogh.15.04280](https://doi.org/10.7189/jogh.15.04280).
-5. Greenberg PE, Fournier A-A, Sisitsky T, Simes M, Berman R, Koenigsberg SH, Kessler RC. The economic burden of adults with major depressive disorder in the United States (2010 and 2018). *PharmacoEconomics.* 2021;39(6):653–665. doi:[10.1007/s40273-021-01019-4](https://doi.org/10.1007/s40273-021-01019-4).
-6. Greenberg PE, et al. The economic burden of adults with major depressive disorder in the United States (2019). *Advances in Therapy.* 2023. doi:[10.1007/s12325-023-02622-x](https://doi.org/10.1007/s12325-023-02622-x).
-7. König H, König H-H, Konnopka A. The excess costs of depression: a systematic review and meta-analysis. *Epidemiology and Psychiatric Sciences.* 2019;29:e30. doi:[10.1017/S2045796019000180](https://doi.org/10.1017/S2045796019000180).
-8. Natural Capital Project. InVEST: Integrated Valuation of Ecosystem Services and Tradeoffs — Urban Mental Health model. Stanford University; 2024. https://naturalcapitalproject.stanford.edu/software/invest
-9. Centers for Disease Control and Prevention. PLACES: Local Data for Better Health (census-tract and county data), 2024 release. https://www.cdc.gov/places
-10. WorldPop. Global 2015–2030 constrained population estimates (Global2), release R2025A. University of Southampton. https://hub.worldpop.org/geodata/listing?id=135
-11. US Census Bureau. Cartographic Boundary Files, 2024 vintage. https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html
-12. US Bureau of Economic Analysis. Gross Domestic Product by County (San Francisco County, FIPS 06075). https://www.bea.gov/data/gdp/gdp-county-metro-and-other-areas
+Centers for Disease Control and Prevention. (2024). *PLACES: Local data for better health (census tract and county data)* [Data set]. https://www.cdc.gov/places
+
+Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, S. H., & Kessler, R. C. (2021). The economic burden of adults with major depressive disorder in the United States (2010 and 2018). *PharmacoEconomics, 39*(6), 653–665. https://doi.org/10.1007/s40273-021-01019-4
+
+Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R., Koenigsberg, S. H., & Kessler, R. C. (2023). The economic burden of adults with major depressive disorder in the United States (2019). *Advances in Therapy, 40*(9), 4460–4479. https://doi.org/10.1007/s12325-023-02622-x
+
+König, H., König, H.-H., & Konnopka, A. (2020). The excess costs of depression: A systematic review and meta-analysis. *Epidemiology and Psychiatric Sciences, 29*, Article e30. https://doi.org/10.1017/S2045796019000180
+
+Liu, Z., Chen, X., Cui, H., Ma, Y., Gao, N., Li, X., Meng, X., Lin, H., Abudou, H., Guo, L., & Liu, Q. (2023). Green space exposure on depression and anxiety outcomes: A meta-analysis. *Environmental Research, 231*(Pt 3), Article 116303. https://doi.org/10.1016/j.envres.2023.116303
+
+Natural Capital Project. (2024). *InVEST: Integrated Valuation of Ecosystem Services and Tradeoffs (Urban Mental Health model)* [Computer software]. Stanford University. https://naturalcapitalproject.stanford.edu/software/invest
+
+U.S. Bureau of Economic Analysis. (2024). *Gross domestic product by county* [Data set]. https://www.bea.gov/data/gdp/gdp-county-metro-and-other-areas
+
+U.S. Census Bureau. (2024). *Cartographic boundary files (2024 vintage)* [Data set]. https://www.census.gov/geographies/mapping-files/time-series/geo/cartographic-boundary.html
+
+Vidal Yáñez, D., Pereira, E., Cirach, M., Daher, C., Nieuwenhuijsen, M., & Mueller, N. (2023). An urban green space intervention with benefits for mental health: A health impact assessment of the Barcelona "Eixos Verds" Plan. *Environment International, 174*, Article 107880. https://doi.org/10.1016/j.envint.2023.107880
+
+WorldPop. (2025). *Global 2015–2030 constrained population estimates (Global2), Release R2025A* [Data set]. University of Southampton. https://hub.worldpop.org/geodata/listing?id=135
+
+Wu, J., Di, W., Ruan, J., Li, S., Ying, J., Zhou, J., Rudan, I., & Song, P. (2025). The global, regional and national preventable burden of depression attributable to greenness and inequalities: A scenario-based health impact analysis. *Journal of Global Health, 15*, Article 04280. https://doi.org/10.7189/jogh.15.04280
+
+Zhang, J., & Yu, K. F. (1998). What's the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. *JAMA, 280*(19), 1690–1691. https://doi.org/10.1001/jama.280.19.1690
+
