@@ -298,6 +298,10 @@ python src/national/build_metro_counties.py --metro-layer <your_metro.shp> --yea
 #    (b) EXACT official CBSA->county crosswalk (no geometry heuristic):
 python src/national/build_metro_counties.py --crosswalk
 # 2. per-county NDVI (prerequisite — run_national.sh does NOT do this):
+# Faster recommended route: upload counties.gpkg as an EE table asset, set the
+# asset ID in src/inputs/ndvi/ndvi_gee_national.js, and run it in the GEE Code
+# Editor in index batches. Drive exports are named <GEOID>_ndvi.tif.
+# Python fallback (local downloads; much slower for a national run):
 python src/inputs/ndvi/ndvi_gee_national.py            # -> data/national/ndvi/<GEOID>_ndvi.tif
 # 3. loop counties: build inputs + run the model
 bash run_national.sh data/national/counties.gpkg data/national/ndvi
