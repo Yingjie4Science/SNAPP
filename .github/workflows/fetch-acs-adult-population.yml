@@ -41,7 +41,7 @@ jobs:
 
           with regions_path.open(newline="", encoding="utf-8-sig") as source:
               wanted = {
-                  str(row["GEOID"]).strip().zfill(5)
+                  str(row["GEOID"]).strip().zfill(5): (row.get("NAME") or "").strip()
                   for row in csv.DictReader(
                       line for line in source if not line.lstrip().startswith("#")
                   )
@@ -51,7 +51,7 @@ jobs:
           rows = []
           with open("/tmp/acsdt5y2023-b01001.dat", newline="", encoding="utf-8-sig") as source:
               reader = csv.DictReader(source, delimiter="|")
-              required = {"GEO_ID", "NAME", "B01001_E001", *child_fields}
+              required = {"GEO_ID", "B01001_E001", *child_fields}
               missing_columns = required - set(reader.fieldnames or ())
               if missing_columns:
                   raise SystemExit(f"ACS file missing columns: {sorted(missing_columns)}")
@@ -69,7 +69,7 @@ jobs:
                       raise SystemExit(f"Invalid population values for {geoid}")
                   rows.append({
                       "GEOID": geoid,
-                      "name": row["NAME"],
+                      "name": wanted[geoid],
                       "acs_year": 2023,
                       "population_total": total,
                       "population_adult": adults,
