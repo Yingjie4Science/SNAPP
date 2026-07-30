@@ -8,7 +8,7 @@ on:
       - "config/regions.csv"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build-county-lookup:
@@ -89,6 +89,15 @@ jobs:
               writer.writerows(rows)
           print(f"Wrote {output_path}: {len(rows)} AOI counties; no missing records.")
           PY
+
+      - name: Commit validated lookup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/adult_population.csv
+          git diff --cached --quiet && exit 0
+          git commit -m "Update ACS 2023 adult population targets"
+          git push
 
       - uses: actions/upload-artifact@v4
         with:
