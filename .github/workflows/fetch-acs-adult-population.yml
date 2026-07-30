@@ -1,0 +1,97 @@
+name: Fetch ACS adult population
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/fetch-acs-adult-population.yml"
+      - "config/regions.csv"
+
+permissions:
+  contents: read
+
+jobs:
+  build-county-lookup:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download official ACS 2023 five-year age table
+        run: |
+          curl --fail --location --retry 5 --retry-all-errors \
+            --output /tmp/acsdt5y2023-b01001.dat \
+            https://www2.census.gov/programs-surveys/acs/summary_file/2023/table-based-SF/data/5YRData/acsdt5y2023-b01001.dat
+
+      - name: Derive age 18+ county targets and validate AOI coverage
+        run: |
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          regions_path = Path("config/regions.csv")
+          output_path = Path("config/adult_population.csv")
+          child_fields = (
+              "B01001_E003", "B01001_E004", "B01001_E005", "B01001_E006",
+              "B01001_E027", "B01001_E028", "B01001_E029", "B01001_E030",
+          )
+
+          with regions_path.open(newline="", encoding="utf-8-sig") as source:
+              wanted = {
+                  str(row["GEOID"]).strip().zfill(5)
+                  for row in csv.DictReader(
+                      line for line in source if not line.lstrip().startswith("#")
+                  )
+                  if row.get("GEOID")
+              }
+
+          rows = []
+          with open("/tmp/acsdt5y2023-b01001.dat", newline="", encoding="utf-8-sig") as source:
+              reader = csv.DictReader(source, delimiter="|")
+              required = {"GEO_ID", "NAME", "B01001_E001", *child_fields}
+              missing_columns = required - set(reader.fieldnames or ())
+              if missing_columns:
+                  raise SystemExit(f"ACS file missing columns: {sorted(missing_columns)}")
+              for row in reader:
+                  geo_id = row["GEO_ID"]
+                  if not geo_id.startswith("0500000US"):
+                      continue
+                  geoid = geo_id[-5:]
+                  if geoid not in wanted:
+                      continue
+                  total = int(row["B01001_E001"])
+                  under_18 = sum(int(row[field]) for field in child_fields)
+                  adults = total - under_18
+                  if total <= 0 or adults <= 0 or adults > total:
+                      raise SystemExit(f"Invalid population values for {geoid}")
+                  rows.append({
+                      "GEOID": geoid,
+                      "name": row["NAME"],
+                      "acs_year": 2023,
+                      "population_total": total,
+                      "population_adult": adults,
+                      "adult_fraction": f"{adults / total:.8f}",
+                  })
+
+          observed = {row["GEOID"] for row in rows}
+          missing = sorted(wanted - observed)
+          duplicates = len(rows) - len(observed)
+          if missing or duplicates or len(rows) != len(wanted):
+              raise SystemExit(
+                  f"Coverage failure: expected={len(wanted)} observed={len(rows)} "
+                  f"missing={missing[:20]} duplicates={duplicates}"
+              )
+
+          rows.sort(key=lambda row: row["GEOID"])
+          output_path.parent.mkdir(parents=True, exist_ok=True)
+          with output_path.open("w", newline="") as target:
+              writer = csv.DictWriter(target, fieldnames=rows[0].keys(), lineterminator="\n")
+              writer.writeheader()
+              writer.writerows(rows)
+          print(f"Wrote {output_path}: {len(rows)} AOI counties; no missing records.")
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: acs-adult-population-2023
+          path: config/adult_population.csv
+          if-no-files-found: error
