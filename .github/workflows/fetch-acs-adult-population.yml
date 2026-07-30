@@ -96,11 +96,50 @@ jobs:
           print(f"Wrote {output_path}: {len(rows)} AOI counties; no missing records.")
           PY
 
+      - name: Fetch the official Florida PLACES temporal bridge
+        run: |
+          curl --fail --location --retry 5 --retry-all-errors --get \
+            --data-urlencode '$select=tractfips,depression_crudeprev' \
+            --data-urlencode '$where=stateabbr='\''FL'\''' \
+            --data-urlencode '$limit=5000' \
+            --output config/places_florida_2022.csv \
+            https://data.cdc.gov/resource/shc3-fzig.csv
+          python - <<'PY'
+          import csv
+          from pathlib import Path
+
+          path = Path("config/places_florida_2022.csv")
+          with path.open(newline="", encoding="utf-8-sig") as source:
+              rows = list(csv.DictReader(source))
+          required = {"tractfips", "depression_crudeprev"}
+          if not rows or required - set(rows[0]):
+              raise SystemExit("Florida PLACES bridge has an unexpected schema.")
+          valid = [
+              row for row in rows
+              if row["tractfips"].startswith("12")
+              and row["depression_crudeprev"] not in ("", None)
+          ]
+          if len(valid) < 4_000 or len({row["tractfips"] for row in valid}) != len(valid):
+              raise SystemExit(
+                  f"Florida PLACES bridge failed validation: rows={len(rows)}, valid={len(valid)}"
+              )
+          valid.sort(key=lambda row: row["tractfips"])
+          with path.open("w", newline="") as target:
+              writer = csv.DictWriter(
+                  target,
+                  fieldnames=["tractfips", "depression_crudeprev"],
+                  lineterminator="\n",
+              )
+              writer.writeheader()
+              writer.writerows(valid)
+          print(f"Wrote {path}: {len(valid)} non-null Florida tracts.")
+          PY
+
       - name: Commit validated lookup
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add config/adult_population.csv
+          git add config/adult_population.csv config/places_florida_2022.csv
           git diff --cached --quiet && exit 0
           git commit -m "Update ACS 2023 adult population targets"
           git push origin "HEAD:${{ github.head_ref || github.ref_name }}"
