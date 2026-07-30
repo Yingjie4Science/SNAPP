@@ -135,11 +135,81 @@ jobs:
           print(f"Wrote {path}: {len(valid)} non-null Florida tracts.")
           PY
 
+      - name: Fetch official CDC 2022 county SVI
+        run: |
+          python - <<'PY'
+          import csv
+          import json
+          import urllib.parse
+          import urllib.request
+          from pathlib import Path
+
+          base = (
+              "https://onemap.cdc.gov/onemapservices/rest/services/SVI/"
+              "CDC_ATSDR_Social_Vulnerability_Index_2022_USA/FeatureServer/1/query"
+          )
+          features = []
+          offset = 0
+          while True:
+              query = urllib.parse.urlencode({
+                  "where": "1=1",
+                  "outFields": "FIPS,RPL_THEMES,E_TOTPOP,STATE,COUNTY",
+                  "returnGeometry": "false",
+                  "f": "json",
+                  "resultOffset": offset,
+                  "resultRecordCount": 2000,
+              })
+              with urllib.request.urlopen(f"{base}?{query}", timeout=120) as response:
+                  payload = json.load(response)
+              if payload.get("error"):
+                  raise SystemExit(f"CDC SVI service error: {payload['error']}")
+              batch = [feature["attributes"] for feature in payload.get("features", [])]
+              features.extend(batch)
+              if len(batch) < 2000:
+                  break
+              offset += len(batch)
+
+          with open("config/regions.csv", newline="", encoding="utf-8-sig") as source:
+              wanted = {
+                  str(row["GEOID"]).strip().zfill(5)
+                  for row in csv.DictReader(
+                      line for line in source if not line.lstrip().startswith("#")
+                  )
+                  if row.get("GEOID")
+              }
+          rows = []
+          for row in features:
+              geoid = str(row.get("FIPS") or "").zfill(5)
+              if geoid in wanted and row.get("RPL_THEMES") not in (None, -999):
+                  rows.append({
+                      "GEOID": geoid,
+                      "state": row.get("STATE") or "",
+                      "county": row.get("COUNTY") or "",
+                      "svi_2022": row["RPL_THEMES"],
+                      "svi_population": row.get("E_TOTPOP") or "",
+                  })
+          observed = {row["GEOID"] for row in rows}
+          missing = sorted(wanted - observed)
+          duplicates = len(rows) - len(observed)
+          if missing or duplicates or len(rows) != len(wanted):
+              raise SystemExit(
+                  f"SVI coverage failure: expected={len(wanted)} observed={len(rows)} "
+                  f"missing={missing[:20]} duplicates={duplicates}"
+              )
+          rows.sort(key=lambda row: row["GEOID"])
+          path = Path("config/svi_county_2022.csv")
+          with path.open("w", newline="") as target:
+              writer = csv.DictWriter(target, fieldnames=rows[0], lineterminator="\n")
+              writer.writeheader()
+              writer.writerows(rows)
+          print(f"Wrote {path}: {len(rows)} AOI counties; no missing records.")
+          PY
+
       - name: Commit validated lookup
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add config/adult_population.csv config/places_florida_2022.csv
+          git add config/adult_population.csv config/places_florida_2022.csv config/svi_county_2022.csv
           git diff --cached --quiet && exit 0
           git commit -m "Update ACS 2023 adult population targets"
           git pull --rebase origin "${{ github.head_ref || github.ref_name }}"
@@ -148,5 +218,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: acs-adult-population-2023
-          path: config/adult_population.csv
+          path: |
+            config/adult_population.csv
+            config/svi_county_2022.csv
           if-no-files-found: error
