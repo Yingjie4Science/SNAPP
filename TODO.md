@@ -1,31 +1,46 @@
 # SNAPP — TODO / roadmap
 
-## Done
-- [x] NDVI: Landsat JJAS p90 via GEE (`src/inputs/ndvi/ndvi_gee.py`); CDSE/Sentinel-2 backups.
-- [x] Inputs: AOI + depression prevalence (local shp or CDC API), WorldPop population, greening scenario.
-- [x] Health cost: pooled societal ~$21,280/case (Greenberg 2018/2019 + König meta-analysis), PubMed cross-checked.
-- [x] Model runs end to end; sensitivity runner (effect_size × cost).
-- [x] National scaffold (`run_city.py`, `run_national.sh`, EPSG:5070).
-- [x] Repro: `config.yaml`, `pytest` smoke tests, results-summary script.
+_Updated 2026-07-30. Detailed U.S. decisions are in
+`docs/us_case_status.md`._
 
-## Now / high priority
-- [ ] **Adult-population correction** — re-run with `fetch_population.py --adult-fraction`
-      so baseline cases use adults ≥18 (prevalence is adult). Confirms the ~8.5k figure.
-- [ ] **Realistic greening scenario** — generators + data helpers all built
-      (`fetch_nlcd_gee.py`, `scenario_lulc_masked.py`, `fit_tcc_ndvi.py`,
-      `scenario_canopy_target.py`; see `docs/greening_scenarios.md`). Remaining:
-      run them, pick a scenario, and set `config.yaml inputs.ndvi_alt`.
-- [ ] **Interpret + QA** — run `summarize_results.py`; sanity-check totals and map per tract.
+## Completed
 
-## Reproducibility / hygiene
-- [ ] Lock the env: `conda env export --from-history > environment.lock.yml` (commit it).
-- [ ] Wire remaining scripts to read `config.yaml` (currently: run_model + fetch_population).
-- [ ] Add a `fetch_all_inputs` helper or data manifest so a fresh clone can rebuild `data/`.
-- [ ] Move repo off Google Drive to a local clone (avoids git lock/corruption).
-- [ ] Rotate the CDSE password (was briefly exposed); update `.env`.
+- [x] SF and national model pipelines with reproducible `config.yaml`.
+- [x] Defensible 2024 societal cost: $21,280/case; $17,000–$23,000 range.
+- [x] Nine SF investment scenarios plus existing-greenness accounting case in
+      one report, with explicit legends and common denominators.
+- [x] SF adult-population calibration and complete rerun.
+- [x] SF income, SVI, ICE, spatial clustering, bootstrap, allocation, and
+      exposure-radius sensitivity.
+- [x] Locked national AOI: 1,167 counties.
+- [x] Six missing Kentucky exports recovered and 56 out-of-AOI files
+      quarantined.
+- [x] All national NDVI harmonized to aligned 90 m EPSG:5070 grids.
+- [x] Full-read NDVI audit including unmasked non-finite-cell detection.
+- [x] Complete ACS 2023 adult targets and CDC/ATSDR 2022 county SVI.
+- [x] Locked national low-NDVI-quartile p0 = 0.191045 and RR = 0.943436.
+- [x] Florida-only official PLACES 2022 temporal bridge for null 2023 values.
+- [x] Hystad et al. (2019) citation and outcome counts verified.
+- [x] National primary and alternative greening scenarios for all counties.
+- [x] National SVI equity analysis with bootstrap intervals.
+- [x] National 250/300/500/1,000 m radius sensitivity and final fail-closed QA.
 
-## Later
-- [ ] National run: build counties-in-metro AOI (`build_metro_counties.py`, ideally with
-      your metro layer) + supply per-county NDVI, then `run_national.sh`.
-- [ ] Regionalize cost (`--wage-factor`, MEPS region) for non-SF cities.
-- [ ] CI (GitHub Actions) running `pytest` on push.
+## Remaining before manuscript freeze
+
+- [ ] Decide whether to finish the national existing-greenness accounting run;
+      SF already includes this comparison.
+- [ ] Export an environment lock and raw-input checksum manifest.
+- [ ] Add CI tests for national completeness, population reconciliation, and
+      finite outputs.
+- [ ] Decide whether regional wage-adjusted societal cost belongs in the main
+      analysis or supplement.
+- [ ] Resolve or explicitly retain the SF NDVI buffer edge warning.
+- [ ] Apply the documented endpoint and causal-language caveats throughout the
+      final manuscript.
+
+## Later extensions
+
+- [ ] National tract-level equity/SVI (current national result is county-level).
+- [ ] Regional cost sensitivity using local wages for the productivity share.
+- [ ] Alaska/Hawaii/territory-specific projections and source coverage.
+- [ ] A one-command input manifest/rebuild workflow for a fresh clone.

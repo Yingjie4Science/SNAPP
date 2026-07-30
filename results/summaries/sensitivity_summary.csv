@@ -1,4 +1,13 @@
-effect_size_label,effect_size,preventable_cases,cost_low_17000,cost_central_21280,cost_high_23000
-es_low_rr_0.908,0.908,8072.6,137234774,171785647,185670577
-es_central_rr_0.944,0.944,4867.2,82741930,103573428,111944964
-es_high_rr_0.982,0.982,1549.2,26337096,32967848,35632542
+effect_size_label,p0_label,p0,or_label,odds_ratio,effect_size,preventable_cases,cost_low_17000,cost_central_21280,cost_high_23000
+national_low_ndvi_quartile_p0__or_low_more_protective,national_low_ndvi_quartile_p0,0.191,or_low_more_protective,0.887,0.906571,6955.9,118250000,148021176,159985293
+national_low_ndvi_quartile_p0__or_central_published,national_low_ndvi_quartile_p0,0.191,or_central_published,0.931,0.943436,4170.3,70895420,88744385,95917333
+national_low_ndvi_quartile_p0__or_high_less_protective,national_low_ndvi_quartile_p0,0.191,or_high_less_protective,0.977,0.981312,1364.5,23195867,29035768,31382644
+hystad_phq9_ge10__or_low_more_protective,hystad_phq9_ge10,0.064,or_low_more_protective,0.887,0.893462,7960.1,135321038,169390099,183081404
+hystad_phq9_ge10__or_central_published,hystad_phq9_ge10,0.064,or_central_published,0.931,0.935130,4793.1,81483515,101998188,110242403
+hystad_phq9_ge10__or_high_less_protective,hystad_phq9_ge10,0.064,or_high_less_protective,0.977,0.978440,1575.3,26779819,33522032,36231519
+hystad_self_reported_diagnosis__or_low_more_protective,hystad_self_reported_diagnosis,0.096,or_low_more_protective,0.887,0.896728,7709.2,131056188,164051510,177311312
+hystad_self_reported_diagnosis__or_central_published,hystad_self_reported_diagnosis,0.096,or_central_published,0.931,0.937208,4637.0,78829656,98676181,106651887
+hystad_self_reported_diagnosis__or_high_less_protective,hystad_self_reported_diagnosis,0.096,or_high_less_protective,0.977,0.979162,1522.3,25878605,32393924,35012230
+hystad_health_record_diagnosis__or_low_more_protective,hystad_health_record_diagnosis,0.115,or_low_more_protective,0.887,0.898678,7559.6,128512861,160867864,173870342
+hystad_health_record_diagnosis__or_central_published,hystad_health_record_diagnosis,0.115,or_central_published,0.931,0.938447,4544.1,77249727,96698481,104514336
+hystad_health_record_diagnosis__or_high_less_protective,hystad_health_record_diagnosis,0.115,or_high_less_protective,0.977,0.979591,1490.8,25343036,31723518,34287637

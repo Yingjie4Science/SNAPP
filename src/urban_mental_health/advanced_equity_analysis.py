@@ -104,6 +104,34 @@ def fetch_svi(state: str, county: str) -> dict:
             if f.get("attributes", {}).get("RPL_THEMES") not in (None, -999)}
 
 
+def load_cached_covariates(path: Path) -> tuple[dict, dict]:
+    """Load the previously retrieved ACS 2023 and SVI 2022 tract covariates.
+
+    The cached table is a reproducibility input when live government endpoints
+    are unavailable. Model-derived columns in the same file are ignored and
+    recalculated from the current population, NDVI, and scenario outputs.
+    """
+    import pandas as pd
+    frame = pd.read_csv(path, dtype={"GEOID": str})
+    required = {
+        "GEOID", "median_income", "acs_population", "households",
+        "low_income_households", "high_income_households",
+        "occupied_households", "renter_households", "race_total",
+        "nonhisp_white", "svi",
+    }
+    missing = required - set(frame.columns)
+    if missing:
+        sys.exit(f"Cached covariate file is missing columns: {sorted(missing)}")
+    acs, svi = {}, {}
+    for row in frame.to_dict("records"):
+        geoid = str(row["GEOID"]).zfill(11)
+        acs[geoid] = {name: row[name] for name in required
+                      if name not in {"GEOID", "svi"}}
+        if np.isfinite(row["svi"]) and 0 <= row["svi"] <= 1:
+            svi[geoid] = float(row["svi"])
+    return acs, svi
+
+
 def load_scenario_gdf(label: str):
     import geopandas as gpd
     matches = sorted(glob.glob(str(RUNS / label / "output" / "*sum*.gpkg")))
@@ -231,16 +259,20 @@ def classify(ci, measure):
     return "equity-promoting" if ci > 0 else "vulnerability-under-serving"
 
 
-def write_outputs(base, scenarios, bootstrap_n, permutations):
+def write_outputs(base, scenarios, bootstrap_n, permutations, covariates_file=None):
     import geopandas as gpd
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    load_env()
-    key = os.environ.get("CENSUS_API_KEY")
-    acs = fetch_acs("06", "075", 2023, key)
-    svi = fetch_svi("06", "075")
+    if covariates_file:
+        acs, svi = load_cached_covariates(covariates_file)
+        LOGGER.info("Using cached ACS/SVI covariates from %s", covariates_file)
+    else:
+        load_env()
+        key = os.environ.get("CENSUS_API_KEY")
+        acs = fetch_acs("06", "075", 2023, key)
+        svi = fetch_svi("06", "075")
     adult_pop = adult_population_by_tract(base)
     mean_ndvi = tract_mean_ndvi(base)
     feasible_increment = feasible_increment_by_tract(base)
@@ -414,8 +446,11 @@ def main():
     ap.add_argument("--bootstrap", type=int, default=400, help="Tract-bootstrap draws per metric.")
     ap.add_argument("--permutations", type=int, default=499, help="Spatial permutation draws.")
     ap.add_argument("--scenario", action="append", help="Scenario label to include; repeatable.")
+    ap.add_argument("--covariates-file", type=Path,
+                    help="Cached tract table with ACS 2023 and SVI 2022 covariates.")
     cli = ap.parse_args()
-    labels = cli.scenario or ["uniform_005", "greenable_005", "lulc_masked", "canopy_30pct",
+    labels = cli.scenario or ["uniform_005", "proportional_10pct", "greenable_005",
+                              "lulc_masked", "canopy_30pct",
                               "best_potential_p95", "health_priority_feasible",
                               "equity_priority_feasible", "balanced_priority_feasible"]
     scenarios = {label: load_scenario_gdf(label) for label in labels}
@@ -423,7 +458,7 @@ def main():
     if "uniform_005" not in scenarios:
         sys.exit("uniform_005 scenario output is required; run run_scenarios.py first.")
     base = scenarios["uniform_005"]
-    write_outputs(base, scenarios, cli.bootstrap, cli.permutations)
+    write_outputs(base, scenarios, cli.bootstrap, cli.permutations, cli.covariates_file)
 
 
 if __name__ == "__main__":

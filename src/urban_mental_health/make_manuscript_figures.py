@@ -200,13 +200,27 @@ def table1_data_sources():
 
 def table2_results_summary():
     TABDIR.mkdir(parents=True, exist_ok=True)
-    csvs = sorted(glob.glob(str(WORKSPACE / "output" / "*sum*.csv")))
     total_cases = total_cost = None
-    if csvs:
-        for r in csv.DictReader(open(csvs[0])):
-            if str(r.get("FID", "")).upper() == "ALL":
-                total_cases = float(r["total_cases"]) if r.get("total_cases") else None
-                total_cost = float(r["total_cost"]) if r.get("total_cost") else None
+    # Use the same uniform +0.05 scenario row as the integrated summary.  The
+    # older sf_baseline workspace can differ by a few edge cells and should not
+    # create a second, slightly different manuscript headline.
+    if SCEN_CSV.exists():
+        for r in csv.DictReader(open(SCEN_CSV)):
+            if r.get("scenario") == "uniform_005":
+                total_cases = float(r["preventable_cases"])
+                total_cost = float(r["preventable_cost_usd"])
+                break
+    if total_cases is None:
+        csvs = sorted(glob.glob(str(WORKSPACE / "output" / "*sum*.csv")))
+        if csvs:
+            for r in csv.DictReader(open(csvs[0])):
+                if str(r.get("FID", "")).upper() == "ALL":
+                    total_cases = (
+                        float(r["total_cases"]) if r.get("total_cases") else None
+                    )
+                    total_cost = (
+                        float(r["total_cost"]) if r.get("total_cost") else None
+                    )
     rows = [["Metric", "Value"]]
     if total_cases is not None:
         rows.append(["Preventable cases per year (central)", f"{total_cases:,.0f}"])
@@ -214,7 +228,11 @@ def table2_results_summary():
         rows.append(["Avoided societal cost per year (central)", f"US${total_cost:,.0f}"])
     if SENS_CSV.exists():
         s = list(csv.DictReader(open(SENS_CSV)))
-        cases = [float(r["preventable_cases"]) for r in s]
+        primary = [
+            r for r in s
+            if r.get("p0_label") == "national_low_ndvi_quartile_p0"
+        ]
+        cases = [float(r["preventable_cases"]) for r in (primary or s)]
         rows.append(["Preventable cases range (effect-size sensitivity)",
                      f"{min(cases):,.0f} – {max(cases):,.0f}"])
     with open(TABDIR / "Table2_results_summary.csv", "w", newline="") as fh:

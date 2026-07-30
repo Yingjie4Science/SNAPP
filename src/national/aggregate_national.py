@@ -37,11 +37,12 @@ LOGGER = logging.getLogger("aggregate_national")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
-RUNS = UMH / "runs" / "national"
+RUNS_ROOT = UMH / "runs"
 REGIONS_CSV = BASE_DIR / "config" / "regions.csv"
-COUNTIES_GPKG = BASE_DIR / "data" / "national" / "counties.gpkg"
+COUNTIES_GPKG = BASE_DIR / "data" / "national" / "counties_gee_upload" / "counties.shp"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_DIR = BASE_DIR / "results" / "summaries"
+RUNS = RUNS_ROOT / "national"
 OUT_CSV = OUT_DIR / "national_summary.csv"
 OUT_MD = OUT_DIR / "national_summary.md"
 FIG = BASE_DIR / "results" / "figures" / "national_preventable_cases_map.png"
@@ -85,6 +86,8 @@ def collect() -> list:
     names = read_county_names()
     rows = []
     for geoid in sorted(os.listdir(RUNS)):
+        if geoid.startswith("_"):
+            continue
         if not (RUNS / geoid).is_dir():
             continue
         rec = read_county_total(geoid)
@@ -186,12 +189,40 @@ def draw_map(rows):
 
 
 def main():
+    global RUNS, OUT_CSV, OUT_MD, FIG
     ap = argparse.ArgumentParser(description="Aggregate national per-county runs.")
+    ap.add_argument(
+        "--scenario",
+        choices=[
+            "uniform_005",
+            "proportional_10pct",
+            "greenable_005",
+            "best_potential_p95",
+            "existing_greenness",
+        ],
+        default="uniform_005",
+    )
+    ap.add_argument("--search-radius", type=float, default=300)
     ap.add_argument("--metro-rollup", action="store_true",
                     help="Also roll up by metro area (needs geopandas + counties.gpkg).")
     ap.add_argument("--map", action="store_true",
                     help="Also draw a per-county choropleth (needs geopandas + matplotlib).")
     cli = ap.parse_args()
+    run_name = (
+        "national" if cli.scenario == "uniform_005"
+        else f"national_{cli.scenario}"
+    )
+    if cli.search_radius != 300:
+        run_name += f"_radius_{int(cli.search_radius)}m"
+    RUNS = RUNS_ROOT / run_name
+    suffix = (
+        "" if cli.scenario == "uniform_005" and cli.search_radius == 300
+        else f"_{cli.scenario}"
+        + (f"_radius_{int(cli.search_radius)}m" if cli.search_radius != 300 else "")
+    )
+    OUT_CSV = OUT_DIR / f"national_summary{suffix}.csv"
+    OUT_MD = OUT_DIR / f"national_summary{suffix}.md"
+    FIG = BASE_DIR / "results" / "figures" / f"national_preventable_cases_map{suffix}.png"
 
     rows = collect()
     if not rows:
@@ -205,11 +236,12 @@ def main():
     implied = (tot_cost / tot_cases) if tot_cases else None
 
     lines = [
-        "# National results summary", "",
+        f"# National results summary — {cli.scenario}", "",
         f"_Generated {date.today().isoformat()} from {n} county runs "
         f"in `{RUNS.relative_to(BASE_DIR)}`._", "",
         "## Headline", "",
         f"- Counties with results: **{n}**",
+        f"- Exposure radius: **{cli.search_radius:g} m**",
         f"- Preventable depression cases/year (national): **{tot_cases:,.0f}**",
         f"- Avoided societal cost/year (national): **${tot_cost:,.0f}**",
     ]

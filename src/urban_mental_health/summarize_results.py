@@ -18,6 +18,7 @@ import argparse
 import csv
 import glob
 import logging
+import re
 from datetime import date
 from pathlib import Path
 from statistics import mean, median
@@ -31,6 +32,7 @@ WORKSPACE = UMH / "runs" / "sf_baseline"                  # base model run
 TOTAL_GREENNESS_WS = UMH / "runs" / "sf_total_greenness"  # existing-greenness run
 RESULTS = BASE_DIR / "results"
 SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
+LIU_REPOOL = RESULTS / "summaries" / "liu_one_effect_per_study.md"
 SCENARIOS = RESULTS / "summaries" / "scenario_comparison.csv"
 EQUITY = RESULTS / "summaries" / "equity_metrics.csv"
 EQUITY_FIG = RESULTS / "figures" / "equity_concentration_curves.png"
@@ -46,6 +48,7 @@ OUT_MD = RESULTS / "summaries" / "results_summary.md"
 
 SCENARIO_NAMES = {
     "uniform_005": "Uniform +0.05 NDVI (reference)",
+    "proportional_10pct": "Proportional +10% NDVI",
     "greenable_005": "Greenable-only +0.05 NDVI",
     "lulc_masked": "LULC-masked feasible greening",
     "canopy_30pct": "30% canopy target",
@@ -149,19 +152,30 @@ def p0_sensitivity_lines(central_cases):
     m = _config_model()
     or_c = float(m.get("effect_size_or", 0.931))
     p0_used = float(m.get("baseline_risk_p0", 0.20))
+    p0_method = str(m.get("baseline_risk_p0_method", "not_recorded"))
     rr_used = or_to_rr(or_c, p0_used)
     out = ["", "### Sensitivity to the baseline-risk assumption (p0)", "",
-           f"Baseline risk p0 used: **{p0_used:.3f}** (population-weighted PLACES "
-           f"prevalence); central OR {or_c:.3f} -> RR {rr_used:.4f}. The RR is nearly "
-           f"flat in p0, but preventable cases scale with -ln(RR), so they move "
-           f"~±6% per 0.05 change in p0 — hence pinning p0 to the data (compute_p0.py):",
+           f"Configured baseline risk p0: **{p0_used:.3f}** "
+           f"(`{p0_method}`); central OR {or_c:.3f} -> RR {rr_used:.4f}. "
+           "This is the **locked national U.S. primary estimate**, calculated as "
+           "adult-population-weighted PLACES prevalence among tracts in the lowest "
+           "population-weighted NDVI quartile across the 1,167-county study AOI. "
+           "Hystad et al. values below are separate outcome-definition sensitivity "
+           "anchors and are not averaged because their participants overlap:",
            "",
-           "| p0 | RR | approx. preventable cases |", "|---:|---:|---:|"]
-    for p in (0.10, 0.15, 0.20, 0.25, 0.30):
+           "| p0 source / outcome | p0 | RR | approx. preventable cases |",
+           "|---|---:|---:|---:|"]
+    scenarios = [
+        ("Hystad et al.: PHQ-9 >=10", 0.064),
+        ("Hystad et al.: self-reported diagnosis", 0.096),
+        ("Hystad et al.: health-record diagnosis", 0.115),
+        ("National low-NDVI-quartile value (primary)", p0_used),
+    ]
+    for label, p in scenarios:
         rr = or_to_rr(or_c, p)
         cases = (central_cases * math.log(rr) / math.log(rr_used)) if (central_cases and rr_used != 1) else float("nan")
-        mark = "  ← used" if abs(p - p0_used) < 1e-9 else ""
-        out.append(f"| {p:.2f}{mark} | {rr:.4f} | {cases:,.0f} |")
+        mark = " (used)" if abs(p - p0_used) < 1e-9 else ""
+        out.append(f"| {label}{mark} | {p:.3f} | {rr:.4f} | {cases:,.0f} |")
     return out
 
 
@@ -170,6 +184,20 @@ def read_sensitivity():
         return None
     with open(SENS) as fh:
         return list(csv.DictReader(fh))
+
+
+def read_liu_repool():
+    """Extract the generated one-effect-per-study robustness result."""
+    if not LIU_REPOOL.exists():
+        return None
+    text = LIU_REPOOL.read_text()
+    match = re.search(
+        r"pooled OR: \*\*(\d+\.\d+)\*\* \(95% CI (\d+\.\d+)[–-](\d+\.\d+)\)",
+        text)
+    i2 = re.search(r"I²: \*\*(\d+\.\d+)%\*\*", text)
+    if not match:
+        return None
+    return (*match.groups(), i2.group(1) if i2 else "n/a")
 
 
 def read_scenarios():
@@ -220,16 +248,19 @@ def read_advanced_equity():
 def effect_ci():
     """95% CI on preventable cases implied by the effect-size 95% CI.
 
-    The effect_size bounds (RR 0.908–0.982) are the Liu et al. (2023) odds-ratio
-    95% CI converted to RRs, so the preventable-case values at those bounds ARE a
-    95% confidence interval. The most-protective RR (lowest) gives the upper case
-    bound and vice-versa. Returns (cases_low, cases_high) or None.
+    Uses only the configured p0 rows. The OR confidence limits are converted
+    at that same p0, so p0 scenarios are not incorrectly folded into the
+    statistical interval. Returns (cases_low, cases_high) or None.
     """
     sens = read_sensitivity()
     if not sens:
         return None
     pts = {}
     for r in sens:
+        if r.get("p0_label") and r.get("p0_label") not in (
+                "configured_interim_p0", "configured_us_p0",
+                "national_low_ndvi_quartile_p0"):
+            continue
         try:
             pts[float(r["effect_size"])] = float(r["preventable_cases"])
         except (KeyError, ValueError, TypeError):
@@ -377,8 +408,10 @@ def baseline_check_lines(total_cases):
     if ratio > 1.15:
         out.append(f"- ⚠️ Model baseline is **{ratio:.2f}×** the census pool → the population "
                    f"raster likely sums ~{implied_baseline/p0:,.0f} (vs {adult:,.0f} adults). "
-                   f"Check that population was adult-scaled AND clipped to the AOI polygon "
-                   f"(not a bounding box). Fixing it scales the headline down by ~{100*(1-1/ratio):.0f}%.")
+                   f"Regenerate it with `fetch_population.py` Census-total calibration, "
+                   f"then rerun all absolute case/cost outputs. Calibration would scale "
+                   f"the headline down by about {100*(1-1/ratio):.0f}% if the spatial "
+                   f"prevalence mix is otherwise unchanged.")
     elif ratio < 0.87:
         out.append(f"- ⚠️ Model baseline is only {ratio:.2f}× the census pool — investigate.")
     else:
@@ -392,11 +425,17 @@ def draw_sensitivity_range():
     if plt is None or not SENS.exists():
         return None
     rows = list(csv.DictReader(open(SENS)))
+    configured = [r for r in rows if r.get("p0_label") in (
+        "configured_interim_p0", "configured_us_p0",
+        "national_low_ndvi_quartile_p0")]
+    if configured:
+        rows = configured
     if not rows:
         return None
     def g(r, k):
         return float(r.get(k, 0) or 0)
-    labels = [r.get("effect_size", "?") for r in rows]
+    labels = [f"OR {r.get('odds_ratio', '?')}\nRR {float(r.get('effect_size', 0)):.3f}"
+              for r in rows]
     cen = [g(r, "cost_central_21280") for r in rows]
     lo = [g(r, "cost_low_17000") for r in rows]
     hi = [g(r, "cost_high_23000") for r in rows]
@@ -411,10 +450,11 @@ def draw_sensitivity_range():
     ax.bar(x, cen_a / 1e6, color="#7fb8a4", width=0.55)
     ax.errorbar(x, cen_a / 1e6, yerr=yerr / 1e6, fmt="none", ecolor="0.25", capsize=5)
     ax.set_xticks(list(x))
-    ax.set_xticklabels([f"RR {l}" for l in labels])
+    ax.set_xticklabels(labels)
     ax.set_ylabel("Avoided societal cost ($M / yr)")
     ax.set_xlabel("Effect size (risk ratio per +0.1 NDVI)")
-    ax.set_title("Avoided cost by effect size\n(error bars = $17k-$23k cost-per-case band)")
+    ax.set_title("Avoided cost by effect size at configured p0\n"
+                 "(error bars = $17k-$23k cost-per-case band)")
     out = RESULTS / "figures" / "sensitivity_range.png"
     out.parent.mkdir(parents=True, exist_ok=True)
     fig.savefig(out, dpi=200, bbox_inches="tight")
@@ -611,11 +651,14 @@ def main():
 
     L = [f"# {city}: health benefits of urban greenery", "",
          f"_Generated {date.today().isoformat()}._", "",
-         "This report estimates how much depression could be prevented — and how much money "
+         "This report estimates how much **PLACES-defined diagnosed depressive disorder** "
+         "could be prevented — and how much money "
          f"saved — by increasing greenery (street trees, parks, vegetation) across {city}. "
          "It combines satellite greenery (the NDVI index), local adult depression rates "
          "(CDC PLACES) and where people live (WorldPop) via the InVEST Urban Mental Health "
-         "model. Key terms are defined in the glossary at the end.", ""]
+         "model. PLACES measures adults ever told by a health professional that they had a "
+         "depressive disorder; it is not strict current MDD prevalence. Key terms are defined "
+         "in the glossary at the end.", ""]
 
     # ---- In brief ----
     L += ["## In brief", ""]
@@ -645,11 +688,11 @@ def main():
     # ---- One scenario section: investments plus existing-greenness accounting ----
     L += ["## Scenario comparison", ""]
     if scenario_rows:
-        L += ["The five investment scenarios use the same exposure-response, baseline depression, "
-              "population, and societal-cost assumptions; they differ only in where and how much "
-              "greening is allowed. The existing-greenness row is included for context, but it is "
-              "an accounting counterfactual (today's greenness versus a bare city), not an investment "
-              "option or a plausible removal forecast.", ""]
+        L += [f"The {len(scenario_rows)} investment scenarios use the same exposure-response, "
+              "baseline depression, population, and societal-cost assumptions; they differ only in "
+              "where and how much greening is allowed. The existing-greenness row is included for "
+              "context, but it is an accounting counterfactual (today's greenness versus a bare "
+              "city), not an investment option or a plausible removal forecast.", ""]
         L += img("scenarios", "Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.")
         L += ["**Table 1. Scenario comparison with common population and economic anchors.**", "",
               "| Scenario | Spatial rule | Cases / yr | Cases / 1,000 adults | Share of adult depression pool | Avoided cost / yr | Cost / resident / yr | Share of city GDP |",
@@ -685,8 +728,16 @@ def main():
               f"{pool_text} ({p0:.1%} prevalence). Cost per resident uses {pop_text} residents; "
               f"GDP shares use {gdp_text}. Costs use the configured ${rate:,.0f} per case. "
               "The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>",
-              "", "The LULC-masked and canopy-target scenarios are the most decision-relevant; "
-              "the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.", ""]
+              "", "**Read these as two groups, not one ranking — they are not on a common "
+              "effort scale.** The *budget-matched, feasible* scenarios (LULC-masked and the "
+              "health-/equity-/balanced-priority allocations) are the decision-relevant options: "
+              "each greens a comparable, realistically achievable amount of land, so their "
+              "prevented-case numbers *are* directly comparable and answer 'where should a fixed "
+              "greening budget go?'. The *reference and aspirational* scenarios (uniform +0.05, "
+              "proportional +10%, within-city p95, 30% canopy) instead raise NDVI broadly or to a "
+              "ceiling; they bracket a simple reference and an upper envelope of what is "
+              "biophysically possible, and their much larger totals reflect far more greening, not "
+              "a better use of the same resources. Compare within a group, not across.", ""]
     else:
         L += ["_Alternative scenarios have not been run. Run `run_scenarios.py` after generating "
               "the scenario rasters to populate this comparison._", ""]
@@ -767,25 +818,49 @@ def main():
           "only as the current stock of modeled benefit.", ""]
 
     # ---- Reliability ----
+    m = _config_model()
+    or_low = float(m.get("effect_size_or_low", 0.887))
+    or_high = float(m.get("effect_size_or_high", 0.977))
+    rr_low = or_low / (1 - p0 + p0 * or_low)
+    rr_high = or_high / (1 - p0 + p0 * or_high)
+    liu_repool = read_liu_repool()
     L += ["", "## How reliable are these numbers?", "",
           "Two sources of spread, and they are different in kind:", "",
-          "- **Statistical 95% CI (cases).** The effect-size bounds (RR 0.908–0.982) are the "
-          "Liu et al. (2023) odds-ratio 95% CI, converted to risk ratios. Propagating them "
+          f"- **Statistical 95% CI (cases), conditional on configured p0={p0:.3f}.** "
+          f"The Liu et al. (2023) OR bounds {or_low:.3f}–{or_high:.3f} convert to "
+          f"RR {rr_low:.3f}–{rr_high:.3f}. Propagating them "
           f"gives the headline confidence interval{(' of ' + f'{ci[0]:,.0f}–{ci[1]:,.0f} cases') if ci else ''}.",
+          "- **Baseline-risk scenarios.** The locked national low-NDVI-quartile p0 and the three "
+          "Hystad et al. outcome-specific p0 values are reported separately. They test the OR-to-RR "
+          "conversion assumption and are not a confidence interval.",
           "- **Cost scenario band ($17k–$23k per case).** This is a range of defensible "
-          "cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range.",
-          "", "The chart and table below show both together.", ""]
+          "cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range."]
+    if liu_repool:
+        pooled, pooled_lo, pooled_hi, pooled_i2 = liu_repool
+        L += [f"- **One-effect-per-study robustness check.** Selecting one estimate from "
+              f"each of nine Liu cohorts gives OR **{pooled}** (95% CI "
+              f"{pooled_lo}–{pooled_hi}; I²={pooled_i2}%). This agrees closely with the "
+              "published point estimate but remains highly heterogeneous and is a "
+              "post-hoc sensitivity, not the primary model.", ""]
+    L += ["", "The chart and table below show the effect, p0, and cost scenarios together.", ""]
     L += img("sens", "How avoided cost changes with the effect size and cost-per-case range.")
     sens = read_sensitivity()
     if sens:
-        L += ["| effect size (RR) | cases prevented | cost (low) | cost (central) | cost (high) |",
-              "|---|---:|---:|---:|---:|"]
+        L += ["**Table 4. Joint OR, p0, and societal-cost sensitivity.**", "",
+              "| p0 scenario | p0 | OR | RR | cases prevented | cost (low) | cost (central) | cost (high) |",
+              "|---|---:|---:|---:|---:|---:|---:|---:|"]
         for r in sens:
-            L.append(f"| {r.get('effect_size','?')} | "
+            label = r.get("p0_label", "legacy sensitivity").replace("_", " ")
+            L.append(f"| {label} | {r.get('p0', '—')} | {r.get('odds_ratio', '—')} | "
+                     f"{r.get('effect_size','?')} | "
                      f"{float(r.get('preventable_cases',0)):,.0f} | "
                      f"${float(r.get('cost_low_17000',0)):,.0f} | "
                      f"${float(r.get('cost_central_21280',0)):,.0f} | "
                      f"${float(r.get('cost_high_23000',0)):,.0f} |")
+        L += ["", "<sub>Table 4 legend. Each OR is converted to RR at the p0 shown, "
+              "then propagated through the spatial model. The three cost columns are "
+              "scenario bounds, not confidence limits. Hystad et al. p0 rows are alternative "
+              "outcome definitions from overlapping participants and must not be averaged.</sub>", ""]
     L += p0_sensitivity_lines(total_cases)
     L += baseline_check_lines(total_cases)
 
@@ -798,8 +873,9 @@ def main():
         ok = abs(implied - rate) / rate < 0.01
         L.append(f"- Cost bookkeeping: implied ${implied:,.0f}/case vs configured "
                  f"${rate:,.0f} — {'OK' if ok else 'MISMATCH, investigate'}.")
-    L += ["- Population is adult-scaled (depression rates are for adults); the baseline "
-          "check above confirms it against census figures.",
+    L += ["- Population is adult-scaled because depression rates are for adults; "
+          "the baseline check above determines whether its aggregate also matches "
+          "the Census anchor.",
           "- The greening scenario and effect size are assumptions — read the headline "
           "with the ranges above, not as a single certain number.",
           "- **Cross-place comparability:** we report the **PAF** and **cases per 1,000 "
@@ -808,6 +884,20 @@ def main():
           "PLACES gives a single adult (18+) depression rate per tract, not 5-year age-"
           "specific rates, and the effect size isn't age-specific — so the PAF and the "
           "crude adult rate are the appropriate comparators."]
+
+    # ---- Explicit handoff checklist ----
+    L += ["", "## Remaining work", "",
+          "- Archive raw-input checksums and an exact software environment lock.",
+          "- Decide whether the optional national existing-greenness accounting "
+          "counterfactual is needed; the SF report already includes it.",
+          "- Decide whether regional wage-adjusted societal costs belong in the "
+          "main analysis or supplement.",
+          "- Treat the eastern/northern SF NDVI buffer warning as a residual edge-effect "
+          "limitation unless a wider source composite can be exported.",
+          "",
+          "The maintained checklist and decision log are in "
+          "`docs/us_case_status.md`; the export evidence is in "
+          "`results/summaries/national_ndvi_audit.md`."]
 
     # ---- Glossary ----
     L += ["", "## Glossary", "",

@@ -1,0 +1,14 @@
+study,effect_id,or,ci_low,ci_high,outcome,selected_one_per_study,selection_reason
+Song 2019,song_1,0.960,0.916,1.005,CES-D,1,only estimate from cohort
+Niu 2020,niu_1,0.878,0.786,0.980,PHQ-2,1,only estimate from cohort
+Perry 2019,perry_phq5,0.960,0.892,1.033,PHQ-9 >=5,0,repeated cohort; less aligned with PLACES
+Perry 2019,perry_phq10,0.920,0.799,1.059,PHQ-9 >=10,0,repeated cohort; less aligned with PLACES
+Perry 2019,perry_doctor,0.850,0.760,0.950,self-reported doctor diagnosis,1,closest Perry outcome to PLACES definition
+Brown 2018,brown_1,0.845,0.822,0.868,clinical diagnosis,1,only estimate from cohort
+Abraham 2022,abraham_cesd,0.918,0.848,0.994,CES-D,0,repeated cohort; diagnosis preferred
+Abraham 2022,abraham_clinical,0.950,0.879,1.027,clinical diagnosis,1,diagnosis preferred over symptom scale
+Sarkar 2018,sarkar_1,0.960,0.930,0.990,psychological inventories,1,only estimate from cohort
+Bezold 2018,bezold_1,0.912,0.845,0.985,CES-D,1,only estimate from cohort
+Tomita 2017,tomita_1,1.010,1.005,1.015,CES-D,1,only estimate from cohort
+Gonzales 2022,gonzales_ndvi,1.041,0.877,1.234,BDI with cumulative NDVI,1,direct NDVI exposure retained
+Gonzales 2022,gonzales_green_pct,0.928,0.894,0.963,BDI with residential green-space percent,0,repeated cohort; non-NDVI exposure omitted

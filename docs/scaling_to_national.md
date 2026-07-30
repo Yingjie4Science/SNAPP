@@ -1,75 +1,131 @@
-# Scaling from San Francisco to a US-nationwide urban study
+# Scaling from San Francisco to the U.S. national urban study
 
-The current pipeline is built for one city, but most of the data sources are
-already national. Here's what changes when you scale to all US urban areas.
+_Method/status updated 2026-07-30._
 
-## What already scales (no new data needed)
+## Locked study design
 
-- **Depression prevalence** — `raw/cdc_places/prevalence_rate_usa_2021.shp` is the
-  *national* CDC PLACES tract file. `build_aoi_prevalence.py` just filters by
-  GEOID prefix; drop the SF filter to keep all tracts.
-- **Population** — WorldPop US 100 m is national; clip per study area.
-- **Health cost** — the societal per-case figure is a US-national value; already
-  applies everywhere (see regional refinement below).
-- **NDVI (GEE)** — your original Earth Engine script already **loops over many
-  city AOIs** (`aoi_cities`, keyed by `GEOID_PLAC`); that pattern is the template.
+- **Study universe:** 1,167 unique county GEOIDs in the exact county layer
+  uploaded to Earth Engine.
+- **Projection and exposure grid:** EPSG:5070, harmonized 90 m NDVI. Original
+  30 m exports are aggregated with area averaging; original 90 m exports are
+  aligned to the same 90 m grid origin.
+- **Population:** WorldPop supplies within-county spatial weights; every county
+  is rescaled to its exact ACS 2023 five-year age-18+ total.
+- **Outcome:** CDC PLACES tract prevalence of adults ever told they have a
+  depressive disorder. This is not strict current MDD.
+- **Florida bridge:** the PLACES 2023 spatial release has null depression
+  values for all Florida tracts. Missing Florida values only are filled from
+  the immediately preceding official PLACES 2022 release on the same 2015
+  tract geography. No other state or non-null value is replaced.
+- **Effect:** Liu et al. (2023) pooled OR 0.931 (0.887–0.977), converted to RR
+  at the locked national low-NDVI-quartile p0 = 0.191045. Primary RR =
+  0.943436 (0.906571–0.981312).
+- **Primary counterfactual:** uniform +0.05 NDVI at a 300 m exposure radius.
+- **Valuation:** $21,280 societal cost per prevalent case (2024 USD), with
+  $17,000–$23,000 sensitivity.
 
-## What needs to change
+## Data gates completed
 
-1. **Define the AOIs = counties in metros.** `build_metro_counties.py` selects
-   US **counties that fall within/overlap a Metro (CBSA)** and writes
-   `data/national/counties.gpkg` + `config/regions.csv`. (Project decision: the
-   study unit is the county intersecting a metro, not the Census "place" layer.)
-   Iterate over them (one AOI per city), as your GEE script does.
+The national run is allowed only after these fail-closed gates pass:
 
-2. **Use a national equal-area CRS.** The scripts hardcode `EPSG:26910` (UTM 10N),
-   which is correct only for the SF longitude band. For CONUS use
-   **`EPSG:5070` (NAD83 / Conus Albers, meters)** everywhere (AOI, population,
-   NDVI). Alaska/Hawaii/PR need their own CRS if included.
+1. Filename GEOIDs match the exact 1,167-county AOI.
+2. The 56 out-of-AOI rasters are quarantined outside the active input folder.
+3. All 1,167 active rasters are readable EPSG:5070 GeoTIFFs on aligned 90 m
+   grids.
+4. A full-pixel read finds valid NDVI within [-1, 1] and no unmasked `NaN` or
+   infinite values.
+5. ACS adult targets and county SVI cover all 1,167 GEOIDs uniquely.
+6. National p0 processing succeeds for every county and reconciles allocated
+   population to ACS targets.
 
-3. **Loop the model per city, not once nationally.** InVEST buffers the AOI by
-   `search_radius` and holds rasters in memory, so run it **per city** (or per
-   metro) and aggregate `preventable_cases` / `preventable_cost` afterward. A
-   single national raster run is not practical.
+The strengthened non-finite-value check matters. An initial harmonization
+declared `-9999` as nodata while retaining internal `NaN` values in some files;
+the InVEST convolution then returned non-finite results. Those preliminary
+national totals were rejected, the rasters were rewritten with consistent
+nodata encoding, and the full-read audit was rerun before modeling.
 
-4. **Mind GEE compute limits.** National 30 m Landsat is large. Keep per-city
-   `Export.image.toDrive` (your script's approach) or batch by state/UTM tile;
-   don't try one national `getDownloadURL`.
+Final scenario QA also exposed a separate cap error: pixels whose baseline
+NDVI already exceeded 0.90 were being lowered to 0.90. Scenario construction
+now preserves those baseline pixels and caps proposed increases only. All SF
+and national scenario/radius outputs were regenerated with this no-decrease
+rule.
 
-5. **Memory + I/O.** Reuse the windowed-read pattern from `fetch_population.py`
-   (`clip_box` before polygon clip) for every city so you never load the national
-   population raster whole.
+Machine-readable evidence:
 
-## Refinements worth adding at national scale
+- `results/summaries/national_ndvi_manifest.csv`
+- `results/summaries/national_ndvi_audit.md`
+- `results/summaries/national_p0_county_qa.csv`
+- `results/summaries/national_final_qa.csv`
 
-- **Regional cost.** `estimate_health_cost.py` already takes `--region`
-  (MEPS census regions) and `--wage-factor`. For a national study, compute a
-  cost per case per region (or per metro wage level) rather than one flat value,
-  since the workplace component (61%) scales with local wages.
-- **Effect size.** The 0.93 default is national; sensitivity runs (0.887–0.977)
-  matter more when totals are large.
-- **Suppressed prevalence.** CDC PLACES suppresses small/low-population tracts;
-  decide how to handle gaps (drop, impute, or county fallback).
+## Reproducible sequence
 
-## Suggested engineering shape
+```bash
+# 1. Quarantine files outside the locked AOI
+python src/national/quarantine_unexpected_ndvi.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --ndvi-dir data/national/ndvi
 
+# 2. Harmonize to aligned 90 m EPSG:5070 grids
+python src/national/harmonize_ndvi_resolution.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --input-dir data/national/ndvi \
+  --output-dir data/national/ndvi_90m --resolution 90
+
+# 3. Full-read raster gate
+python src/national/audit_ndvi_exports.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --ndvi-dir data/national/ndvi_90m \
+  --expected-resolution 90 --full-read
+
+# 4. Lock p0 and update config.yaml
+python src/national/compute_national_p0.py \
+  --prevalence <national_places_shapefile> \
+  --population <national_worldpop_raster>
+
+# 5. Primary national run; resumable and isolated by county
+python src/national/run_national_batch.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --prevalence <national_places_shapefile> \
+  --population <national_worldpop_raster> \
+  --ndvi-dir data/national/ndvi_90m \
+  --scenario uniform_005 --workers 8
+
+# 6. Further scenarios/radii reuse the calibrated primary inputs
+python src/national/run_national_batch.py <same shared arguments> \
+  --scenario proportional_10pct --reuse-central-inputs
+
+python src/national/run_national_batch.py <same shared arguments> \
+  --scenario uniform_005 --search-radius 500 --reuse-central-inputs
+
+# 7. Aggregate and validate
+python src/national/aggregate_national.py --scenario uniform_005 --map
+python src/national/summarize_national_scenarios.py
+python src/national/national_equity.py
+python src/national/summarize_radius_sensitivity.py
+python src/national/qa_national_results.py
 ```
-src/national/build_metro_counties.py   # AOI: counties overlapping metros
-config/regions.csv                      # county GEOIDs (written by the builder)
-src/national/run_city.py                # build inputs + run model for ONE county
-run_national.sh                         # loop config/regions.csv -> run_city.py
-data/urban-mental-health/runs/national/<GEOID>/   # per-county outputs
-```
 
-Parameterize by `--geoid`/`--regions`/`--crs`, drive from `config/regions.csv`,
-and parallelize across counties (they're independent). Cache the shared national
-rasters (WorldPop, NDVI tiles) so each county reads a window rather than
-re-downloading.
+Each county has an isolated workspace and log. Completed counties are skipped
+on restart unless `--force` is supplied.
 
-## Bottom line
+## Interpretation and remaining refinements
 
-Scaling is mostly (a) building the counties-in-metro AOI layer, (b) moving to
-`EPSG:5070`, and (c) wrapping the per-county steps in a loop with per-county run
-folders — not new science. The prevalence, population, cost, and effect-size
-inputs are already national. The scaffolding (`build_metro_counties.py`,
-`run_city.py`, `run_national.sh`, `config/regions.csv`) is in place.
+- National benefit totals are prevalence-based modeled counterfactuals, not
+  incidence reductions or randomized intervention forecasts.
+- The 90 m exposure grid is a defensible common denominator for mixed original
+  exports, but it cannot recover information lost in rasters originally
+  exported at 90 m.
+- County-level SVI describes between-county distribution; it masks
+  within-county inequity and should complement tract-level city analyses.
+- A flat national societal cost is appropriate for the primary analysis.
+  Regional wage scaling remains a sensitivity because workplace productivity
+  is the largest cost component.
+- Alaska, Hawaii, and territories require projection and source-coverage
+  decisions if added; the current AOI and EPSG:5070 workflow are CONUS-focused.
+
+## Remaining to-do
+
+- Archive exact raw-data checksums and the final environment lock file.
+- Add automated CI tests for the national manifest and summary invariants.
+- Consider regional wage-adjusted costs and tract-level national SVI as
+  manuscript extensions, not blockers for the present U.S. analysis.
