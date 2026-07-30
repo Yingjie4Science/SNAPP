@@ -2,6 +2,10 @@ name: Fetch ACS adult population
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - ".github/workflows/fetch-acs-adult-population.yml"
+      - "config/regions.csv"
   push:
     paths:
       - ".github/workflows/fetch-acs-adult-population.yml"
@@ -91,6 +95,7 @@ jobs:
           PY
 
       - name: Commit validated lookup
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
