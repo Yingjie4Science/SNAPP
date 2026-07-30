@@ -55,10 +55,17 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 NATIONAL_CRS = "EPSG:5070"          # NAD83 / Conus Albers (meters) — CONUS-wide
 WORKSPACE_ROOT = BASE_DIR / "data" / "urban-mental-health" / "runs" / "national"
 
-SEARCH_RADIUS_M = 300.0
-# RISK RATIO per +0.1 NDVI. Converted OR->RR from Liu et al. 2023 (OR 0.931) at
-# p0=0.20; matches config.yaml effect_size. See docs/effect_size.md.
-EFFECT_SIZE_RR = 0.944
+try:
+    import yaml
+    _MODEL = (yaml.safe_load((BASE_DIR / "config.yaml").read_text()) or {}).get("model", {})
+except Exception as exc:
+    sys.exit(f"Could not read model settings from config.yaml: {exc}")
+
+SEARCH_RADIUS_M = float(_MODEL.get("search_radius_m", 300.0))
+# RISK RATIO per +0.1 NDVI, converted from the Liu et al. pooled OR at the
+# documented p0. Reading config prevents national runs from silently retaining
+# an obsolete hard-coded conversion after p0 is finalized.
+EFFECT_SIZE_RR = float(_MODEL.get("effect_size", 0.944))
 SCENARIO_DELTA = 0.05               # uniform NDVI greening for ndvi_alt
 SCENARIO_CAP = 0.90
 
@@ -97,12 +104,12 @@ def resolve_cost(cli) -> float | None:
     return None
 
 
-def resolve_adult_fraction(cli) -> float:
-    """Per-county 18+ share from the ACS lookup if present, else the flat default.
+def resolve_adult_population(cli) -> tuple[float, float | None]:
+    """Return per-county adult fraction and, when available, ACS adult total.
 
-    config/adult_fraction.csv (from fetch_adult_fraction.py) maps GEOID ->
-    adult_fraction. If the file exists and lists this county, use it; otherwise
-    fall back to --adult-fraction (0.86).
+    config/adult_population.csv maps GEOID -> adult_fraction and
+    population_adult. The adult total calibrates WorldPop's aggregate while
+    retaining its spatial pattern. A legacy fraction-only file is supported.
     """
     import csv
     f = cli.adult_fraction_file
@@ -111,10 +118,13 @@ def resolve_adult_fraction(cli) -> float:
             for r in csv.DictReader(fh):
                 if (r.get("GEOID") or "").strip() == cli.geoid:
                     val = float(r["adult_fraction"])
-                    LOGGER.info("[%s] adult_fraction %.4f (per-county, ACS).", cli.geoid, val)
-                    return val
+                    target = (float(r["population_adult"])
+                              if r.get("population_adult") not in (None, "") else None)
+                    LOGGER.info("[%s] adult_fraction %.4f; target=%s (ACS).",
+                                cli.geoid, val, target)
+                    return val, target
         LOGGER.info("[%s] not in %s; using flat %.3f.", cli.geoid, f.name, cli.adult_fraction)
-    return cli.adult_fraction
+    return cli.adult_fraction, None
 
 
 def pick_geoid_col(gdf) -> str:
@@ -161,10 +171,18 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     post_sum = float(pop_proj.sum(skipna=True))
     if post_sum > 0 and pre_sum > 0:
         pop_proj = (pop_proj * (pre_sum / post_sum)).rio.write_crs(NATIONAL_CRS)
-    frac = resolve_adult_fraction(cli)              # CDC PLACES prevalence is ADULT (18+);
+    frac, target_adult = resolve_adult_population(cli)  # PLACES prevalence is adult;
     if frac != 1.0:                                  # scale all-ages WorldPop to adults so
         crs = pop_proj.rio.crs                        # cases aren't ~20% high
         pop_proj = (pop_proj * frac).rio.write_crs(crs)
+    if target_adult is not None:
+        current = float(pop_proj.sum(skipna=True))
+        if current <= 0:
+            sys.exit(f"[{cli.geoid}] adult population raster sums to zero.")
+        crs = pop_proj.rio.crs
+        pop_proj = (pop_proj * (target_adult / current)).rio.write_crs(crs)
+        LOGGER.info("[%s] calibrated WorldPop adult sum %.0f -> %.0f.",
+                    cli.geoid, current, target_adult)
     pop_proj.rio.write_nodata(float("nan"), inplace=True)
     pop_proj.attrs.pop("_FillValue", None)          # avoid xarray _FillValue clash
     pop_path = inputs / "population.tif"
@@ -228,10 +246,10 @@ def main():
                          "lookup file, since CDC PLACES prevalence is adult. Default 0.86 "
                          "(US 18+), matching the corrected SF run. Use 1.0 to disable.")
     ap.add_argument("--adult-fraction-file", type=Path,
-                    default=BASE_DIR / "config" / "adult_fraction.csv",
-                    help="Per-county 18+ share lookup (GEOID,adult_fraction) from "
-                         "fetch_adult_fraction.py. Used when present; overrides the flat "
-                         "value per county. Missing counties fall back to --adult-fraction.")
+                    default=BASE_DIR / "config" / "adult_population.csv",
+                    help="Per-county ACS lookup (GEOID,adult_fraction,population_adult). "
+                         "Used when present; missing counties fall back to "
+                         "--adult-fraction without aggregate calibration.")
     ap.add_argument("--cost-by-region", type=Path,
                     default=BASE_DIR / "config" / "cost_by_region.csv",
                     help="Per-region societal cost table (from regional_cost.py). Used when "

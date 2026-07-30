@@ -5,7 +5,9 @@ Make an `ndvi_alt` greening-scenario raster from the baseline NDVI (`ndvi_base`)
 The InVEST Urban Mental Health model compares a baseline against an alternate
 scenario; this builds that alternate by increasing greenness. Two modes:
 
-  uniform        add a fixed increment to every valid pixel (simple sensitivity run)
+  uniform        add a fixed absolute increment to every valid pixel (e.g. +0.05)
+  proportional   multiply every pixel by (1 + percent/100) — a relative % increase
+                 (Wu et al. 2026 use +10%); greener areas gain more in absolute terms
   greenable      only raise pixels currently BELOW a target (a more realistic
                  "green the un-green areas" scenario); already-green pixels unchanged
   best_potential raise every pixel below this AOI's OWN Nth-percentile NDVI up to
@@ -58,9 +60,12 @@ def main():
     ap = argparse.ArgumentParser(description="Build an ndvi_alt greening scenario.")
     ap.add_argument("--input", type=Path, default=DEFAULT_IN, help="Baseline NDVI raster.")
     ap.add_argument("--output", type=Path, default=DEFAULT_OUT, help="Scenario NDVI raster.")
-    ap.add_argument("--mode", choices=["uniform", "greenable", "best_potential"],
+    ap.add_argument("--mode",
+                    choices=["uniform", "proportional", "greenable", "best_potential"],
                     default="uniform")
-    ap.add_argument("--delta", type=float, default=0.05, help="NDVI increase to apply.")
+    ap.add_argument("--delta", type=float, default=0.05, help="uniform mode: NDVI increment.")
+    ap.add_argument("--percent", type=float, default=10.0,
+                    help="proportional mode: %% increase in NDVI (Wu et al. 2026 use 10%%).")
     ap.add_argument("--cap", type=float, default=0.90, help="Max NDVI after greening.")
     ap.add_argument("--target", type=float, default=0.60,
                     help="greenable mode: only raise pixels below this NDVI.")
@@ -76,6 +81,8 @@ def main():
     # Build the alternate (greened) NDVI per mode.
     if cli.mode == "uniform":
         alt = base + cli.delta
+    elif cli.mode == "proportional":             # +X% of each pixel's own NDVI
+        alt = base * (1.0 + cli.percent / 100.0)
     elif cli.mode == "greenable":                # increment only below the target
         alt = base + xr.where(base < cli.target, cli.delta, 0.0)
     else:                                        # best_potential: level up to this AOI's own Pth pct
@@ -97,7 +104,8 @@ def main():
     diff = (alt - base)
     changed = int((diff > 0).sum())
     extra = (f" target={cli.target}" if cli.mode == "greenable"
-             else f" percentile={cli.percentile}" if cli.mode == "best_potential" else "")
+             else f" percentile={cli.percentile}" if cli.mode == "best_potential"
+             else f" percent={cli.percent}" if cli.mode == "proportional" else "")
     LOGGER.info("mode=%s delta=%s cap=%s%s", cli.mode, cli.delta, cli.cap, extra)
     LOGGER.info("pixels increased: %d | mean NDVI %.3f -> %.3f",
                 changed, float(base.mean()), float(alt.mean()))

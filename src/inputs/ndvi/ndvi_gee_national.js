@@ -124,9 +124,16 @@ function yearlyP90(geometry) {
  */
 function withExportGeoid(feature) {
   var props = feature.propertyNames();
-  var hasParts = props.contains('STATEFP').and(props.contains('COUNTYFP'));
-  var idFromParts = ee.String(feature.get('STATEFP')).cat(ee.String(feature.get('COUNTYFP')));
-  var id = ee.String(ee.Algorithms.If(hasParts, idFromParts, feature.get('GEOID')));
+  // ee.List.contains() returns a server-side object; JavaScript's `.and()` is
+  // therefore unavailable. Nested ee.Algorithms.If calls keep this expression
+  // server-side and support either STATEFP+COUNTYFP or an existing GEOID.
+  var id = ee.String(ee.Algorithms.If(
+      props.contains('STATEFP'),
+      ee.Algorithms.If(
+          props.contains('COUNTYFP'),
+          ee.String(feature.get('STATEFP')).cat(ee.String(feature.get('COUNTYFP'))),
+          feature.get('GEOID')),
+      feature.get('GEOID')));
   return feature.set('GEOID_EXPORT', id);
 }
 

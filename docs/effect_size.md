@@ -1,126 +1,178 @@
-# Exposure-response: effect size and exposure radius
+# Exposure-response, baseline risk, and exposure radius
 
-This documents two modelling choices reviewers will scrutinise: (1) the greenness
-effect size and the fact that it is an **odds ratio converted to a risk ratio**,
-and (2) why we keep a **300 m** exposure radius.
+This document records the U.S. case-study decisions that control the
+greenness-to-depression calculation. It should be read with
+[`us_case_status.md`](us_case_status.md).
 
-## Source
+## Outcome represented by the model
 
-Liu, Z., Chen, X., Cui, H., Ma, Y., Gao, N., Li, X., Meng, X., Lin, H., Abudou, H.,
-Guo, L., & Liu, Q. (2023). Green space exposure on depression and anxiety outcomes:
-A meta-analysis. *Environmental Research, 231*(Pt 3), Article 116303.
-https://doi.org/10.1016/j.envres.2023.116303
+The baseline raster is CDC PLACES **DEPRESSION**: the percentage of adults who
+report ever being told by a health professional that they had a depressive
+disorder. It is not strict current major depressive disorder (MDD) prevalence
+and is not interchangeable with PHQ-9 ≥10. Results and figure legends should
+therefore say “PLACES-defined diagnosed depressive disorder” on first use.
 
-(Full citations for all sources are in [docs/references.md](references.md), APA 7th ed.)
+## Published exposure-response estimate
 
-Pooled association for depression: a **0.1-unit increase in NDVI** is linked to
-lower odds of depression, **merged OR = 0.931 (95% CI 0.887–0.977)**. (The same
-paper reports OR 0.963 per 10% green-space area, and a non-significant anxiety
-estimate; we use the NDVI depression figure.)
+Liu et al. (2023) report a pooled **odds ratio (OR) of 0.931 (95% CI
+0.887–0.977) per +0.1 NDVI** for depression. The forest plot contains 13
+estimates from nine unique studies; Perry contributes three outcomes, Abraham
+two, and Gonzales two. The reported heterogeneity is high (I² = 94.4%).
 
-## The metric: odds ratio vs risk ratio
+The published pooled OR remains the primary estimate because selecting one
+outcome per study after seeing the forest plot involves judgment. A scripted,
+one-effect-per-study re-pooling is retained as a robustness analysis:
 
-The published 0.931 is an **odds ratio (OR)**. The InVEST Urban Mental Health
-model applies `effect_size` as a **risk ratio (RR)** — it computes
-
-```
-preventable_cases = (1 − exp( ln(effect_size) · 10 · ΔNDVI )) · baseline_cases
-```
-
-so `effect_size` is a per-0.1-NDVI multiplier on **risk**. Depression is common
-(~20% prevalence), and for common outcomes the OR is further from 1 than the RR.
-Using the OR directly therefore **overstates** the protective effect and inflates
-preventable cases.
-
-### Conversion (Zhang & Yu 1998)
-
-```
-RR = OR / (1 − p0 + p0 · OR)
+```bash
+python src/analysis/repool_liu_one_effect_per_study.py
 ```
 
-where `p0` is the baseline risk in the reference (least-green) group, approximated
-by the population prevalence of depression.
+The input transcription and selection rationale are in
+`config/liu_2023_ndvi_depression_effects.csv`. This sensitivity is not presented
+as a superior replacement for Liu's prespecified meta-analysis.
 
-### How p0 is set (data-driven)
+## Why the OR is converted
 
-We do **not** hand-pick p0. `src/inputs/compute_p0.py` derives it as the
-**population-weighted mean of the same CDC PLACES `risk_rate` layer the model
-uses** (same outcome definition, same geography), then rewrites the RR values in
-`config.yaml`. This keeps the conversion self-consistent — the OR is applied to,
-and converted at, the identical prevalence surface. It lands near **0.20** for
-both SF and the US metro AOI. Run it after building model inputs:
+InVEST applies `effect_size` as a risk ratio (RR):
 
-```
-python src/inputs/compute_p0.py                 # updates config.yaml
-python src/inputs/effect_size.py --p0-sweep     # show p0 sensitivity table
+```text
+preventable_cases =
+  (1 - exp(ln(effect_size) * 10 * delta_NDVI)) * baseline_cases
 ```
 
-### Sensitivity to p0
+Using an OR directly for a common outcome exaggerates the protective effect.
+The Zhang–Yu conversion is:
 
-The RR itself is nearly flat in p0 (0.941 at 0.15 → 0.947 at 0.25). **But**
-preventable cases scale with `−ln(RR)`, and because RR is close to 1 that log
-amplifies small RR changes: **cases move ~±6% per 0.05 change in p0.**
+```text
+RR = OR / (1 - p0 + p0 * OR)
+```
 
-| p0 | RR (from OR 0.931) | ~cases vs p0=0.20 |
-|---|---|---|
-| 0.10 | 0.9375 | +12% |
-| 0.15 | 0.9407 | +6% |
-| 0.20 | 0.9440 | 0 (ref) |
-| 0.25 | 0.9473 | −6% |
-| 0.30 | 0.9507 | −12% |
+where `p0` is the outcome risk in the reference, least-green population.
 
-So p0 is not a throwaway constant: it is worth pinning to the data (which we do)
-and reporting a sensitivity row (which `summarize_results.py` now emits). It
-remains smaller than the effect-size CI and cost bands, but it is not negligible.
+## Decision on p0
 
-Converted values used in the pipeline (p0 = 0.20):
+### Primary U.S. estimand
 
-| quantity | published OR | **RR used** |
-|---|---|---|
-| central | 0.931 | **0.944** |
-| low bound (more protective) | 0.887 | **0.908** |
-| high bound (least protective) | 0.977 | **0.982** |
+The primary p0 will be the adult-population-weighted PLACES prevalence among
+tracts in the **lowest population-weighted quartile of baseline NDVI across the
+national urban study domain**:
 
-Recompute anytime with `python src/inputs/effect_size.py --or 0.931 --p0 0.20`.
+```text
+p0 = sum(adult_population_i * PLACES_prevalence_i) /
+     sum(adult_population_i), for low-NDVI reference tracts
+```
 
-### Why this matters numerically
+The NDVI threshold is itself population weighted. This definition matches the
+reference exposure concept while keeping the outcome definition identical to
+the modeled prevalence surface.
 
-In the model's small-ΔNDVI regime, preventable cases scale roughly with
-`−ln(effect_size)`. Because `ln(0.931) ≈ −0.0715` but `ln(0.944) ≈ −0.0576`,
-using the OR instead of the RR overstates preventable cases by **~20–24%** — the
-same order of magnitude as the all-ages-vs-adults population issue. Both
-corrections are now applied.
+### Interim operational value
 
-### Where it's wired
+Until all national NDVI exports pass completeness and quality checks, the
+pipeline uses `p0 = 0.204`, the overall adult-population-weighted PLACES
+prevalence calculated from the current **San Francisco** inputs. `config.yaml`
+labels this `sf_overall_population_weighted_places_interim`; it is neither a
+national U.S. estimate nor the final least-green reference risk.
 
-- `config.yaml → model.effect_size / _low / _high` hold the **RR** values; the raw
-  ORs and `baseline_risk_p0` are kept alongside for provenance.
-- `src/inputs/effect_size.py` — the OR→RR converter (and CLI).
-- `run_model.py`, `run_sensitivity.py`, `run_city.py` all consume the RR.
+```bash
+# Current SF diagnostic; does not overwrite the national configuration
+python src/inputs/compute_p0.py --no-write
 
-## The exposure radius: why 300 m
+# Final U.S. primary calculation once national inputs are complete
+python src/inputs/compute_p0.py \
+  --reference lowest-ndvi-quantile --quantile 0.25 \
+  --prevalence <national_places_layer> \
+  --population <national_adult_population_raster> \
+  --ndvi <national_baseline_ndvi_mosaic>
+```
 
-InVEST averages NDVI within `search_radius` of each populated pixel as the
-greenness-exposure metric. Ideally this matches the buffer at which the effect
-size was estimated.
+### Perry values: sensitivity only
 
-The Liu et al. estimate is a **meta-analysis pooling primary studies that used a
-range of buffers** (commonly 250 m, 300 m, 500 m, 1000 m); the pooled OR is
-expressed *per 0.1 NDVI* and is not tied to a single distance. There is therefore
-no single "correct" radius to match. We keep **300 m** because:
+Perry et al. (2019) report three outcome-specific prevalences in the lowest
+NDVI quartile:
 
-- it sits centrally within the 250–500 m buffers most common in the pooled
-  residential-greenness literature;
-- 300 m is the distance repeatedly used in urban mental-health exposure work and
-  is the scale the InVEST model documentation itself cites for mental health;
-- results are only weakly sensitive to radius within 250–500 m once NDVI is
-  resolved at 30 m (Landsat), the resolution we use.
+| Outcome | p0 |
+|---|---:|
+| PHQ-9 ≥10 | 0.064 |
+| Self-reported doctor diagnosis | 0.096 |
+| Health-record diagnosis | 0.115 |
 
-We deliberately do **not** adopt a larger radius (e.g. 1 km) because that would
-average away the within-neighbourhood greenness gradient that the intervention
-scenarios act on. If a future single-buffer effect size is adopted, set
-`search_radius_m` in `config.yaml` to that buffer and note it here.
+These groups overlap, so their percentages must **not be summed or averaged**.
+They are separate sensitivity scenarios. The health-record definition is the
+closest of the three to PLACES, but it comes from one Canadian cohort and
+cannot serve as the primary national U.S. reference risk.
 
-*Contrast:* the sister hypertension pipeline (Kula, `snapp_health`) uses a single
-500 m buffer because it draws buffer-specific ORs (Bu et al. 2024); our pooled,
-buffer-agnostic OR does not compel that choice.
+### Local implementation check
+
+The low-NDVI estimator was tested on the current SF files without changing the
+configuration. Overall population-weighted p0 was **0.2039**; the lowest
+population-weighted NDVI quartile gave **0.2058**, using an NDVI threshold of
+0.1771, 67 of 241 tracts, 215,883 adults in the selected stratum, and 99.98%
+NDVI population coverage. This validates the computation and shows little local
+sensitivity, but it is not evidence for the final national p0.
+
+The current model grid crosses the three Liu OR values with the configured
+interim SF p0 and all three Perry p0 values. After the national p0 is locked,
+the same grid must be regenerated with that value:
+
+```bash
+python src/urban_mental_health/run_sensitivity.py
+```
+
+## Interpretation of the uncertainty
+
+- The Liu OR confidence limits, converted at the configured p0, form the
+  conditional statistical effect-size interval.
+- The alternative p0 values are structural/outcome-definition scenarios, not a
+  confidence interval.
+- The $17,000–$23,000 societal cost-per-case range is an economic scenario
+  range, not a confidence interval.
+- High meta-analytic heterogeneity and repeated outcomes mean the pooled OR
+  should be interpreted as a transportable average association, not a
+  universal causal constant.
+
+## Exposure radius
+
+The model retains a 300 m radius. Liu pools studies using several residential
+buffers, commonly 250–1,000 m, so no single buffer is uniquely implied by the
+meta-analysis. Three hundred metres is near the common 250–500 m neighborhood
+scale and preserves within-city spatial contrast at 30 m NDVI resolution.
+Radius sensitivity remains a required U.S. robustness test.
+
+## Decisions recorded
+
+1. Keep Liu's published pooled OR as the primary exposure-response estimate.
+2. Convert OR to RR; never pass the OR directly to InVEST.
+3. Use the lowest population-weighted national-urban NDVI quartile for the
+   final U.S. p0.
+4. Use overall population-weighted PLACES prevalence only as an explicitly
+   interim operational value.
+5. Keep Perry's 0.064, 0.096, and 0.115 as separate scenarios; do not average.
+6. Treat one-effect-per-study re-pooling as robustness analysis.
+7. Read the effect size from `config.yaml` in both city and national runners.
+8. Use WorldPop for within-area population allocation but calibrate each adult
+   raster to an authoritative Census/ACS adult total before calculating cases.
+
+## To-do before the U.S. analysis is final
+
+- [ ] Complete and QA all national county NDVI exports.
+- [ ] Build the national-urban NDVI mosaic and aligned adult-population and
+      PLACES tract inputs.
+- [ ] Calculate the primary low-NDVI-quartile p0 and save its threshold,
+      selected population, tract count, and coverage.
+- [ ] Recompute central and confidence-limit RRs in `config.yaml`.
+- [ ] Re-run the OR × p0 × cost sensitivity grid and summary report.
+- [ ] Run exposure-radius sensitivity (at minimum 250, 300, 500, and 1,000 m).
+- [ ] Report the one-effect-per-study robustness result beside, not instead of,
+      the published pooled estimate.
+- [ ] Add causal-language and outcome-definition caveats to the manuscript.
+
+## Sources
+
+- Liu, Z., et al. (2023). *Green space exposure on depression and anxiety
+  outcomes: A meta-analysis*. Environmental Research, 231, 116303.
+  https://doi.org/10.1016/j.envres.2023.116303
+- Zhang, J., & Yu, K. F. (1998). What's the relative risk? JAMA, 280, 1690–1691.
+  https://doi.org/10.1001/jama.280.19.1690
+- Perry et al. (2019), as identified in the Liu et al. meta-analysis; verify the
+  final bibliographic record and Table 1 transcription before submission.

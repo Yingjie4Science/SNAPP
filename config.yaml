@@ -24,7 +24,12 @@ model:
   effect_size_or: 0.931
   effect_size_or_low: 0.887
   effect_size_or_high: 0.977
-  baseline_risk_p0: 0.204      # population-weighted PLACES prevalence (compute_p0.py)
+  # INTERIM operational p0. It is the overall population-weighted PLACES
+  # prevalence, not the final least-green reference risk. The U.S. primary
+  # analysis will replace it with the population-weighted prevalence among the
+  # lowest national-urban NDVI quartile after all national NDVI files pass QA.
+  baseline_risk_p0: 0.204
+  baseline_risk_p0_method: "sf_overall_population_weighted_places_interim"
   model_option: "ndvi"        # 'ndvi' or 'lulc'
 
 population:
@@ -51,6 +56,7 @@ scenario:
 # only the spatial greening rule changes.  Missing rasters are skipped.
 scenarios:
   uniform_005: "ndvi_scenario.tif"                  # reference: +0.05 everywhere
+  proportional_10pct: "ndvi_scenario_prop.tif"       # +10% relative NDVI (Wu et al. 2026)
   greenable_005: "ndvi_scenario_greenable.tif"       # +0.05 only below NDVI 0.60
   lulc_masked: "ndvi_scenario_lulc.tif"
   canopy_30pct: "ndvi_scenario_canopy.tif"           # tract means reach 30% canopy-equivalent NDVI

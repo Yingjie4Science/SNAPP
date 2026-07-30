@@ -1,0 +1,10 @@
+study,effect_id,outcome,or,ci_low,ci_high,random_effect_weight_percent,selection_reason
+Song 2019,song_1,CES-D,0.960,0.916,1.005,12.53,only estimate from cohort
+Niu 2020,niu_1,PHQ-2,0.878,0.786,0.980,9.47,only estimate from cohort
+Perry 2019,perry_doctor,self-reported doctor diagnosis,0.850,0.760,0.950,9.40,closest Perry outcome to PLACES definition
+Brown 2018,brown_1,clinical diagnosis,0.845,0.822,0.868,13.13,only estimate from cohort
+Abraham 2022,abraham_clinical,clinical diagnosis,0.950,0.879,1.027,11.13,diagnosis preferred over symptom scale
+Sarkar 2018,sarkar_1,psychological inventories,0.960,0.930,0.990,13.02,only estimate from cohort
+Bezold 2018,bezold_1,CES-D,0.912,0.845,0.985,11.18,only estimate from cohort
+Tomita 2017,tomita_1,CES-D,1.010,1.005,1.015,13.45,only estimate from cohort
+Gonzales 2022,gonzales_ndvi,BDI with cumulative NDVI,1.041,0.877,1.234,6.69,direct NDVI exposure retained

@@ -55,7 +55,10 @@ def test_cpi_monotonic():
 def test_config_has_required_keys():
     yaml = pytest.importorskip("yaml")
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
-    assert cfg["model"]["effect_size"] == 0.93
+    # InVEST consumes a risk ratio, not Liu's published odds ratio.
+    assert cfg["model"]["effect_size_or"] == 0.931
+    assert 0 < cfg["model"]["effect_size"] <= 1
+    assert cfg["model"]["effect_size"] > cfg["model"]["effect_size_or"]
     assert cfg["model"]["search_radius_m"] == 300
     assert 0 < cfg["population"]["adult_fraction"] <= 1.0
     for k in ("low_usd", "central_usd", "high_usd"):

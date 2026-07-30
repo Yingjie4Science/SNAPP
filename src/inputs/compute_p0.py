@@ -6,22 +6,23 @@ then refresh the converted risk ratios in config.yaml.
 Why
     The effect size is a published ODDS RATIO (Liu 2023) that we convert to the
     RISK RATIO InVEST expects, via RR = OR / (1 - p0 + p0*OR) (Zhang & Yu 1998).
-    p0 is the baseline depression risk. The most defensible, self-consistent
-    choice is the POPULATION-WEIGHTED MEAN of the SAME CDC PLACES prevalence layer
-    the model uses (same outcome definition, same geography) rather than an
-    external number. This script computes that p0 and rewrites config.yaml's
-    effect_size / _low / _high (and baseline_risk_p0) accordingly. See
-    docs/effect_size.md.
+    p0 is the baseline depression risk in a reference / least-green population.
+    For the U.S. primary analysis, the planned estimate is the population-weighted
+    CDC PLACES prevalence among tracts in the lowest population-weighted NDVI
+    quantile. The overall population-weighted prevalence remains available as an
+    explicitly INTERIM fallback until the national NDVI set is complete.
 
 Method
-    Rasterize the prevalence polygons' `risk_rate` onto the population grid,
-    then p0 = sum(pop_i * prev_i) / sum(pop_i) over tracts (fast, no per-polygon
-    loop). --simple-mean uses an unweighted tract mean instead (instant; p0 is
-    insensitive, so this is an acceptable fallback).
+    Rasterize prevalence polygons onto the population grid and aggregate adult
+    population by tract. For --reference lowest-ndvi-quantile, also align NDVI
+    to the population grid, calculate population-weighted mean NDVI by tract,
+    find the requested population-weighted NDVI threshold, and calculate p0
+    among tracts below that threshold.
 
 REQUIREMENTS (conda env `snapp`): geopandas, rioxarray, rasterio, numpy, pyyaml
 USAGE
-    python src/inputs/compute_p0.py                      # SF inputs, pop-weighted, updates config
+    python src/inputs/compute_p0.py                      # interim overall mean, updates config
+    python src/inputs/compute_p0.py --reference lowest-ndvi-quantile --quantile 0.25
     python src/inputs/compute_p0.py --prevalence <gpkg> --population <tif>
     python src/inputs/compute_p0.py --simple-mean --no-write   # just print
 """
@@ -42,7 +43,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from effect_size import or_to_rr  # noqa: E402
 
 
-def population_weighted_p0(prev_path: Path, pop_path: Path, simple_mean: bool) -> float:
+def _weighted_quantile(values, weights, quantile):
+    import numpy as np
+
+    order = np.argsort(values)
+    values = values[order]
+    weights = weights[order]
+    cumulative = np.cumsum(weights)
+    if cumulative[-1] <= 0:
+        raise ValueError("Weighted quantile has zero total weight.")
+    return float(values[np.searchsorted(cumulative, quantile * cumulative[-1], side="left")])
+
+
+def population_weighted_p0(prev_path: Path, pop_path: Path, simple_mean: bool,
+                           reference: str = "overall", ndvi_path: Path | None = None,
+                           quantile: float = 0.25) -> tuple[float, dict]:
     import geopandas as gpd
     import numpy as np
     import rioxarray  # noqa: F401
@@ -53,7 +68,12 @@ def population_weighted_p0(prev_path: Path, pop_path: Path, simple_mean: bool) -
     gdf = gdf[gdf["risk_rate"].notna()].copy()
 
     if simple_mean:
-        return float(gdf["risk_rate"].mean())
+        if reference != "overall":
+            sys.exit("--simple-mean is only available with --reference overall.")
+        return float(gdf["risk_rate"].mean()), {
+            "method": "unweighted_tract_mean_places",
+            "matched_tracts": len(gdf),
+        }
 
     import rasterio
     from rasterio.features import rasterize
@@ -74,12 +94,60 @@ def population_weighted_p0(prev_path: Path, pop_path: Path, simple_mean: bool) -
     denom = pop_by_tract.sum()
     if denom <= 0:
         LOGGER.warning("No population overlapped tracts; falling back to simple mean.")
-        return float(gdf["risk_rate"].mean())
-    return float((pop_by_tract * prev).sum() / denom)
+        return float(gdf["risk_rate"].mean()), {
+            "method": "unweighted_tract_mean_fallback",
+            "matched_tracts": len(gdf),
+        }
+
+    overall = float((pop_by_tract * prev).sum() / denom)
+    if reference == "overall":
+        return overall, {
+            "method": "aoi_overall_population_weighted_places_interim",
+            "matched_tracts": int((pop_by_tract > 0).sum()),
+            "adult_population": float(denom),
+        }
+
+    if ndvi_path is None or not ndvi_path.exists():
+        sys.exit("--reference lowest-ndvi-quantile requires an existing --ndvi raster.")
+    if not 0 < quantile < 1:
+        sys.exit("--quantile must be between 0 and 1.")
+
+    from rasterio.enums import Resampling
+
+    ndvi = rioxarray.open_rasterio(ndvi_path, masked=True).squeeze()
+    ndvi = ndvi.rio.reproject_match(pop, resampling=Resampling.bilinear)
+    ndvi_flat = np.asarray(ndvi.values, dtype="float64").ravel()
+    valid_ndvi = valid & np.isfinite(ndvi_flat)
+    pop_ndvi = np.bincount(id_flat[valid_ndvi], weights=pop_flat[valid_ndvi],
+                           minlength=len(gdf) + 1)[1:]
+    ndvi_num = np.bincount(
+        id_flat[valid_ndvi],
+        weights=pop_flat[valid_ndvi] * ndvi_flat[valid_ndvi],
+        minlength=len(gdf) + 1)[1:]
+    tract_ndvi = np.divide(ndvi_num, pop_ndvi, out=np.full(len(gdf), np.nan),
+                           where=pop_ndvi > 0)
+    eligible = np.isfinite(tract_ndvi) & (pop_ndvi > 0)
+    threshold = _weighted_quantile(tract_ndvi[eligible], pop_ndvi[eligible], quantile)
+    selected = eligible & (tract_ndvi <= threshold)
+    selected_pop = float(pop_ndvi[selected].sum())
+    if selected_pop <= 0:
+        sys.exit("No populated tracts were selected for the low-NDVI reference group.")
+    p0 = float((pop_ndvi[selected] * prev[selected]).sum() / selected_pop)
+    return p0, {
+        "method": f"lowest_population_weighted_ndvi_quantile_{quantile:g}",
+        "quantile": quantile,
+        "ndvi_threshold": threshold,
+        "matched_tracts": int(eligible.sum()),
+        "selected_tracts": int(selected.sum()),
+        "adult_population": float(pop_ndvi[eligible].sum()),
+        "selected_adult_population": selected_pop,
+        "ndvi_population_coverage": float(pop_ndvi[eligible].sum() / denom),
+        "overall_population_weighted_p0": overall,
+    }
 
 
 def update_config(p0: float, rr_c: float, rr_lo: float, rr_hi: float,
-                  or_c: float, or_lo: float, or_hi: float):
+                  or_c: float, or_lo: float, or_hi: float, method: str):
     text = CONFIG.read_text()
 
     def repl(key, line):
@@ -93,7 +161,9 @@ def update_config(p0: float, rr_c: float, rr_lo: float, rr_hi: float,
     repl("effect_size_high",
          f"  effect_size_high: {rr_hi:.3f}     # RR bound (OR {or_hi} = least protective)")
     repl("baseline_risk_p0",
-         f"  baseline_risk_p0: {p0:.3f}      # population-weighted PLACES prevalence (compute_p0.py)")
+         f"  baseline_risk_p0: {p0:.3f}")
+    repl("baseline_risk_p0_method",
+         f'  baseline_risk_p0_method: "{method}"')
     CONFIG.write_text(text)
     LOGGER.info("Updated config.yaml: p0=%.3f -> effect_size RR %.3f (%.3f-%.3f).",
                 p0, rr_c, rr_lo, rr_hi)
@@ -103,6 +173,14 @@ def main():
     ap = argparse.ArgumentParser(description="Derive p0 from data and refresh config RRs.")
     ap.add_argument("--prevalence", type=Path, default=INPUTS / "baseline_prevalence.gpkg")
     ap.add_argument("--population", type=Path, default=INPUTS / "population.tif")
+    ap.add_argument("--ndvi", type=Path, default=INPUTS / "ndvi_base.tif",
+                    help="Baseline NDVI; required for the low-NDVI reference method.")
+    ap.add_argument("--reference", choices=["overall", "lowest-ndvi-quantile"],
+                    default="overall",
+                    help="Reference-risk method. 'overall' is an interim fallback; "
+                         "the U.S. primary method is lowest-ndvi-quantile.")
+    ap.add_argument("--quantile", type=float, default=0.25,
+                    help="Population-weighted low-NDVI fraction (default 0.25).")
     ap.add_argument("--simple-mean", action="store_true",
                     help="Unweighted tract mean instead of population-weighted.")
     ap.add_argument("--no-write", action="store_true", help="Print only; don't edit config.yaml.")
@@ -112,7 +190,9 @@ def main():
         if not p.exists():
             sys.exit(f"Missing input: {p}. Build model inputs first.")
 
-    p0 = population_weighted_p0(cli.prevalence, cli.population, cli.simple_mean)
+    p0, details = population_weighted_p0(
+        cli.prevalence, cli.population, cli.simple_mean, cli.reference,
+        cli.ndvi, cli.quantile)
 
     # Read published ORs from config.
     try:
@@ -125,7 +205,10 @@ def main():
     or_hi = float(m.get("effect_size_or_high", 0.977))
     rr_c, rr_lo, rr_hi = (or_to_rr(or_c, p0), or_to_rr(or_lo, p0), or_to_rr(or_hi, p0))
 
-    LOGGER.info("p0 (%s) = %.4f", "simple mean" if cli.simple_mean else "population-weighted", p0)
+    LOGGER.info("p0 method=%s = %.4f", details["method"], p0)
+    for key, value in details.items():
+        if key != "method":
+            LOGGER.info("  %s=%s", key, value)
     LOGGER.info("RR central %.4f  low %.4f  high %.4f", rr_c, rr_lo, rr_hi)
 
     # p0 sensitivity, so the choice is visibly robust.
@@ -134,7 +217,8 @@ def main():
         LOGGER.info("   p0=%.2f -> RR %.4f", p, or_to_rr(or_c, p))
 
     if not cli.no_write:
-        update_config(p0, rr_c, rr_lo, rr_hi, or_c, or_lo, or_hi)
+        update_config(p0, rr_c, rr_lo, rr_hi, or_c, or_lo, or_hi,
+                      details["method"])
     else:
         LOGGER.info("--no-write: config.yaml unchanged.")
 

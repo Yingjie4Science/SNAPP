@@ -15,9 +15,10 @@ Why this exists
 Conversion (Zhang & Yu 1998, JAMA 280:1690)
     RR = OR / (1 - p0 + p0 * OR)
     where p0 = baseline risk in the reference (unexposed / least-green) group.
-    We approximate p0 by the population prevalence of depression (a standard,
-    slightly conservative simplification). RR is insensitive to p0 across the
-    plausible 0.15-0.25 range (central RR ~0.941-0.947).
+    The U.S. primary analysis will estimate p0 in the least-green reference
+    stratum: the lowest population-weighted national-urban NDVI quartile. Until
+    national NDVI coverage is complete and quality-assured, config.yaml records
+    an explicitly interim overall population-weighted PLACES prevalence.
 
 USAGE
     python src/inputs/effect_size.py                 # convert config OR at p0

@@ -12,7 +12,7 @@
 #   bash run_pipeline.sh --skip-ndvi --validate
 #
 # Stops at the first error (set -e). Applies every correction: cartographic AOI
-# with water tracts dropped, mass-conserving adult population, data-driven p0
+# with water tracts dropped, mass-conserving adult population, interim p0
 # (OR->RR), dual counterfactual, sensitivity, and the figure-rich summary.
 
 set -euo pipefail
@@ -35,6 +35,8 @@ if [ -z "$SKIP_NDVI" ]; then
     python src/inputs/ndvi/ndvi_gee.py
     step "2/12  Greening scenario rasters (reference, feasible, and ambitious)"
     python src/inputs/ndvi/make_ndvi_scenario.py
+    python src/inputs/ndvi/make_ndvi_scenario.py --mode proportional --percent 10 \
+        --output data/urban-mental-health/inputs/ndvi_scenario_prop.tif
     python src/inputs/ndvi/make_ndvi_scenario.py --mode greenable \
         --output data/urban-mental-health/inputs/ndvi_scenario_greenable.tif
     python src/inputs/ndvi/make_ndvi_scenario.py --mode best_potential --percentile 95 \
@@ -76,8 +78,8 @@ python src/inputs/fetch_population.py --adult-fraction 0.86
 step "5/10  Health cost per case (societal, Greenberg pooled)"
 python src/inputs/estimate_health_cost.py
 
-step "6/10  Data-driven p0 (population-weighted PLACES prevalence -> refresh config RRs)"
-python src/inputs/compute_p0.py
+step "6/10  SF p0 diagnostic (no config write; national p0 remains a separate gate)"
+python src/inputs/compute_p0.py --no-write
 
 step "7/12  Model — marginal greening reference scenario"
 python src/urban_mental_health/run_model.py ${VALIDATE_ONLY}
@@ -105,7 +107,10 @@ python src/urban_mental_health/run_scenarios.py
 step "13/14  Advanced equity — all scenarios"
 python src/urban_mental_health/advanced_equity_analysis.py
 
-step "14/14  Sensitivity (effect_size x cost)"
+step "Literature robustness (one independent effect per Liu study)"
+python src/analysis/repool_liu_one_effect_per_study.py
+
+step "14/14  Sensitivity (OR x p0 x societal cost)"
 python src/urban_mental_health/run_sensitivity.py
 
 step "Basic equity diagnostic (ACS income/SVI; continues if the public API is unavailable)"

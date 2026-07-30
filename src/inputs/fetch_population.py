@@ -38,6 +38,9 @@ NOTE ON COUNTS
     pixel-size change does not conserve the total, so after reprojecting we
     rescale to preserve the true clipped population sum (mass conservation).
     Remember to pass --adult-fraction (e.g. 0.86 for SF) since prevalence is adult.
+    By default, the resulting adult raster is then calibrated to
+    config.yaml context.population_adult when available. This preserves
+    WorldPop's within-city spatial pattern while matching the Census total.
 """
 
 import argparse
@@ -134,7 +137,22 @@ def main():
     ap.add_argument("--adult-fraction", type=float, default=1.0,
                     help="Scale to adults >=18 (prevalence is adult). e.g. 0.86 for "
                          "SF, ~0.78 US. Default 1.0 = no scaling (total population).")
+    ap.add_argument("--target-adult-population", type=float,
+                    help="Rescale the final raster to this authoritative adult total. "
+                         "Default: config.yaml context.population_adult when present.")
+    ap.add_argument("--no-census-calibration", action="store_true",
+                    help="Do not calibrate to config.yaml context.population_adult.")
     cli = ap.parse_args()
+
+    target_adult = cli.target_adult_population
+    if target_adult is None and not cli.no_census_calibration:
+        try:
+            import yaml
+            cfg = yaml.safe_load((BASE_DIR / "config.yaml").read_text()) or {}
+            target_adult = cfg.get("context", {}).get("population_adult")
+            target_adult = float(target_adult) if target_adult is not None else None
+        except Exception:
+            target_adult = None
 
     if not cli.aoi.exists():
         sys.exit(f"AOI not found: {cli.aoi}. Run build_aoi_prevalence.py first.")
@@ -187,6 +205,20 @@ def main():
         projected.rio.write_nodata(float("nan"), inplace=True)
         projected.attrs.pop("_FillValue", None)
         LOGGER.info("Scaled to adult population (x%.2f)", cli.adult_fraction)
+
+    # Preserve WorldPop's spatial allocation but align the aggregate with the
+    # authoritative Census adult population used in report denominators.
+    if target_adult is not None:
+        current = float(projected.sum(skipna=True))
+        if target_adult <= 0 or current <= 0:
+            sys.exit("Target and raster adult population must both be positive.")
+        crs = projected.rio.crs
+        factor = target_adult / current
+        projected = (projected * factor).rio.write_crs(crs)
+        projected.rio.write_nodata(float("nan"), inplace=True)
+        projected.attrs.pop("_FillValue", None)
+        LOGGER.info("Census calibration: adult sum %.0f -> %.0f (x%.4f)",
+                    current, target_adult, factor)
 
     cli.output.parent.mkdir(parents=True, exist_ok=True)
     projected.rio.to_raster(cli.output, driver="GTiff", compress="LZW")

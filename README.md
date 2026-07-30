@@ -303,7 +303,14 @@ python src/national/build_metro_counties.py --crosswalk
 # Editor in index batches. Drive exports are named <GEOID>_ndvi.tif.
 # Python fallback (local downloads; much slower for a national run):
 python src/inputs/ndvi/ndvi_gee_national.py            # -> data/national/ndvi/<GEOID>_ndvi.tif
-# 3. loop counties: build inputs + run the model
+# 3. audit completeness against the EXACT table uploaded to GEE (required):
+python src/national/audit_ndvi_exports.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --ndvi-dir data/national/ndvi
+# 4. loop counties: build inputs + run the model only after the audit passes
+python src/inputs/fetch_adult_fraction.py \
+  --regions data/national/counties_gee_upload/counties.shp \
+  --out config/adult_population.csv --year 2023
 bash run_national.sh data/national/counties.gpkg data/national/ndvi
 # args: <counties-in-metro layer>  <dir of per-county <GEOID>_ndvi.tif>
 ```

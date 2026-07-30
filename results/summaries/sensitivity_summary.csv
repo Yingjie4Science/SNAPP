@@ -1,4 +1,13 @@
-effect_size_label,effect_size,preventable_cases,cost_low_17000,cost_central_21280,cost_high_23000
-es_low_rr_0.908,0.908,8072.6,137234774,171785647,185670577
-es_central_rr_0.944,0.944,4867.2,82741930,103573428,111944964
-es_high_rr_0.982,0.982,1549.2,26337096,32967848,35632542
+effect_size_label,p0_label,p0,or_label,odds_ratio,effect_size,preventable_cases,cost_low_17000,cost_central_21280,cost_high_23000
+configured_interim_p0__or_low_more_protective,configured_interim_p0,0.204,or_low_more_protective,0.887,0.908000,8072.6,137234774,171785647,185670577
+configured_interim_p0__or_central_published,configured_interim_p0,0.204,or_central_published,0.931,0.944000,4867.2,82741930,103573428,111944964
+configured_interim_p0__or_high_less_protective,configured_interim_p0,0.204,or_high_less_protective,0.977,0.982000,1549.2,26337096,32967848,35632542
+perry_phq9_ge10__or_low_more_protective,perry_phq9_ge10,0.064,or_low_more_protective,0.887,0.893462,9385.1,159547158,199715502,215857920
+perry_phq9_ge10__or_central_published,perry_phq9_ge10,0.064,or_central_published,0.931,0.935130,5651.2,96071225,120258569,129978716
+perry_phq9_ge10__or_high_less_protective,perry_phq9_ge10,0.064,or_high_less_protective,0.977,0.978440,1857.3,31574097,39523340,42717896
+perry_self_reported_diagnosis__or_low_more_protective,perry_self_reported_diagnosis,0.096,or_low_more_protective,0.887,0.896728,9089.3,154518794,193421173,209054839
+perry_self_reported_diagnosis__or_central_published,perry_self_reported_diagnosis,0.096,or_central_published,0.931,0.937208,5467.2,92942246,116341823,125745391
+perry_self_reported_diagnosis__or_high_less_protective,perry_self_reported_diagnosis,0.096,or_high_less_protective,0.977,0.979162,1794.8,30511543,38193272,41280323
+perry_health_record_diagnosis__or_low_more_protective,perry_health_record_diagnosis,0.115,or_low_more_protective,0.887,0.898678,8912.9,151520137,189667559,204997832
+perry_health_record_diagnosis__or_central_published,perry_health_record_diagnosis,0.115,or_central_published,0.931,0.938447,5357.6,91079476,114010073,123225173
+perry_health_record_diagnosis__or_high_less_protective,perry_health_record_diagnosis,0.115,or_high_less_protective,0.977,0.979591,1757.7,29880092,37402844,40426007

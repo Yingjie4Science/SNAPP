@@ -1,8 +1,8 @@
 # San Francisco: health benefits of urban greenery
 
-_Generated 2026-07-14._
+_Generated 2026-07-30._
 
-This report estimates how much depression could be prevented — and how much money saved — by increasing greenery (street trees, parks, vegetation) across San Francisco. It combines satellite greenery (the NDVI index), local adult depression rates (CDC PLACES) and where people live (WorldPop) via the InVEST Urban Mental Health model. Key terms are defined in the glossary at the end.
+This report estimates how much **PLACES-defined diagnosed depressive disorder** could be prevented — and how much money saved — by increasing greenery (street trees, parks, vegetation) across San Francisco. It combines satellite greenery (the NDVI index), local adult depression rates (CDC PLACES) and where people live (WorldPop) via the InVEST Urban Mental Health model. PLACES measures adults ever told by a health professional that they had a depressive disorder; it is not strict current MDD prevalence. Key terms are defined in the glossary at the end.
 
 ## In brief
 
@@ -17,7 +17,7 @@ Adding a modest amount of greenery across San Francisco — a **+0.05 rise in th
 
 ## Scenario comparison
 
-The five investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
+The 8 investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
 
 ![Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.](../figures/scenario_comparison.png)
 <sub>Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.</sub>
@@ -38,7 +38,7 @@ The five investment scenarios use the same exposure-response, baseline depressio
 
 <sub>Table 1 legend. All values are annual central estimates, not confidence intervals. Cases per 1,000 adults use 716,727 adults. The adult depression pool is 146,212 (20.4% prevalence). Cost per resident uses 830,235 residents; GDP shares use $250B. Costs use the configured $21,280 per case. The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>
 
-The LULC-masked and canopy-target scenarios are the most decision-relevant; the uniform and p95 scenarios bracket a simple reference and an ambitious upper bound.
+**Read these as two groups, not one ranking — they are not on a common effort scale.** The *budget-matched, feasible* scenarios (LULC-masked and the health-/equity-/balanced-priority allocations) are the decision-relevant options: each greens a comparable, realistically achievable amount of land, so their prevented-case numbers *are* directly comparable and answer 'where should a fixed greening budget go?'. The *reference and aspirational* scenarios (uniform +0.05, proportional +10%, within-city p95, 30% canopy) instead raise NDVI broadly or to a ceiling; they bracket a simple reference and an upper envelope of what is biophysically possible, and their much larger totals reflect far more greening, not a better use of the same resources. Compare within a group, not across.
 
 ## Where the benefits concentrate
 
@@ -101,38 +101,54 @@ The population, depression-pool, resident-cost, and GDP measures in Table 1 are 
 
 Two sources of spread, and they are different in kind:
 
-- **Statistical 95% CI (cases).** The effect-size bounds (RR 0.908–0.982) are the Liu et al. (2023) odds-ratio 95% CI, converted to risk ratios. Propagating them gives the headline confidence interval of 1,549–8,073 cases.
+- **Statistical 95% CI (cases), conditional on configured p0=0.204.** The Liu et al. (2023) OR bounds 0.887–0.977 convert to RR 0.908–0.982. Propagating them gives the headline confidence interval of 1,549–8,073 cases.
+- **Baseline-risk scenarios.** The configured interim SF-derived p0 and the three Perry outcome-specific p0 values are reported separately. They test the OR-to-RR conversion assumption and are not a confidence interval.
 - **Cost scenario band ($17k–$23k per case).** This is a range of defensible cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range.
+- **One-effect-per-study robustness check.** Selecting one estimate from each of nine Liu cohorts gives OR **0.930** (95% CI 0.874–0.990; I²=95.8%). This agrees closely with the published point estimate but remains highly heterogeneous and is a post-hoc sensitivity, not the primary model.
 
-The chart and table below show both together.
+
+The chart and table below show the effect, p0, and cost scenarios together.
 
 ![How avoided cost changes with the effect size and cost-per-case range.](../figures/sensitivity_range.png)
 <sub>How avoided cost changes with the effect size and cost-per-case range.</sub>
 
-| effect size (RR) | cases prevented | cost (low) | cost (central) | cost (high) |
-|---|---:|---:|---:|---:|
-| 0.908 | 8,073 | $137,234,774 | $171,785,647 | $185,670,577 |
-| 0.944 | 4,867 | $82,741,930 | $103,573,428 | $111,944,964 |
-| 0.982 | 1,549 | $26,337,096 | $32,967,848 | $35,632,542 |
+**Table 4. Joint OR, p0, and societal-cost sensitivity.**
+
+| p0 scenario | p0 | OR | RR | cases prevented | cost (low) | cost (central) | cost (high) |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| configured interim p0 | 0.204 | 0.887 | 0.908000 | 8,073 | $137,234,774 | $171,785,647 | $185,670,577 |
+| configured interim p0 | 0.204 | 0.931 | 0.944000 | 4,867 | $82,741,930 | $103,573,428 | $111,944,964 |
+| configured interim p0 | 0.204 | 0.977 | 0.982000 | 1,549 | $26,337,096 | $32,967,848 | $35,632,542 |
+| perry phq9 ge10 | 0.064 | 0.887 | 0.893462 | 9,385 | $159,547,158 | $199,715,502 | $215,857,920 |
+| perry phq9 ge10 | 0.064 | 0.931 | 0.935130 | 5,651 | $96,071,225 | $120,258,569 | $129,978,716 |
+| perry phq9 ge10 | 0.064 | 0.977 | 0.978440 | 1,857 | $31,574,097 | $39,523,340 | $42,717,896 |
+| perry self reported diagnosis | 0.096 | 0.887 | 0.896728 | 9,089 | $154,518,794 | $193,421,173 | $209,054,839 |
+| perry self reported diagnosis | 0.096 | 0.931 | 0.937208 | 5,467 | $92,942,246 | $116,341,823 | $125,745,391 |
+| perry self reported diagnosis | 0.096 | 0.977 | 0.979162 | 1,795 | $30,511,543 | $38,193,272 | $41,280,323 |
+| perry health record diagnosis | 0.115 | 0.887 | 0.898678 | 8,913 | $151,520,137 | $189,667,559 | $204,997,832 |
+| perry health record diagnosis | 0.115 | 0.931 | 0.938447 | 5,358 | $91,079,476 | $114,010,073 | $123,225,173 |
+| perry health record diagnosis | 0.115 | 0.977 | 0.979591 | 1,758 | $29,880,092 | $37,402,844 | $40,426,007 |
+
+<sub>Table 4 legend. Each OR is converted to RR at the p0 shown, then propagated through the spatial model. The three cost columns are scenario bounds, not confidence limits. Perry p0 rows are alternative outcome definitions from overlapping participants and must not be averaged.</sub>
+
 
 ### Sensitivity to the baseline-risk assumption (p0)
 
-Baseline risk p0 used: **0.204** (population-weighted PLACES prevalence); central OR 0.931 -> RR 0.9443. The RR is nearly flat in p0, but preventable cases scale with -ln(RR), so they move ~±6% per 0.05 change in p0 — hence pinning p0 to the data (compute_p0.py):
+Configured baseline risk p0: **0.204** (`sf_overall_population_weighted_places_interim`); central OR 0.931 -> RR 0.9443. This is an **interim SF/AOI overall population-weighted PLACES value**, not yet a national U.S. estimate. It remains in use until the primary U.S. estimate can be calculated among tracts in the lowest population-weighted national-urban NDVI quartile. Perry values below are separate outcome-definition scenarios and are not averaged because their participants overlap:
 
-| p0 | RR | approx. preventable cases |
-|---:|---:|---:|
-| 0.10 | 0.9375 | 5,483 |
-| 0.15 | 0.9407 | 5,187 |
-| 0.20 | 0.9440 | 4,891 |
-| 0.25 | 0.9473 | 4,593 |
-| 0.30 | 0.9507 | 4,295 |
+| p0 source / outcome | p0 | RR | approx. preventable cases |
+|---|---:|---:|---:|
+| Perry: PHQ-9 >=10 | 0.064 | 0.9351 | 5,695 |
+| Perry: self-reported diagnosis | 0.096 | 0.9372 | 5,507 |
+| Perry: health-record diagnosis | 0.115 | 0.9384 | 5,394 |
+| Configured U.S. value (interim) (used) | 0.204 | 0.9443 | 4,867 |
 
 ### Baseline, PAF & population check
 
 - **Population-attributable fraction (PAF): 2.84%** — the share of baseline depression preventable at +0.05 NDVI (RR 0.944). Dimensionless, so it is directly comparable across places regardless of size or age structure.
 - Model-implied baseline depression cases: **171,359** (= preventable / PAF).
 - Census-based adult depression pool: **146,212** (716,727 adults × 20.4%).
-- ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~839,995 (vs 716,727 adults). Check that population was adult-scaled AND clipped to the AOI polygon (not a bounding box). Fixing it scales the headline down by ~15%.
+- ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~839,995 (vs 716,727 adults). Regenerate it with `fetch_population.py` Census-total calibration, then rerun all absolute case/cost outputs. Calibration would scale the headline down by about 15% if the spatial prevalence mix is otherwise unchanged.
 
 ## How this compares with other studies
 
@@ -146,9 +162,22 @@ _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — s
 ## Data-quality checks
 
 - Cost bookkeeping: implied $21,280/case vs configured $21,280 — OK.
-- Population is adult-scaled (depression rates are for adults); the baseline check above confirms it against census figures.
+- Population is adult-scaled because depression rates are for adults; the baseline check above determines whether its aggregate also matches the Census anchor.
 - The greening scenario and effect size are assumptions — read the headline with the ranges above, not as a single certain number.
 - **Cross-place comparability:** we report the **PAF** and **cases per 1,000 adults**, which are independent of a place's size and age structure. A full *age-standardized* rate (as in Wu et al., 2026) is **not feasible here**: CDC PLACES gives a single adult (18+) depression rate per tract, not 5-year age-specific rates, and the effect size isn't age-specific — so the PAF and the crude adult rate are the appropriate comparators.
+
+## Next steps before final U.S. interpretation
+
+- Re-export the six missing expected national county rasters.
+- Resolve the 56 files outside the uploaded 1,167-county AOI.
+- Replace or defensibly harmonize the 467 expected rasters exported at 90 m rather than the specified 30 m.
+- Run the full-read national NDVI audit and lock one AOI vintage.
+- Calculate the national lowest-population-weighted-NDVI-quartile p0; the current 0.204 is SF-derived and interim.
+- Re-run all scenarios, OR × p0 × cost sensitivity, exposure-radius sensitivity, equity/SVI analyses, and national QA after p0 is locked.
+- Regenerate the SF population raster with Census-total calibration and re-run its absolute case/cost results; the current report flags a 17% mismatch.
+- Verify the Perry citation/count transcription and report the one-effect-per-study Liu robustness result.
+
+The maintained checklist and decision log are in `docs/us_case_status.md`; the export evidence is in `results/summaries/national_ndvi_audit.md`.
 
 ## Glossary
 
