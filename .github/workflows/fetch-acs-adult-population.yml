@@ -77,7 +77,7 @@ jobs:
                   })
 
           observed = {row["GEOID"] for row in rows}
-          missing = sorted(wanted - observed)
+          missing = sorted(set(wanted) - observed)
           duplicates = len(rows) - len(observed)
           if missing or duplicates or len(rows) != len(wanted):
               raise SystemExit(
