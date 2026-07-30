@@ -35,6 +35,11 @@ def main() -> None:
         "--radius", action="append", type=int, default=[],
         help="Uniform-scenario radius to validate; repeatable.",
     )
+    parser.add_argument(
+        "--check-only",
+        action="store_true",
+        help="Validate committed summaries without rewriting QA artifacts.",
+    )
     cli = parser.parse_args()
     scenarios = cli.scenario or [
         "uniform_005",
@@ -118,7 +123,8 @@ def main() -> None:
         })
 
     table = pd.DataFrame(checks)
-    table.to_csv(SUMMARIES / "national_final_qa.csv", index=False)
+    if not cli.check_only:
+        table.to_csv(SUMMARIES / "national_final_qa.csv", index=False)
     lines = [
         "# National final QA",
         "",
@@ -140,7 +146,8 @@ def main() -> None:
         "case/cost/rate values, non-negative cases, positive adult population, "
         "and county population totals within one person of ACS 2023 targets.",
     ]
-    (SUMMARIES / "national_final_qa.md").write_text("\n".join(lines) + "\n")
+    if not cli.check_only:
+        (SUMMARIES / "national_final_qa.md").write_text("\n".join(lines) + "\n")
     failed = table.loc[table["status"].ne("pass"), ["scenario", "radius_m", "status"]]
     if not failed.empty:
         raise SystemExit("National QA failed:\n" + failed.to_string(index=False))

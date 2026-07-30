@@ -29,8 +29,8 @@ _Updated 2026-07-30. Detailed U.S. decisions are in
 
 - [ ] Decide whether to finish the national existing-greenness accounting run;
       SF already includes this comparison.
-- [ ] Export an environment lock and raw-input checksum manifest.
-- [ ] Add CI tests for national completeness, population reconciliation, and
+- [x] Export an exact platform environment lock and raw-input checksum manifest.
+- [x] Add CI tests for national completeness, population reconciliation, and
       finite outputs.
 - [ ] Decide whether regional wage-adjusted societal cost belongs in the main
       analysis or supplement.
