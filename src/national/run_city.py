@@ -42,8 +42,10 @@ from pathlib import Path
 
 try:
     import geopandas as gpd
+    import numpy as np
     import pandas as pd
     import rioxarray  # noqa: F401
+    import xarray as xr
     from rasterio.enums import Resampling
 except ImportError:
     sys.exit("Missing deps. Install the `snapp` conda env (geopandas, rioxarray, rasterio).")
@@ -66,8 +68,11 @@ SEARCH_RADIUS_M = float(_MODEL.get("search_radius_m", 300.0))
 # documented p0. Reading config prevents national runs from silently retaining
 # an obsolete hard-coded conversion after p0 is finalized.
 EFFECT_SIZE_RR = float(_MODEL.get("effect_size", 0.944))
-SCENARIO_DELTA = 0.05               # uniform NDVI greening for ndvi_alt
+SCENARIO_DELTA = 0.05
 SCENARIO_CAP = 0.90
+SCENARIO_TARGET = 0.60
+SCENARIO_PERCENT = 10.0
+SCENARIO_PERCENTILE = 95.0
 
 
 # State FIPS -> US Census region, for optional per-region cost (regional_cost.py).
@@ -150,12 +155,52 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     city[[gcol, "geometry"]].to_file(aoi_path, driver="GPKG")
 
     # --- 2. Prevalence: tracts intersecting the city, risk_rate = DEPRESS/100 ---
-    tracts = gpd.read_file(cli.prevalence).to_crs(NATIONAL_CRS)
-    hit = gpd.sjoin(tracts, city[["geometry"]], predicate="intersects", how="inner")
-    hit = hit.drop(columns=[c for c in hit.columns if c.startswith("index_")])
+    # Read only the requested county's tracts. Loading the full national layer
+    # 1,167 times made the national loop needlessly slow. GEOID prefixes are
+    # exact county identifiers for census tracts, so no spatial join is needed.
+    try:
+        hit = gpd.read_file(
+            cli.prevalence, where=f"GEOID LIKE '{cli.geoid}%'"
+        )
+    except Exception:
+        tracts = gpd.read_file(cli.prevalence)
+        hit = tracts[tracts["GEOID"].astype(str).str.startswith(cli.geoid)].copy()
+    hit = hit.to_crs(NATIONAL_CRS)
+    if hit.empty:
+        sys.exit(f"[{cli.geoid}] no PLACES tracts found.")
     hit["risk_rate"] = pd.to_numeric(hit["DEPRESS"], errors="coerce") / 100.0
+    hit["risk_source"] = "places_2023_brfss_2021"
+    if cli.geoid.startswith("12") and cli.florida_places_bridge.exists():
+        bridge = pd.read_csv(
+            cli.florida_places_bridge, dtype={"tractfips": str}
+        )
+        bridge["tractfips"] = bridge["tractfips"].str.zfill(11)
+        bridge_values = dict(
+            zip(
+                bridge["tractfips"],
+                pd.to_numeric(bridge["depression_crudeprev"], errors="coerce")
+                / 100.0,
+            )
+        )
+        missing = hit["risk_rate"].isna()
+        hit.loc[missing, "risk_rate"] = (
+            hit.loc[missing, "GEOID"].astype(str).str.zfill(11).map(bridge_values)
+        )
+        matched = missing & hit["risk_rate"].notna()
+        hit.loc[matched, "risk_source"] = "places_2022_florida_bridge"
+        LOGGER.info(
+            "[%s] Florida PLACES bridge matched %d/%d null tracts.",
+            cli.geoid,
+            int(matched.sum()),
+            int(missing.sum()),
+        )
+    hit = hit[hit["risk_rate"].between(0, 1, inclusive="both")].copy()
+    if hit.empty:
+        sys.exit(f"[{cli.geoid}] no non-null PLACES depression estimates.")
     prev_path = inputs / "baseline_prevalence.gpkg"
-    hit[["GEOID", "risk_rate", "geometry"]].to_file(prev_path, driver="GPKG")
+    hit[["GEOID", "risk_rate", "risk_source", "geometry"]].to_file(
+        prev_path, driver="GPKG"
+    )
 
     # --- 3. Population: windowed clip to the city, reproject to meters ---
     pop = rioxarray.open_rasterio(cli.population, masked=True)
@@ -195,7 +240,7 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
     if not ndvi_base.exists():
         sys.exit(f"NDVI not found for {cli.geoid}: {ndvi_base}. Run the GEE city loop first.")
     base = rioxarray.open_rasterio(ndvi_base, masked=True).squeeze()
-    if getattr(cli, "total_greenness", False):
+    if cli.scenario == "existing_greenness":
         # Value EXISTING greenness: baseline = NDVI 0 (bare), alt = current NDVI.
         zero = (base * 0.0).rio.write_crs(base.rio.crs)
         zero.rio.write_nodata(float("nan"), inplace=True)
@@ -204,8 +249,21 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
         zero.rio.to_raster(model_base, driver="GTiff", compress="LZW")
         model_alt = ndvi_base                        # today's greenness is the "improved" state
     else:
-        # Marginal greening scenario: base = current NDVI, alt = current + delta.
-        alt = (base + SCENARIO_DELTA).clip(max=SCENARIO_CAP).where(~base.isnull())
+        if cli.scenario == "uniform_005":
+            alt = base + SCENARIO_DELTA
+        elif cli.scenario == "proportional_10pct":
+            alt = base * (1.0 + SCENARIO_PERCENT / 100.0)
+        elif cli.scenario == "greenable_005":
+            alt = base + xr.where(base < SCENARIO_TARGET, SCENARIO_DELTA, 0.0)
+        elif cli.scenario == "best_potential_p95":
+            p95 = float(np.nanpercentile(base.values, SCENARIO_PERCENTILE))
+            alt = xr.where(base < p95, p95, base)
+            LOGGER.info("[%s] within-county p95 NDVI=%.4f.", cli.geoid, p95)
+        else:
+            raise ValueError(f"Unsupported scenario: {cli.scenario}")
+        alt = xr.where(
+            base > SCENARIO_CAP, base, alt.clip(max=SCENARIO_CAP)
+        ).where(~base.isnull())
         alt = alt.rio.write_crs(base.rio.crs)
         alt.rio.write_nodata(float("nan"), inplace=True)
         alt.attrs.pop("_FillValue", None)
@@ -218,7 +276,7 @@ def build_city_inputs(cli, city_ws: Path) -> dict:
         "results_suffix": cli.geoid,
         "aoi_path": str(aoi_path),
         "population_raster": str(pop_path),
-        "search_radius": SEARCH_RADIUS_M,
+        "search_radius": float(cli.search_radius),
         "effect_size": EFFECT_SIZE_RR,
         "baseline_prevalence_vector": str(prev_path),
         "model_option": "ndvi",
@@ -239,6 +297,13 @@ def main():
                     default=BASE_DIR / "data/urban-mental-health/raw/cdc_places/prevalence_rate_usa_2021.shp")
     ap.add_argument("--population", type=Path, required=True, help="National WorldPop raster.")
     ap.add_argument("--ndvi-dir", type=Path, required=True, help="Folder of <GEOID>_ndvi.tif.")
+    ap.add_argument(
+        "--florida-places-bridge",
+        type=Path,
+        default=BASE_DIR / "config" / "places_florida_2022.csv",
+        help="Official PLACES 2022 tract values used only where PLACES 2023 is "
+        "null in Florida.",
+    )
     ap.add_argument("--cost-file", type=Path,
                     default=BASE_DIR / "data/urban-mental-health/inputs/health_cost_rate.txt")
     ap.add_argument("--adult-fraction", type=float, default=0.86,
@@ -255,13 +320,40 @@ def main():
                     help="Per-region societal cost table (from regional_cost.py). Used when "
                          "present: maps county state -> Census region -> cost. Falls back to "
                          "--cost-file otherwise.")
-    ap.add_argument("--total-greenness", action="store_true",
-                    help="Value EXISTING greenness (baseline NDVI=0 vs current) instead of "
-                         "the marginal greening scenario. Writes to a separate runs root.")
+    ap.add_argument(
+        "--scenario",
+        choices=[
+            "uniform_005",
+            "proportional_10pct",
+            "greenable_005",
+            "best_potential_p95",
+            "existing_greenness",
+        ],
+        default="uniform_005",
+        help="National greening counterfactual. The default is uniform +0.05 NDVI.",
+    )
+    ap.add_argument(
+        "--search-radius",
+        type=float,
+        default=SEARCH_RADIUS_M,
+        help="Residential exposure radius in metres.",
+    )
+    ap.add_argument(
+        "--total-greenness",
+        action="store_true",
+        help="Deprecated alias for --scenario existing_greenness.",
+    )
     cli = ap.parse_args()
 
-    ws_root = (WORKSPACE_ROOT.parent / "national_total_greenness"
-               if cli.total_greenness else WORKSPACE_ROOT)
+    if cli.total_greenness:
+        cli.scenario = "existing_greenness"
+    scenario_root = (
+        "national" if cli.scenario == "uniform_005"
+        else f"national_{cli.scenario}"
+    )
+    if float(cli.search_radius) != SEARCH_RADIUS_M:
+        scenario_root += f"_radius_{int(cli.search_radius)}m"
+    ws_root = WORKSPACE_ROOT.parent / scenario_root
     city_ws = ws_root / cli.geoid
     city_ws.mkdir(parents=True, exist_ok=True)
     LOGGER.info("[%s] building inputs...", cli.geoid)

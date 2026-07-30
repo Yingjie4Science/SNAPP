@@ -90,7 +90,10 @@ def main():
         alt = xr.where(base < pval, pval, base)  # raise below-target pixels; greener unchanged
         LOGGER.info("best_potential: AOI p%.0f NDVI = %.3f (leveling floor)", cli.percentile, pval)
 
-    alt = alt.clip(max=cli.cap)                  # cap NDVI
+    # Cap only proposed increases. Baseline pixels already above the policy cap
+    # must remain unchanged; clipping them downward would turn greening into
+    # vegetation removal and can produce negative health benefits.
+    alt = xr.where(base > cli.cap, base, alt.clip(max=cli.cap))
     alt = alt.where(~base.isnull())              # preserve nodata footprint
 
     # Restore geospatial metadata (arithmetic can drop it).

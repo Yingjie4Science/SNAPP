@@ -155,17 +155,17 @@ def update_config(p0: float, rr_c: float, rr_lo: float, rr_hi: float,
         text = re.sub(rf"(?m)^\s*{key}:.*$", line, text)
 
     repl("effect_size",
-         f"  effect_size: {rr_c:.3f}          # RR central (OR {or_c} at p0={p0:.3f}); derived by compute_p0.py")
+         f"  effect_size: {rr_c:.6f}       # RR central (OR {or_c} at p0={p0:.6f}); derived by compute_p0.py")
     repl("effect_size_low",
-         f"  effect_size_low: {rr_lo:.3f}      # RR bound (OR {or_lo} = more protective)")
+         f"  effect_size_low: {rr_lo:.6f}   # RR bound (OR {or_lo} = more protective)")
     repl("effect_size_high",
-         f"  effect_size_high: {rr_hi:.3f}     # RR bound (OR {or_hi} = least protective)")
+         f"  effect_size_high: {rr_hi:.6f}  # RR bound (OR {or_hi} = least protective)")
     repl("baseline_risk_p0",
-         f"  baseline_risk_p0: {p0:.3f}")
+         f"  baseline_risk_p0: {p0:.6f}")
     repl("baseline_risk_p0_method",
          f'  baseline_risk_p0_method: "{method}"')
     CONFIG.write_text(text)
-    LOGGER.info("Updated config.yaml: p0=%.3f -> effect_size RR %.3f (%.3f-%.3f).",
+    LOGGER.info("Updated config.yaml: p0=%.6f -> effect_size RR %.6f (%.6f-%.6f).",
                 p0, rr_c, rr_lo, rr_hi)
 
 

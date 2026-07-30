@@ -157,20 +157,19 @@ def p0_sensitivity_lines(central_cases):
     out = ["", "### Sensitivity to the baseline-risk assumption (p0)", "",
            f"Configured baseline risk p0: **{p0_used:.3f}** "
            f"(`{p0_method}`); central OR {or_c:.3f} -> RR {rr_used:.4f}. "
-           "This is an **interim SF/AOI overall population-weighted PLACES value**, "
-           "not yet a national U.S. estimate. It remains in use until the "
-           "primary U.S. estimate can be calculated among tracts in the lowest "
-           "population-weighted national-urban NDVI quartile. Perry values below are "
-           "separate outcome-definition scenarios and are not averaged because their "
-           "participants overlap:",
+           "This is the **locked national U.S. primary estimate**, calculated as "
+           "adult-population-weighted PLACES prevalence among tracts in the lowest "
+           "population-weighted NDVI quartile across the 1,167-county study AOI. "
+           "Hystad et al. values below are separate outcome-definition sensitivity "
+           "anchors and are not averaged because their participants overlap:",
            "",
            "| p0 source / outcome | p0 | RR | approx. preventable cases |",
            "|---|---:|---:|---:|"]
     scenarios = [
-        ("Perry: PHQ-9 >=10", 0.064),
-        ("Perry: self-reported diagnosis", 0.096),
-        ("Perry: health-record diagnosis", 0.115),
-        ("Configured U.S. value (interim)", p0_used),
+        ("Hystad et al.: PHQ-9 >=10", 0.064),
+        ("Hystad et al.: self-reported diagnosis", 0.096),
+        ("Hystad et al.: health-record diagnosis", 0.115),
+        ("National low-NDVI-quartile value (primary)", p0_used),
     ]
     for label, p in scenarios:
         rr = or_to_rr(or_c, p)
@@ -259,7 +258,8 @@ def effect_ci():
     pts = {}
     for r in sens:
         if r.get("p0_label") and r.get("p0_label") not in (
-                "configured_interim_p0", "configured_us_p0"):
+                "configured_interim_p0", "configured_us_p0",
+                "national_low_ndvi_quartile_p0"):
             continue
         try:
             pts[float(r["effect_size"])] = float(r["preventable_cases"])
@@ -426,7 +426,8 @@ def draw_sensitivity_range():
         return None
     rows = list(csv.DictReader(open(SENS)))
     configured = [r for r in rows if r.get("p0_label") in (
-        "configured_interim_p0", "configured_us_p0")]
+        "configured_interim_p0", "configured_us_p0",
+        "national_low_ndvi_quartile_p0")]
     if configured:
         rows = configured
     if not rows:
@@ -829,8 +830,8 @@ def main():
           f"The Liu et al. (2023) OR bounds {or_low:.3f}–{or_high:.3f} convert to "
           f"RR {rr_low:.3f}–{rr_high:.3f}. Propagating them "
           f"gives the headline confidence interval{(' of ' + f'{ci[0]:,.0f}–{ci[1]:,.0f} cases') if ci else ''}.",
-          "- **Baseline-risk scenarios.** The configured interim SF-derived p0 and the three Perry "
-          "outcome-specific p0 values are reported separately. They test the OR-to-RR "
+          "- **Baseline-risk scenarios.** The locked national low-NDVI-quartile p0 and the three "
+          "Hystad et al. outcome-specific p0 values are reported separately. They test the OR-to-RR "
           "conversion assumption and are not a confidence interval.",
           "- **Cost scenario band ($17k–$23k per case).** This is a range of defensible "
           "cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range."]
@@ -858,7 +859,7 @@ def main():
                      f"${float(r.get('cost_high_23000',0)):,.0f} |")
         L += ["", "<sub>Table 4 legend. Each OR is converted to RR at the p0 shown, "
               "then propagated through the spatial model. The three cost columns are "
-              "scenario bounds, not confidence limits. Perry p0 rows are alternative "
+              "scenario bounds, not confidence limits. Hystad et al. p0 rows are alternative "
               "outcome definitions from overlapping participants and must not be averaged.</sub>", ""]
     L += p0_sensitivity_lines(total_cases)
     L += baseline_check_lines(total_cases)
@@ -885,20 +886,14 @@ def main():
           "crude adult rate are the appropriate comparators."]
 
     # ---- Explicit handoff checklist ----
-    L += ["", "## Next steps before final U.S. interpretation", "",
-          "- Re-export the six missing expected national county rasters.",
-          "- Resolve the 56 files outside the uploaded 1,167-county AOI.",
-          "- Replace or defensibly harmonize the 467 expected rasters exported at "
-          "90 m rather than the specified 30 m.",
-          "- Run the full-read national NDVI audit and lock one AOI vintage.",
-          "- Calculate the national lowest-population-weighted-NDVI-quartile p0; "
-          "the current 0.204 is SF-derived and interim.",
-          "- Re-run all scenarios, OR × p0 × cost sensitivity, exposure-radius "
-          "sensitivity, equity/SVI analyses, and national QA after p0 is locked.",
-          "- Regenerate the SF population raster with Census-total calibration and "
-          "re-run its absolute case/cost results; the current report flags a 17% mismatch.",
-          "- Verify the Perry citation/count transcription and report the "
-          "one-effect-per-study Liu robustness result.",
+    L += ["", "## Remaining work", "",
+          "- Archive raw-input checksums and an exact software environment lock.",
+          "- Decide whether the optional national existing-greenness accounting "
+          "counterfactual is needed; the SF report already includes it.",
+          "- Decide whether regional wage-adjusted societal costs belong in the "
+          "main analysis or supplement.",
+          "- Treat the eastern/northern SF NDVI buffer warning as a residual edge-effect "
+          "limitation unless a wider source composite can be exported.",
           "",
           "The maintained checklist and decision log are in "
           "`docs/us_case_status.md`; the export evidence is in "

@@ -6,37 +6,35 @@ This report estimates how much **PLACES-defined diagnosed depressive disorder** 
 
 ## In brief
 
-Adding a modest amount of greenery across San Francisco — a **+0.05 rise in the NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan — could prevent about **4,867 cases of depression per year** (95% CI: 1,549–8,073), worth roughly **$104 million** in avoided societal cost. Separately, the greenery San Francisco *already has* is estimated to prevent about **21,321 cases per year** versus a bare city.
+Adding a modest amount of greenery across San Francisco — a **+0.05 rise in the NDVI greenery index**, roughly the scale of Barcelona's green-corridor plan — could prevent about **4,170 cases of depression per year** (95% CI: 1,364–6,956), worth roughly **$89 million** in avoided societal cost. Separately, the greenery San Francisco *already has* is estimated to prevent about **18,257 cases per year** versus a bare city.
 
 ## Headline numbers
 
-- **4,867** depression cases prevented per year (95% CI: 1,549–8,073) (from added greenery)
-- **$103,573,424** avoided societal cost per year (95% CI: $33–$172M)
+- **4,170** depression cases prevented per year (95% CI: 1,364–6,956) (from added greenery)
+- **$88,744,376** avoided societal cost per year (95% CI: $29–$148M)
 - Neighborhoods analyzed: **241** census tracts
-- Per neighborhood: **20** cases prevented on average (range 1–65).
+- Per neighborhood: **17** cases prevented on average (range 1–55).
 
 ## Scenario comparison
 
-The 8 investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
-
-![Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.](../figures/scenario_comparison.png)
-<sub>Figure 1. Annual modeled prevented depression cases. Blue bars are alternative investment scenarios; the green bar is the existing-greenness accounting counterfactual. All bars use the same central health-effect and societal-cost assumptions. The green bar is not a project option or a forecast of vegetation removal.</sub>
+The 9 investment scenarios use the same exposure-response, baseline depression, population, and societal-cost assumptions; they differ only in where and how much greening is allowed. The existing-greenness row is included for context, but it is an accounting counterfactual (today's greenness versus a bare city), not an investment option or a plausible removal forecast.
 
 **Table 1. Scenario comparison with common population and economic anchors.**
 
 | Scenario | Spatial rule | Cases / yr | Cases / 1,000 adults | Share of adult depression pool | Avoided cost / yr | Cost / resident / yr | Share of city GDP |
 |---|---|---:|---:|---:|---:|---:|---:|
-| Uniform +0.05 NDVI (reference) | Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere. | 4,867 | 6.8 | 3.3% | $103,573,428 | $125 | 0.041% |
-| Greenable-only +0.05 NDVI | Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen. | 4,700 | 6.6 | 3.2% | $100,026,235 | $120 | 0.040% |
-| LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 596 | 0.8 | 0.4% | $12,681,043 | $15 | 0.005% |
-| 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 35,317 | 49.3 | 24.2% | $751,537,448 | $905 | 0.301% |
-| Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 39,013 | 54.4 | 26.7% | $830,202,625 | $1,000 | 0.332% |
-| Health-priority feasible allocation | Allocate the same feasible-NDVI budget first to tracts with highest modeled cases per feasible NDVI increment. | 476 | 0.7 | 0.3% | $10,135,939 | $12 | 0.004% |
-| Equity-priority feasible allocation | Allocate the same feasible-NDVI budget using health need, SVI, and low-greenness priority. | 309 | 0.4 | 0.2% | $6,584,181 | $8 | 0.003% |
-| Balanced feasible allocation | Allocate the same feasible-NDVI budget using equal health and equity priority weights. | 322 | 0.4 | 0.2% | $6,860,278 | $8 | 0.003% |
-| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 21,321 | 29.7 | 14.6% | $453,715,456 | $546 | 0.181% |
+| Uniform +0.05 NDVI (reference) | Raise every valid pixel by 0.05 NDVI; reference only, not physically feasible everywhere. | 4,170 | 5.8 | 3.0% | $88,744,385 | $107 | 0.035% |
+| Proportional +10% NDVI | See config.yaml. | 1,952 | 2.7 | 1.4% | $41,533,788 | $50 | 0.017% |
+| Greenable-only +0.05 NDVI | Raise pixels below NDVI 0.60 by 0.05; data-light feasibility screen. | 4,028 | 5.6 | 2.9% | $85,705,392 | $103 | 0.034% |
+| LULC-masked feasible greening | Raise eligible NLCD developed-open, low-intensity, and barren land toward NDVI 0.65. | 511 | 0.7 | 0.4% | $10,866,473 | $13 | 0.004% |
+| 30% canopy target | Raise each tract toward the NDVI equivalent of 30% tree canopy; policy target. | 30,227 | 42.2 | 22.1% | $643,227,651 | $775 | 0.257% |
+| Within-city p95 potential | Raise lower-NDVI pixels to the city's own 95th-percentile NDVI; ambitious upper-bound potential. | 33,387 | 46.6 | 24.4% | $710,470,788 | $856 | 0.284% |
+| Health-priority feasible allocation | Allocate the same feasible-NDVI budget first to tracts with highest modeled cases per feasible NDVI increment. | 408 | 0.6 | 0.3% | $8,685,521 | $10 | 0.003% |
+| Equity-priority feasible allocation | Allocate the same feasible-NDVI budget using health need, SVI, and low-greenness priority. | 265 | 0.4 | 0.2% | $5,641,954 | $7 | 0.002% |
+| Balanced feasible allocation | Allocate the same feasible-NDVI budget using equal health and equity priority weights. | 276 | 0.4 | 0.2% | $5,878,547 | $7 | 0.002% |
+| Existing greenness (accounting counterfactual) | Current NDVI compared with NDVI = 0; upper-bound stock value, not an investment scenario. | 18,257 | 25.5 | 13.3% | $388,500,000 | $468 | 0.155% |
 
-<sub>Table 1 legend. All values are annual central estimates, not confidence intervals. Cases per 1,000 adults use 716,727 adults. The adult depression pool is 146,212 (20.4% prevalence). Cost per resident uses 830,235 residents; GDP shares use $250B. Costs use the configured $21,280 per case. The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>
+<sub>Table 1 legend. All values are annual central estimates, not confidence intervals. Cases per 1,000 adults use 716,727 adults. The adult depression pool is 136,927 (19.1% prevalence). Cost per resident uses 830,235 residents; GDP shares use $250B. Costs use the configured $21,280 per case. The existing-greenness row is an upper-bound accounting comparison, not an investment scenario.</sub>
 
 **Read these as two groups, not one ranking — they are not on a common effort scale.** The *budget-matched, feasible* scenarios (LULC-masked and the health-/equity-/balanced-priority allocations) are the decision-relevant options: each greens a comparable, realistically achievable amount of land, so their prevented-case numbers *are* directly comparable and answer 'where should a fixed greening budget go?'. The *reference and aspirational* scenarios (uniform +0.05, proportional +10%, within-city p95, 30% canopy) instead raise NDVI broadly or to a ceiling; they bracket a simple reference and an upper envelope of what is biophysically possible, and their much larger totals reflect far more greening, not a better use of the same resources. Compare within a group, not across.
 
@@ -44,16 +42,13 @@ The 8 investment scenarios use the same exposure-response, baseline depression, 
 
 Benefits are largest where many people live near low greenery and depression rates are high. The map shows avoided cost by neighborhood; the scatter shows that higher-prevalence neighborhoods gain more from greening.
 
-![Avoided societal cost per neighborhood, from added greenery.](../figures/map_marginal_cost.png)
-<sub>Avoided societal cost per neighborhood, from added greenery.</sub>
-
 ## Equity implications
 
 We assess the distribution of the modeled *rate* of prevented cases using two complementary rankings: median household income and CDC/ATSDR Social Vulnerability Index (SVI). This is a distributional diagnostic, not evidence that a real project will reach vulnerable residents without deliberate siting and implementation.
 
 | Equity lens | Concentration index | Interpretation |
 |---|---:|---|
-| Median household income (low → high) | +0.020 | no material gradient detected |
+| Median household income (low → high) | +0.019 | no material gradient detected |
 | CDC/ATSDR SVI (low → high vulnerability) | -0.028 | benefits concentrate in less socially vulnerable neighborhoods (equity concern) |
 
 For income, a negative index favors lower-income tracts. For SVI, a positive index favors more socially vulnerable tracts. Values within ±0.02 are treated as no material gradient.
@@ -69,14 +64,15 @@ This extension reports **relative inequality** (concentration index, CI) and **a
 
 | Scenario | SVI CI (95% interval) | SII cases / 1,000 adults (95% interval) | Interpretation |
 |---|---:|---:|---|
-| Uniform +0.05 NDVI (reference) | -0.022 (-0.031, -0.011) | -0.75 (-1.08, -0.39) | vulnerability-under-serving |
-| Greenable-only +0.05 NDVI | -0.012 (-0.022, -0.002) | -0.40 (-0.72, -0.07) | no material gradient |
-| LULC-masked feasible greening | -0.090 (-0.226, +0.024) | -0.38 (-0.88, +0.12) | vulnerability-under-serving |
-| 30% canopy target | +0.029 (+0.013, +0.046) | +7.31 (+3.39, +11.72) | equity-promoting |
-| Within-city p95 potential | +0.020 (+0.005, +0.036) | +5.65 (+1.45, +9.88) | equity-promoting |
-| Health-priority feasible allocation | -0.139 (-0.256, -0.029) | -0.47 (-0.86, -0.09) | vulnerability-under-serving |
-| Equity-priority feasible allocation | +0.306 (+0.182, +0.399) | +0.67 (+0.33, +1.07) | equity-promoting |
-| Balanced feasible allocation | +0.272 (+0.149, +0.382) | +0.62 (+0.28, +1.06) | equity-promoting |
+| Uniform +0.05 NDVI (reference) | -0.022 (-0.031, -0.011) | -0.75 (-1.09, -0.40) | vulnerability-under-serving |
+| Proportional +10% NDVI | -0.117 (-0.144, -0.091) | -1.91 (-2.35, -1.47) | vulnerability-under-serving |
+| Greenable-only +0.05 NDVI | -0.012 (-0.022, -0.001) | -0.41 (-0.75, -0.03) | no material gradient |
+| LULC-masked feasible greening | -0.090 (-0.206, +0.020) | -0.39 (-0.86, +0.09) | vulnerability-under-serving |
+| 30% canopy target | +0.029 (+0.012, +0.047) | +7.36 (+2.95, +11.76) | equity-promoting |
+| Within-city p95 potential | +0.020 (+0.006, +0.037) | +5.69 (+1.68, +10.25) | equity-promoting |
+| Health-priority feasible allocation | -0.139 (-0.246, -0.020) | -0.47 (-0.84, -0.08) | vulnerability-under-serving |
+| Equity-priority feasible allocation | +0.306 (+0.181, +0.413) | +0.68 (+0.32, +1.12) | equity-promoting |
+| Balanced feasible allocation | +0.272 (+0.138, +0.377) | +0.63 (+0.28, +1.02) | equity-promoting |
 
 <sub>Table 3 legend. CI is a relative distribution measure; SII is the modeled difference between the least and most socially vulnerable ends of the population-weighted SVI rank. Both use adult-population weights.</sub>
 
@@ -101,60 +97,57 @@ The population, depression-pool, resident-cost, and GDP measures in Table 1 are 
 
 Two sources of spread, and they are different in kind:
 
-- **Statistical 95% CI (cases), conditional on configured p0=0.204.** The Liu et al. (2023) OR bounds 0.887–0.977 convert to RR 0.908–0.982. Propagating them gives the headline confidence interval of 1,549–8,073 cases.
-- **Baseline-risk scenarios.** The configured interim SF-derived p0 and the three Perry outcome-specific p0 values are reported separately. They test the OR-to-RR conversion assumption and are not a confidence interval.
+- **Statistical 95% CI (cases), conditional on configured p0=0.191.** The Liu et al. (2023) OR bounds 0.887–0.977 convert to RR 0.907–0.981. Propagating them gives the headline confidence interval of 1,364–6,956 cases.
+- **Baseline-risk scenarios.** The locked national low-NDVI-quartile p0 and the three Hystad et al. outcome-specific p0 values are reported separately. They test the OR-to-RR conversion assumption and are not a confidence interval.
 - **Cost scenario band ($17k–$23k per case).** This is a range of defensible cost-of-illness anchors, *not* a statistical CI — treat it as a what-if range.
 - **One-effect-per-study robustness check.** Selecting one estimate from each of nine Liu cohorts gives OR **0.930** (95% CI 0.874–0.990; I²=95.8%). This agrees closely with the published point estimate but remains highly heterogeneous and is a post-hoc sensitivity, not the primary model.
 
 
 The chart and table below show the effect, p0, and cost scenarios together.
 
-![How avoided cost changes with the effect size and cost-per-case range.](../figures/sensitivity_range.png)
-<sub>How avoided cost changes with the effect size and cost-per-case range.</sub>
-
 **Table 4. Joint OR, p0, and societal-cost sensitivity.**
 
 | p0 scenario | p0 | OR | RR | cases prevented | cost (low) | cost (central) | cost (high) |
 |---|---:|---:|---:|---:|---:|---:|---:|
-| configured interim p0 | 0.204 | 0.887 | 0.908000 | 8,073 | $137,234,774 | $171,785,647 | $185,670,577 |
-| configured interim p0 | 0.204 | 0.931 | 0.944000 | 4,867 | $82,741,930 | $103,573,428 | $111,944,964 |
-| configured interim p0 | 0.204 | 0.977 | 0.982000 | 1,549 | $26,337,096 | $32,967,848 | $35,632,542 |
-| perry phq9 ge10 | 0.064 | 0.887 | 0.893462 | 9,385 | $159,547,158 | $199,715,502 | $215,857,920 |
-| perry phq9 ge10 | 0.064 | 0.931 | 0.935130 | 5,651 | $96,071,225 | $120,258,569 | $129,978,716 |
-| perry phq9 ge10 | 0.064 | 0.977 | 0.978440 | 1,857 | $31,574,097 | $39,523,340 | $42,717,896 |
-| perry self reported diagnosis | 0.096 | 0.887 | 0.896728 | 9,089 | $154,518,794 | $193,421,173 | $209,054,839 |
-| perry self reported diagnosis | 0.096 | 0.931 | 0.937208 | 5,467 | $92,942,246 | $116,341,823 | $125,745,391 |
-| perry self reported diagnosis | 0.096 | 0.977 | 0.979162 | 1,795 | $30,511,543 | $38,193,272 | $41,280,323 |
-| perry health record diagnosis | 0.115 | 0.887 | 0.898678 | 8,913 | $151,520,137 | $189,667,559 | $204,997,832 |
-| perry health record diagnosis | 0.115 | 0.931 | 0.938447 | 5,358 | $91,079,476 | $114,010,073 | $123,225,173 |
-| perry health record diagnosis | 0.115 | 0.977 | 0.979591 | 1,758 | $29,880,092 | $37,402,844 | $40,426,007 |
+| national low ndvi quartile p0 | 0.191 | 0.887 | 0.906571 | 6,956 | $118,250,000 | $148,021,176 | $159,985,293 |
+| national low ndvi quartile p0 | 0.191 | 0.931 | 0.943436 | 4,170 | $70,895,420 | $88,744,385 | $95,917,333 |
+| national low ndvi quartile p0 | 0.191 | 0.977 | 0.981312 | 1,364 | $23,195,867 | $29,035,768 | $31,382,644 |
+| hystad phq9 ge10 | 0.064 | 0.887 | 0.893462 | 7,960 | $135,321,038 | $169,390,099 | $183,081,404 |
+| hystad phq9 ge10 | 0.064 | 0.931 | 0.935130 | 4,793 | $81,483,515 | $101,998,188 | $110,242,403 |
+| hystad phq9 ge10 | 0.064 | 0.977 | 0.978440 | 1,575 | $26,779,819 | $33,522,032 | $36,231,519 |
+| hystad self reported diagnosis | 0.096 | 0.887 | 0.896728 | 7,709 | $131,056,188 | $164,051,510 | $177,311,312 |
+| hystad self reported diagnosis | 0.096 | 0.931 | 0.937208 | 4,637 | $78,829,656 | $98,676,181 | $106,651,887 |
+| hystad self reported diagnosis | 0.096 | 0.977 | 0.979162 | 1,522 | $25,878,605 | $32,393,924 | $35,012,230 |
+| hystad health record diagnosis | 0.115 | 0.887 | 0.898678 | 7,560 | $128,512,861 | $160,867,864 | $173,870,342 |
+| hystad health record diagnosis | 0.115 | 0.931 | 0.938447 | 4,544 | $77,249,727 | $96,698,481 | $104,514,336 |
+| hystad health record diagnosis | 0.115 | 0.977 | 0.979591 | 1,491 | $25,343,036 | $31,723,518 | $34,287,637 |
 
-<sub>Table 4 legend. Each OR is converted to RR at the p0 shown, then propagated through the spatial model. The three cost columns are scenario bounds, not confidence limits. Perry p0 rows are alternative outcome definitions from overlapping participants and must not be averaged.</sub>
+<sub>Table 4 legend. Each OR is converted to RR at the p0 shown, then propagated through the spatial model. The three cost columns are scenario bounds, not confidence limits. Hystad et al. p0 rows are alternative outcome definitions from overlapping participants and must not be averaged.</sub>
 
 
 ### Sensitivity to the baseline-risk assumption (p0)
 
-Configured baseline risk p0: **0.204** (`sf_overall_population_weighted_places_interim`); central OR 0.931 -> RR 0.9443. This is an **interim SF/AOI overall population-weighted PLACES value**, not yet a national U.S. estimate. It remains in use until the primary U.S. estimate can be calculated among tracts in the lowest population-weighted national-urban NDVI quartile. Perry values below are separate outcome-definition scenarios and are not averaged because their participants overlap:
+Configured baseline risk p0: **0.191** (`national_urban_lowest_population_weighted_ndvi_quartile_q0.25`); central OR 0.931 -> RR 0.9434. This is the **locked national U.S. primary estimate**, calculated as adult-population-weighted PLACES prevalence among tracts in the lowest population-weighted NDVI quartile across the 1,167-county study AOI. Hystad et al. values below are separate outcome-definition sensitivity anchors and are not averaged because their participants overlap:
 
 | p0 source / outcome | p0 | RR | approx. preventable cases |
 |---|---:|---:|---:|
-| Perry: PHQ-9 >=10 | 0.064 | 0.9351 | 5,695 |
-| Perry: self-reported diagnosis | 0.096 | 0.9372 | 5,507 |
-| Perry: health-record diagnosis | 0.115 | 0.9384 | 5,394 |
-| Configured U.S. value (interim) (used) | 0.204 | 0.9443 | 4,867 |
+| Hystad et al.: PHQ-9 >=10 | 0.064 | 0.9351 | 4,804 |
+| Hystad et al.: self-reported diagnosis | 0.096 | 0.9372 | 4,645 |
+| Hystad et al.: health-record diagnosis | 0.115 | 0.9384 | 4,550 |
+| National low-NDVI-quartile value (primary) (used) | 0.191 | 0.9434 | 4,170 |
 
 ### Baseline, PAF & population check
 
-- **Population-attributable fraction (PAF): 2.84%** — the share of baseline depression preventable at +0.05 NDVI (RR 0.944). Dimensionless, so it is directly comparable across places regardless of size or age structure.
-- Model-implied baseline depression cases: **171,359** (= preventable / PAF).
-- Census-based adult depression pool: **146,212** (716,727 adults × 20.4%).
-- ⚠️ Model baseline is **1.17×** the census pool → the population raster likely sums ~839,995 (vs 716,727 adults). Regenerate it with `fetch_population.py` Census-total calibration, then rerun all absolute case/cost outputs. Calibration would scale the headline down by about 15% if the spatial prevalence mix is otherwise unchanged.
+- **Population-attributable fraction (PAF): 2.87%** — the share of baseline depression preventable at +0.05 NDVI (RR 0.943). Dimensionless, so it is directly comparable across places regardless of size or age structure.
+- Model-implied baseline depression cases: **145,339** (= preventable / PAF).
+- Census-based adult depression pool: **136,927** (716,727 adults × 19.1%).
+- ✅ Model baseline within 6% of the census pool — consistent.
 
 ## How this compares with other studies
 
 - **Greening magnitude.** Our +0.05 NDVI scenario is close to the Barcelona "Eixos Verds" green-corridor plan, whose health impact assessment modelled an average **+0.059 NDVI** (Vidal Yáñez et al., 2023) — so the dose is realistic, not arbitrary.
 - **Method precedent.** Wu et al. (2025) use the same design — scenario-based preventable depression burden from greenness via a pooled meta-analytic odds ratio and population-attributable fractions — so the approach is established and publishable.
-- **Effect magnitude.** Published per-0.1-NDVI depression reductions cluster around **5–8%**; our risk ratio gives **5.6%** per 0.1 NDVI (converted from the Liu et al., 2023 odds ratio) — at the conservative end, as expected after the OR→RR correction (the higher figures use the OR directly).
+- **Effect magnitude.** Published per-0.1-NDVI depression reductions cluster around **5–8%**; our risk ratio gives **5.7%** per 0.1 NDVI (converted from the Liu et al., 2023 odds ratio) — at the conservative end, as expected after the OR→RR correction (the higher figures use the OR directly).
 - **Takeaway.** The preventable *fraction* is defensible and literature-consistent; the absolute count depends on the population baseline (see check above).
 
 _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — see References._
@@ -166,16 +159,12 @@ _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — s
 - The greening scenario and effect size are assumptions — read the headline with the ranges above, not as a single certain number.
 - **Cross-place comparability:** we report the **PAF** and **cases per 1,000 adults**, which are independent of a place's size and age structure. A full *age-standardized* rate (as in Wu et al., 2026) is **not feasible here**: CDC PLACES gives a single adult (18+) depression rate per tract, not 5-year age-specific rates, and the effect size isn't age-specific — so the PAF and the crude adult rate are the appropriate comparators.
 
-## Next steps before final U.S. interpretation
+## Remaining work
 
-- Re-export the six missing expected national county rasters.
-- Resolve the 56 files outside the uploaded 1,167-county AOI.
-- Replace or defensibly harmonize the 467 expected rasters exported at 90 m rather than the specified 30 m.
-- Run the full-read national NDVI audit and lock one AOI vintage.
-- Calculate the national lowest-population-weighted-NDVI-quartile p0; the current 0.204 is SF-derived and interim.
-- Re-run all scenarios, OR × p0 × cost sensitivity, exposure-radius sensitivity, equity/SVI analyses, and national QA after p0 is locked.
-- Regenerate the SF population raster with Census-total calibration and re-run its absolute case/cost results; the current report flags a 17% mismatch.
-- Verify the Perry citation/count transcription and report the one-effect-per-study Liu robustness result.
+- Archive raw-input checksums and an exact software environment lock.
+- Decide whether the optional national existing-greenness accounting counterfactual is needed; the SF report already includes it.
+- Decide whether regional wage-adjusted societal costs belong in the main analysis or supplement.
+- Treat the eastern/northern SF NDVI buffer warning as a residual edge-effect limitation unless a wider source composite can be exported.
 
 The maintained checklist and decision log are in `docs/us_case_status.md`; the export evidence is in `results/summaries/national_ndvi_audit.md`.
 

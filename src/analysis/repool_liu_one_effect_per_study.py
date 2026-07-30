@@ -114,7 +114,9 @@ def main():
         "## To-do",
         "",
         "- Independently verify every transcribed coefficient against the Liu supplement.",
-        "- Confirm which Perry and Abraham outcomes Liu treated as NDVI estimates.",
+        "- Hystad et al. outcome labels/counts are independently documented in "
+        "docs/perry_2019_verification.md; verify the remaining Abraham mapping "
+        "against the supplement.",
         "- If this sensitivity materially changes U.S. results, repeat with a multilevel "
         "or robust-variance meta-analysis.",
     ]

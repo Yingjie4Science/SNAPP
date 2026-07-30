@@ -1,93 +1,108 @@
-# U.S. case study: decisions, status, and next steps
+# U.S. case study: decisions, status, and remaining work
 
-_Status updated 2026-07-30._
+_Authoritative status updated 2026-07-30._
 
-This is the authoritative running checklist for the U.S. analysis. Every
-material methodological change should add or revise a dated decision here and
-keep the remaining tasks current.
+## Decisions locked
 
-## Decisions implemented
-
-| Decision | Rationale | Implementation |
+| Decision | Rationale | Implementation/evidence |
 |---|---|---|
-| Name the health endpoint precisely | CDC PLACES measures ever-diagnosed depressive disorder, not strict current MDD | Report introduction and `docs/effect_size.md` |
-| Retain Liu OR 0.931 (0.887–0.977) as primary | It is the prespecified published meta-analysis; post-hoc outcome selection can introduce judgment | `config.yaml` and model sensitivity |
-| Convert OR to RR | InVEST applies a risk ratio; direct OR use exaggerates effects for a common outcome | `effect_size.py`, `compute_p0.py` |
-| Define final U.S. p0 in the least-green stratum | p0 is conceptually the reference-group risk, not the overall mean | Lowest population-weighted national-urban NDVI quartile in `compute_p0.py` |
-| Label p0=0.204 as interim and SF-derived | National NDVI completeness/QA is not finished; an SF mean is not a national reference risk | `baseline_risk_p0_method` in `config.yaml` |
-| Do not average Perry outcome prevalences | PHQ-9, self-report, and health-record groups overlap | Separate 0.064, 0.096, 0.115 sensitivity scenarios |
-| Re-pool one estimate per study only as sensitivity | Liu has 13 estimates from nine studies and high heterogeneity; selection is not neutral | `repool_liu_one_effect_per_study.py` |
-| Eliminate national hard-coding | National cities must inherit the finalized RR | `src/national/run_city.py` reads `config.yaml` |
-| Calibrate population totals | WorldPop is used for spatial allocation, but current SF adult sum is about 845k versus the 716,727 Census anchor | SF population builder and national county runner rescale to authoritative adult totals |
-| Separate uncertainty types | Effect CI, p0 scenarios, and cost range answer different questions | Joint sensitivity table and revised report text |
+| Report the endpoint as PLACES-defined diagnosed depressive disorder | PLACES measures ever diagnosis among adults, not strict current MDD | `docs/effect_size.md`; report text |
+| Retain Liu et al. OR 0.931 (0.887–0.977) | Prespecified published meta-analysis; one-effect-per-study result is robustness only | `config.yaml`; sensitivity table |
+| Convert OR to RR | InVEST requires an RR and the outcome is common | `effect_size.py`; `compute_national_p0.py` |
+| Define p0 in the national least-green stratum | p0 is the reference-group risk, not overall prevalence | Lowest adult-population-weighted NDVI quartile |
+| Lock p0 = 0.191045 | Outcome, adults, AOI, and exposure distribution match the model | `results/summaries/national_p0.md` |
+| Do not average Hystad outcome prevalences | PHQ-9, self-report, and health-record groups overlap | Separate 0.064/0.096/0.115 sensitivities |
+| Use WorldPop only for spatial allocation | WorldPop reprojection is not count preserving | Exact county scaling to ACS 2023 adults |
+| Harmonize all NDVI at 90 m | A common 90 m grid avoids mixed resolution; 30 m sources are area-averaged | `harmonize_ndvi_resolution.py` |
+| Quarantine, do not delete, out-of-AOI files | Preserves provenance while locking the active study universe | `data/national/ndvi/_outside_current_aoi` |
+| Bridge Florida with official PLACES 2022 only | PLACES 2023 has null depression values for all Florida tracts | `config/places_florida_2022.csv` |
+| Use SVI alongside income | Income alone is an incomplete equity construct | SF tract and national county analyses |
+| Keep uncertainty types separate | Effect CI, p0 definitions, cost bounds, radius, and scenarios answer different questions | Results tables and legends |
 
-## What is complete
+## Completed
 
-- U.S. p0 calculator supports overall-interim and low-NDVI-reference methods.
-- Perry outcome definitions are represented separately.
-- OR × p0 × societal-cost sensitivity design is implemented.
-- One-effect-per-study Liu robustness calculation is reproducible.
-- The national city runner reads the configured effect size.
-- Summary-report language distinguishes the modeled PLACES endpoint from MDD.
-- The existing equity analysis, SVI extension, and multi-scenario comparison
-  remain integrated.
+- [x] Re-exported the six missing Kentucky counties.
+- [x] Moved 56 out-of-AOI rasters to a separate quarantine subfolder.
+- [x] Harmonized all 1,167 active rasters to aligned 90 m EPSG:5070 grids.
+- [x] Strengthened the audit to reject unmasked `NaN`/infinite cells.
+- [x] Passed the full-read NDVI audit: 1,167 present, 0 missing, 0 unexpected,
+      0 QA failures.
+- [x] Fetched and validated complete ACS 2023 adult targets for all counties.
+- [x] Fetched and validated official CDC/ATSDR 2022 county SVI for all counties.
+- [x] Calibrated SF population to 716,727 adults and reran every SF scenario.
+- [x] Locked national p0 and the central/boundary RRs in `config.yaml`.
+- [x] Verified Hystad et al. (2019) bibliographic details and Table 1 counts.
+- [x] Reran SF OR × p0 × cost, exposure-radius, income, SVI, ICE, spatial,
+      and allocation analyses.
+- [x] Completed the national primary and alternative greening scenarios for
+      all 1,167 counties.
+- [x] Added national county-level SVI concentration and slope-index analysis
+      with 1,000-draw bootstrap intervals.
+- [x] Completed national 250/300/500/1,000 m exposure-radius sensitivity.
+- [x] Added resumable per-county processing, cached-input scenario runs, and
+      fail-closed national final QA.
+- [x] Passed final QA for all four national scenarios and all four radii.
 
-## What remains to do
+## Key locked values
 
-### Blocking the final national U.S. estimate
+- National p0: **0.191045**
+- Population-weighted low-NDVI threshold: **0.416390**
+- Eligible/reference tracts: **59,161 / 14,993**
+- ACS adults represented: **218,643,229**
+- Adults with valid NDVI: **218,607,899 (99.9838%)**
+- RR per +0.1 NDVI: **0.943436** (0.906571–0.981312)
+- SF uniform +0.05 central result: about **4,170 cases/year** and
+  **$88.7M/year** (exact report regenerates from the locked configuration).
+- National uniform +0.05 central result: **1,264,304 cases/year** and
+  **$26.90B/year** after enforcing the no-decrease NDVI cap.
+- National radius sensitivity: **1,264,303 / 1,264,304 / 1,241,075 /
+  1,217,851 cases/year** at 250 / 300 / 500 / 1,000 m, respectively.
 
-- [x] Identify the exact uploaded AOI: 1,167 unique county GEOIDs in
-      `counties_gee.shp`.
-- [ ] Re-export six missing expected counties: 21047, 21049, 21067, 21081,
-      21103, and 21113.
-- [ ] Resolve the 56 unexpected files from a different AOI vintage: either
-      exclude them or revise and consistently regenerate the study universe.
-- [ ] Re-export or defensibly harmonize the 467 expected rasters at 90 m; the
-      specified standard is 30 m EPSG:5070.
-- [ ] Finish all NDVI exports and resolve duplicate/failed Earth Engine tasks.
-- [ ] Produce a manifest containing expected GEOID, file present, readable,
-      CRS, pixel size, date, valid-pixel fraction, and value range.
-- [ ] Re-export or exclude counties failing QA with a documented rule.
-- [ ] Mosaic or aggregate national NDVI in a way that preserves tract-level
-      population weighting.
-- [ ] Build aligned national adult population and PLACES inputs.
-- [ ] Fetch `config/adult_population.csv` from ACS and require complete county
-      coverage; the current execution environment could not reach the Census API.
-- [ ] Calculate and lock the lowest-NDVI-quartile p0.
+## Important QA incident and resolution
 
-### Required robustness and reporting
+The first national aggregation produced valid totals only for 14 Kentucky
+counties. Diagnosis showed that older harmonized rasters declared `-9999` as
+nodata but retained internal `NaN` cells; convolution therefore propagated
+non-finite results. The preliminary 8,171-case national figure was rejected.
+Harmonization now explicitly converts every non-finite source/destination cell
+to the declared nodata value, and the audit counts unmasked non-finite cells.
+The full 1,167-file audit and all national primary runs were repeated.
 
-- [ ] Run all 12 OR × p0 combinations for the U.S. study domain.
-- [ ] Regenerate the SF population raster with Census calibration and rerun all
-      SF absolute case/cost outputs. The current report correctly flags a
-      model-implied population about 17% above the Census anchor.
-- [ ] Add 250/300/500/1,000 m exposure-radius sensitivity.
-- [ ] Run and report the one-effect-per-study meta-analytic sensitivity.
-- [ ] Verify the Perry citation and all transcribed counts against the paper.
-- [ ] Decide whether the manuscript headline should retain “depression” or use
-      “diagnosed depressive disorder” throughout.
-- [ ] Propagate health-effect, p0, cost, and NDVI-input uncertainty without
-      presenting structural scenarios as confidence intervals.
-- [ ] Re-run all investment scenarios, advanced equity/SVI analysis, and report
-      generation after the effect size is locked.
-- [ ] Conduct national output QA: missing counties, extreme values, population
-      reconciliation, duplicated GEOIDs, and scenario comparability.
+A second fail-closed check found small negative benefits in 10 greenable-only
+county runs. The shared NDVI cap had lowered baseline pixels already above
+0.90, inadvertently modeling vegetation removal. Scenario construction now
+preserves every baseline value above the cap and caps only proposed increases.
+All SF and national scenarios were rerun; the corrected national tables contain
+1,167 finite, strictly positive county totals in every scenario.
 
-### Manuscript-facing limitations to retain
+## Manuscript-facing limitations to retain
 
-- The exposure-response evidence is heterogeneous (Liu I² = 94.4%).
-- Several forest-plot estimates come from the same underlying study.
-- Zhang–Yu is an approximation for adjusted ORs.
-- PLACES is self-reported ever diagnosis and includes depressive disorders
-  beyond strict current MDD.
-- The model estimates attributable/preventable prevalent cases under a
-  counterfactual association; it is not a randomized intervention forecast.
-- Geographic transportability can vary with vegetation type, urban form,
-  population composition, healthcare diagnosis, and baseline prevalence.
+- Liu meta-analytic heterogeneity is high (I² = 94.4%), and multiple estimates
+  come from the same underlying studies.
+- Zhang–Yu is an approximation for adjusted ORs, although error is small here
+  because the OR is close to 1.
+- PLACES is self-reported ever diagnosis and is broader than current MDD.
+- Results are prevalence-based modeled counterfactuals, not incidence effects
+  or randomized intervention forecasts.
+- Florida PLACES values use a transparent one-release temporal bridge.
+- Harmonized 90 m NDVI cannot restore spatial detail absent from original 90 m
+  exports.
+- National county SVI masks within-county inequity.
+- A flat cost per case does not reflect local wage variation in productivity
+  losses.
+- SF NDVI does not fully cover the northern/eastern search-radius buffer;
+  99.98% of modeled adult population is covered, but an edge-effect limitation
+  remains.
 
-## Completion criterion
+## Remaining to-do
 
-The U.S. case is methodologically ready for manuscript use only when the
-national NDVI manifest is complete, the low-NDVI reference p0 is locked,
-all sensitivity/robustness runs are regenerated, and the national QA checklist
-has no unexplained failures.
+- [ ] Decide whether to finish the optional national existing-greenness
+      accounting counterfactual; SF already includes this comparison.
+- [ ] Export and commit a reproducible environment lock plus raw-input
+      checksums.
+- [ ] Add automated CI checks for manifest completeness, ACS reconciliation,
+      and finite national outputs.
+- [ ] Decide whether regional wage-adjusted societal costs belong in the main
+      manuscript or supplement.
+- [ ] Maintain causal-language and outcome-definition caveats during manuscript
+      editing.

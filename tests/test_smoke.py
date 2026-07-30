@@ -72,9 +72,16 @@ def test_ndvi_scenario_caps():
     pytest.importorskip("rioxarray")
     import numpy as np
     import xarray as xr
-    base = xr.DataArray(np.array([[0.10, 0.88, np.nan]]), dims=("y", "x"))
-    alt = (base + 0.05).clip(max=0.90).where(~base.isnull())
+    base = xr.DataArray(
+        np.array([[0.10, 0.88, 0.95, np.nan]]), dims=("y", "x")
+    )
+    proposed = base + 0.05
+    alt = xr.where(base > 0.90, base, proposed.clip(max=0.90)).where(
+        ~base.isnull()
+    )
     vals = alt.values.ravel()
     assert vals[0] == pytest.approx(0.15)   # normal add
     assert vals[1] == pytest.approx(0.90)   # capped (0.93 -> 0.90)
-    assert np.isnan(vals[2])                # nodata preserved
+    assert vals[2] == pytest.approx(0.95)   # cap never removes baseline NDVI
+    assert np.isnan(vals[3])                # nodata preserved
+    assert np.nanmin(alt.values - base.values) >= 0

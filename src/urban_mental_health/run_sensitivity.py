@@ -4,14 +4,14 @@ Sensitivity analysis for the Urban Mental Health model (SF).
 
 Varies the three key assumptions and reports how the results move:
   - Liu odds ratio: 0.887 / 0.931 / 0.977 per +0.1 NDVI
-  - p0 reference risk: configured interim estimate plus Perry outcome-definition
-    scenarios 0.064 / 0.096 / 0.115
+  - p0 reference risk: locked national low-NDVI-quartile estimate plus Hystad
+    et al. outcome-definition scenarios 0.064 / 0.096 / 0.115
   - health_cost_rate : $17,000 (low) / $21,280 (pooled central) / $23,000 (high)
 
 Each OR × p0 pair is converted to the RR InVEST expects and run spatially.
 Preventable COST scales linearly with the cost rate, so cost bands are computed
-analytically. The configured p0 is explicitly interim until the national
-low-NDVI-quartile value is available.
+analytically. The three Hystad values are distinct, overlapping outcome
+definitions from one Canadian cohort; they are sensitivity anchors only.
 
 REQUIREMENTS  (conda env `snapp`): natcap.invest, rasterio, numpy
 USAGE
@@ -40,10 +40,10 @@ ODDS_RATIOS = {
     "or_high_less_protective": float(_M.get("effect_size_or_high", 0.977)),
 }
 P0_SCENARIOS = {
-    "configured_interim_p0": float(_M.get("baseline_risk_p0", 0.204)),
-    "perry_phq9_ge10": 0.064,
-    "perry_self_reported_diagnosis": 0.096,
-    "perry_health_record_diagnosis": 0.115,
+    "national_low_ndvi_quartile_p0": float(_M.get("baseline_risk_p0", 0.191066)),
+    "hystad_phq9_ge10": 0.064,
+    "hystad_self_reported_diagnosis": 0.096,
+    "hystad_health_record_diagnosis": 0.115,
 }
 COST_RATES = {"cost_low_17000": 17000.0, "cost_central_21280": 21280.0, "cost_high_23000": 23000.0}
 
@@ -83,7 +83,7 @@ def main():
             # The configured run stores rounded RRs. Use those exact values for
             # its three rows so the central sensitivity row reproduces the
             # headline model run rather than differing only by rounding.
-            if p0_label == "configured_interim_p0":
+            if p0_label == "national_low_ndvi_quartile_p0":
                 configured_rr = {
                     "or_low_more_protective": _M.get("effect_size_low"),
                     "or_central_published": _M.get("effect_size"),
@@ -134,8 +134,8 @@ def main():
             })
     LOGGER.info("Wrote %s", SUMMARY_CSV)
     LOGGER.info("Interpretation: rows = OR x p0 scenarios converted to RR; "
-                "columns = societal cost-per-case bands. The configured p0 remains "
-                "interim pending the national low-NDVI reference calculation.")
+                "columns = societal cost-per-case bands. The national "
+                "low-NDVI-quartile p0 is the primary U.S. specification.")
 
 
 if __name__ == "__main__":

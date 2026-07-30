@@ -8,9 +8,9 @@ The analysis compares relative (concentration index) and absolute (slope index o
 
 | Equity lens | CI (95% CI) | SII cases / 1,000 adults (95% CI) | Interpretation |
 |---|---:|---:|---|
-| income | +0.016 (+0.007, +0.025) | +0.56 (+0.25, +0.85) | no material gradient |
-| svi | -0.022 (-0.031, -0.011) | -0.75 (-1.08, -0.39) | vulnerability-under-serving |
-| ice_income | +0.012 (+0.003, +0.020) | +0.41 (+0.10, +0.70) | no material gradient |
+| income | +0.016 (+0.007, +0.025) | +0.56 (+0.25, +0.86) | no material gradient |
+| svi | -0.022 (-0.031, -0.011) | -0.75 (-1.09, -0.40) | vulnerability-under-serving |
+| ice_income | +0.012 (+0.003, +0.020) | +0.41 (+0.10, +0.71) | no material gradient |
 
 Global Moran's I for the equity-priority score: **+0.298** (k-nearest-neighbor diagnostic). Priority clusters are planning targets, not causal estimates.
 

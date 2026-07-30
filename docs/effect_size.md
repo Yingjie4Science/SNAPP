@@ -66,41 +66,47 @@ The NDVI threshold is itself population weighted. This definition matches the
 reference exposure concept while keeping the outcome definition identical to
 the modeled prevalence surface.
 
-### Interim operational value
+### Locked national value
 
-Until all national NDVI exports pass completeness and quality checks, the
-pipeline uses `p0 = 0.204`, the overall adult-population-weighted PLACES
-prevalence calculated from the current **San Francisco** inputs. `config.yaml`
-labels this `sf_overall_population_weighted_places_interim`; it is neither a
-national U.S. estimate nor the final least-green reference risk.
+The completed national calculation gives **p0 = 0.191045** among tracts in the
+lowest adult-population-weighted NDVI quartile (threshold mean NDVI =
+**0.416390**) across all 1,167 study counties. The resulting primary RR is
+**0.943436** (OR-CI conversion: 0.906571–0.981312). Full inputs, coverage, and
+the Florida temporal bridge are documented in
+`results/summaries/national_p0.md`.
 
 ```bash
-# Current SF diagnostic; does not overwrite the national configuration
+# Optional SF diagnostic; does not overwrite the national configuration
 python src/inputs/compute_p0.py --no-write
 
-# Final U.S. primary calculation once national inputs are complete
-python src/inputs/compute_p0.py \
-  --reference lowest-ndvi-quantile --quantile 0.25 \
+# Reproduce the locked national calculation
+python src/national/compute_national_p0.py \
   --prevalence <national_places_layer> \
-  --population <national_adult_population_raster> \
-  --ndvi <national_baseline_ndvi_mosaic>
+  --population <national_worldpop_raster>
 ```
 
-### Perry values: sensitivity only
+### Hystad et al. (2019; “Perry”): sensitivity only
 
-Perry et al. (2019) report three outcome-specific prevalences in the lowest
+Hystad et al. (2019) report three outcome-specific prevalences in the lowest
 NDVI quartile:
 
-| Outcome | p0 |
-|---|---:|
-| PHQ-9 ≥10 | 0.064 |
-| Self-reported doctor diagnosis | 0.096 |
-| Health-record diagnosis | 0.115 |
+| Outcome | Count | p0 |
+|---|---:|---:|
+| PHQ-9 ≥10 | 130 | 0.064 |
+| Self-reported doctor diagnosis | 192 | 0.096 |
+| Health-record diagnosis | 234 | 0.115 |
 
 These groups overlap, so their percentages must **not be summed or averaged**.
-They are separate sensitivity scenarios. The health-record definition is the
+They are separate sensitivity scenarios. Row-specific denominators may differ
+because of missing data, so the printed percentages should not be reverse
+engineered into a common denominator. The health-record definition is the
 closest of the three to PLACES, but it comes from one Canadian cohort and
 cannot serve as the primary national U.S. reference risk.
+
+The bibliographic record and Table 1 transcription are documented in
+[`perry_2019_verification.md`](perry_2019_verification.md). The correct
+author-date citation is **Hystad et al. (2019)**; “Perry” is the first author's
+given name.
 
 ### Local implementation check
 
@@ -111,9 +117,8 @@ population-weighted NDVI quartile gave **0.2058**, using an NDVI threshold of
 NDVI population coverage. This validates the computation and shows little local
 sensitivity, but it is not evidence for the final national p0.
 
-The current model grid crosses the three Liu OR values with the configured
-interim SF p0 and all three Perry p0 values. After the national p0 is locked,
-the same grid must be regenerated with that value:
+The current model grid crosses the three Liu OR values with the locked national
+p0 and all three Hystad et al. p0 sensitivity values:
 
 ```bash
 python src/urban_mental_health/run_sensitivity.py
@@ -145,27 +150,21 @@ Radius sensitivity remains a required U.S. robustness test.
 2. Convert OR to RR; never pass the OR directly to InVEST.
 3. Use the lowest population-weighted national-urban NDVI quartile for the
    final U.S. p0.
-4. Use overall population-weighted PLACES prevalence only as an explicitly
-   interim operational value.
-5. Keep Perry's 0.064, 0.096, and 0.115 as separate scenarios; do not average.
+4. Retain the former overall population-weighted PLACES prevalence only as a
+   superseded diagnostic.
+5. Keep Hystad's 0.064, 0.096, and 0.115 as separate scenarios; do not average.
 6. Treat one-effect-per-study re-pooling as robustness analysis.
 7. Read the effect size from `config.yaml` in both city and national runners.
 8. Use WorldPop for within-area population allocation but calibrate each adult
    raster to an authoritative Census/ACS adult total before calculating cases.
 
-## To-do before the U.S. analysis is final
+## Remaining to-do
 
-- [ ] Complete and QA all national county NDVI exports.
-- [ ] Build the national-urban NDVI mosaic and aligned adult-population and
-      PLACES tract inputs.
-- [ ] Calculate the primary low-NDVI-quartile p0 and save its threshold,
-      selected population, tract count, and coverage.
-- [ ] Recompute central and confidence-limit RRs in `config.yaml`.
-- [ ] Re-run the OR × p0 × cost sensitivity grid and summary report.
-- [ ] Run exposure-radius sensitivity (at minimum 250, 300, 500, and 1,000 m).
-- [ ] Report the one-effect-per-study robustness result beside, not instead of,
-      the published pooled estimate.
-- [ ] Add causal-language and outcome-definition caveats to the manuscript.
+- [x] Complete national multi-scenario runs.
+- [x] Complete national exposure-radius runs and final QA.
+- [ ] Archive exact input dataset versions and software environment.
+- [ ] Add the documented causal-language and outcome-definition caveats to the
+      submitted manuscript text.
 
 ## Sources
 
@@ -174,5 +173,7 @@ Radius sensitivity remains a required U.S. robustness test.
   https://doi.org/10.1016/j.envres.2023.116303
 - Zhang, J., & Yu, K. F. (1998). What's the relative risk? JAMA, 280, 1690–1691.
   https://doi.org/10.1001/jama.280.19.1690
-- Perry et al. (2019), as identified in the Liu et al. meta-analysis; verify the
-  final bibliographic record and Table 1 transcription before submission.
+- Hystad, P., Payette, Y., Noisel, N., & Boileau, C. (2019). *Green space
+  associations with mental health and cognitive function: Results from the
+  Quebec CARTaGENE cohort*. Environmental Epidemiology, 3(1), e040.
+  https://doi.org/10.1097/EE9.0000000000000040

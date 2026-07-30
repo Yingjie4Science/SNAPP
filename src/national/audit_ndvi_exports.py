@@ -22,7 +22,7 @@ DEFAULT_REPORT = BASE_DIR / "results" / "summaries" / "national_ndvi_audit.md"
 NAME_RE = re.compile(r"^(?P<geoid>\d{5})_ndvi\.tif$")
 
 
-def inspect_raster(item, full_read=False):
+def inspect_raster(item, full_read=False, expected_resolution=30.0):
     geoid, path, expected = item
     row = {
         "GEOID": geoid,
@@ -36,6 +36,7 @@ def inspect_raster(item, full_read=False):
         "width": "",
         "height": "",
         "sampled_valid_fraction": "",
+        "unmasked_nonfinite_count": "",
         "sampled_min": "",
         "sampled_max": "",
         "qa_status": "missing" if path is None else "pending",
@@ -67,7 +68,10 @@ def inspect_raster(item, full_read=False):
                 arr = ds.read(
                     1, out_shape=(out_h, out_w), masked=True,
                     resampling=Resampling.nearest)
-            valid = arr.compressed()
+            compressed = arr.compressed()
+            nonfinite_count = int((~np.isfinite(compressed)).sum())
+            valid = compressed[np.isfinite(compressed)]
+            row["unmasked_nonfinite_count"] = nonfinite_count
             row["sampled_valid_fraction"] = float(valid.size / arr.size)
             if valid.size:
                 row["sampled_min"] = float(np.nanmin(valid))
@@ -75,11 +79,18 @@ def inspect_raster(item, full_read=False):
         notes = []
         if row["crs"] != "EPSG:5070":
             notes.append(f"CRS is {row['crs'] or 'missing'}, expected EPSG:5070")
-        if not (25 <= float(row["pixel_size_x"]) <= 35 and
-                25 <= float(row["pixel_size_y"]) <= 35):
-            notes.append("pixel size is outside 25-35 m")
+        tolerance = max(0.01, expected_resolution * 0.001)
+        if not (
+                abs(float(row["pixel_size_x"]) - expected_resolution) <= tolerance and
+                abs(float(row["pixel_size_y"]) - expected_resolution) <= tolerance):
+            notes.append(
+                f"pixel size does not match expected {expected_resolution:g} m")
         if row["sampled_valid_fraction"] == 0:
             notes.append("no valid sampled pixels")
+        if row["unmasked_nonfinite_count"]:
+            notes.append(
+                f"{row['unmasked_nonfinite_count']} unmasked non-finite pixels"
+            )
         if row["sampled_min"] != "" and (
                 float(row["sampled_min"]) < -1.01 or float(row["sampled_max"]) > 1.01):
             notes.append("sampled NDVI is outside [-1, 1]")
@@ -108,6 +119,8 @@ def main():
     ap.add_argument("--output", type=Path, default=DEFAULT_OUT)
     ap.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     ap.add_argument("--workers", type=int, default=8)
+    ap.add_argument("--expected-resolution", type=float, default=30.0,
+                    help="Required x/y pixel size in metres (default 30).")
     ap.add_argument("--full-read", action="store_true",
                     help="Read every pixel instead of a <=256x256 sample.")
     cli = ap.parse_args()
@@ -135,7 +148,10 @@ def main():
     all_ids = sorted(expected | set(found))
     items = [(geoid, found.get(geoid), geoid in expected) for geoid in all_ids]
     with ThreadPoolExecutor(max_workers=max(1, cli.workers)) as pool:
-        rows = list(pool.map(lambda x: inspect_raster(x, cli.full_read), items))
+        rows = list(pool.map(
+            lambda x: inspect_raster(
+                x, cli.full_read, cli.expected_resolution),
+            items))
 
     fields = list(rows[0])
     cli.output.parent.mkdir(parents=True, exist_ok=True)
@@ -172,6 +188,7 @@ def main():
         f"- Missing expected GEOIDs: **{len(missing)}**",
         f"- Unexpected GEOIDs outside the AOI: **{len(unexpected)}**",
         f"- Expected rows not passing current QA: **{len(failures)}**",
+        f"- Required resolution for this audit: **{cli.expected_resolution:g} m**",
         f"- Expected-raster resolutions: **{resolution_text or 'none readable'}**",
         f"- Raster-statistics method: **{method}**",
         "",
@@ -191,11 +208,19 @@ def main():
         "",
         "## To-do",
         "",
-        "- Re-export every missing expected GEOID.",
-        "- Decide whether unexpected GEOIDs belong in the study universe; do not mix AOI vintages.",
-        "- Review every expected row whose `qa_status` is not `pass`.",
-        "- Run this audit with `--full-read` before locking the national dataset.",
     ]
+    if missing:
+        report.append("- Re-export every missing expected GEOID.")
+    if unexpected:
+        report.append(
+            "- Decide whether unexpected GEOIDs belong in the study universe; "
+            "do not mix AOI vintages.")
+    if failures:
+        report.append("- Review every expected row whose `qa_status` is not `pass`.")
+    if not cli.full_read:
+        report.append("- Run this audit with `--full-read` before locking the dataset.")
+    if not (missing or unexpected or failures) and cli.full_read:
+        report.append("- None for this raster gate; the complete harmonized set passes.")
     cli.report.write_text("\n".join(report) + "\n")
     print(f"Expected={len(expected)} present={len(expected & set(found))} "
           f"missing={len(missing)} unexpected={len(unexpected)} failures={len(failures)}")

@@ -91,12 +91,18 @@ def fetch_acs(state: str, county: str, year: int, api_key: str | None = None) ->
 
 
 def load_ses_file(path: Path) -> dict:
+    """Read either the compact GEOID/income/population schema or the cached
+    advanced-equity tract table (median_income/acs_population).
+    """
     out = {}
     with open(path) as fh:
         for r in csv.DictReader(fh):
             try:
-                out[str(r["GEOID"]).strip()] = (float(r["income"]), float(r["population"]))
-            except (KeyError, ValueError):
+                income = r.get("income", r.get("median_income"))
+                population = r.get("population", r.get("acs_population"))
+                out[str(r["GEOID"]).strip().zfill(11)] = (
+                    float(income), float(population))
+            except (KeyError, TypeError, ValueError):
                 continue
     return out
 
@@ -161,13 +167,13 @@ def concentration_index(y, w, rankvar):
 
 
 def load_svi_file(path: Path) -> dict:
-    """Read an SVI CSV with FIPS and RPL_THEMES columns."""
+    """Read an SVI CSV or the cached advanced-equity tract table."""
     out = {}
     with open(path) as fh:
         for row in csv.DictReader(fh):
             try:
-                value = float(row["RPL_THEMES"])
-                geoid = str(row["FIPS"]).zfill(11)
+                value = float(row.get("RPL_THEMES", row.get("svi")))
+                geoid = str(row.get("FIPS", row.get("GEOID", ""))).zfill(11)
             except (KeyError, TypeError, ValueError):
                 continue
             if 0 <= value <= 1:
