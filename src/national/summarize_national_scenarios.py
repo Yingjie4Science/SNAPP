@@ -16,6 +16,8 @@ SCENARIOS = (
      "national_summary_greenable_005.csv"),
     ("best_potential_p95", "Within-county p95 potential",
      "national_summary_best_potential_p95.csv"),
+    ("existing_greenness", "Existing greenness (accounting)",
+     "national_summary_existing_greenness.csv"),
 )
 
 
@@ -46,7 +48,11 @@ def main() -> None:
     import matplotlib.pyplot as plt
 
     fig, ax = plt.subplots(figsize=(7.2, 4.3))
-    ax.barh(table["label"], table["preventable_cases"], color="#2c7fb8")
+    colors = [
+        "#31a354" if scenario == "existing_greenness" else "#2c7fb8"
+        for scenario in table["scenario"]
+    ]
+    ax.barh(table["label"], table["preventable_cases"], color=colors)
     ax.invert_yaxis()
     ax.set(
         xlabel="Preventable depression cases / year",
@@ -66,6 +72,10 @@ def main() -> None:
         "proportional_10pct": "Increase every valid pixel by 10%, capped at 0.90.",
         "greenable_005": "Add 0.05 only where baseline NDVI is below 0.60.",
         "best_potential_p95": "Raise lower pixels to each county's own p95 NDVI.",
+        "existing_greenness": (
+            "Compare observed NDVI with an NDVI=0 accounting reference; not an "
+            "investment scenario."
+        ),
     }
     lines = [
         "# National scenario comparison",
@@ -76,8 +86,9 @@ def main() -> None:
         "",
         f"![National scenario comparison](../figures/{figure.name})",
         "<sub>Figure. Annual modeled preventable depression cases under four "
-        "national greening counterfactuals. The p95 scenario is an aspirational "
-        "upper bound, not a feasible investment program.</sub>",
+        "national greening counterfactuals plus the existing-greenness accounting "
+        "reference. The p95 scenario is an aspirational upper bound; existing "
+        "greenness is not an investment program.</sub>",
         "",
         "| Scenario | Spatial rule | Cases/year | Cases/1,000 adults | "
         "Avoided societal cost/year | Relative to uniform |",
@@ -96,7 +107,8 @@ def main() -> None:
         "<sub>Table legend. Values are annual central estimates. All rows use "
         "218,643,229 ACS adults and exactly 1,167 counties. These scenarios differ "
         "in greening magnitude and feasibility, so they should not be ranked as "
-        "equal-budget policy alternatives.</sub>",
+        "equal-budget policy alternatives. Existing greenness is a stock-value "
+        "accounting counterfactual and must be interpreted separately.</sub>",
     ]
     (SUMMARIES / "national_scenario_comparison.md").write_text(
         "\n".join(lines) + "\n"

@@ -11,6 +11,8 @@ from __future__ import annotations
 import argparse
 import concurrent.futures
 import csv
+import math
+import os
 import subprocess
 import sys
 from datetime import datetime
@@ -30,7 +32,19 @@ def scenario_root(scenario: str, radius: float) -> Path:
 
 def output_complete(root: Path, geoid: str) -> bool:
     output = root / geoid / "output"
-    return output.exists() and any(output.glob(f"*sum*{geoid}*.csv"))
+    candidates = sorted(output.glob(f"*sum*{geoid}*.csv"))
+    for path in candidates:
+        try:
+            with path.open(newline="") as source:
+                for row in csv.DictReader(source):
+                    if str(row.get("FID", "")).upper() != "ALL":
+                        continue
+                    cases = float(row["total_cases"])
+                    cost = float(row["total_cost"])
+                    return math.isfinite(cases) and math.isfinite(cost)
+        except (KeyError, OSError, TypeError, ValueError):
+            continue
+    return False
 
 
 def run_one(args: tuple) -> dict:
@@ -86,15 +100,21 @@ def run_one(args: tuple) -> dict:
     completed = subprocess.run(
         command,
         cwd=BASE_DIR,
+        env={
+            **os.environ,
+            "PROJ_NETWORK": "OFF",
+            "MPLCONFIGDIR": str(root / "_matplotlib"),
+        },
         stdout=subprocess.PIPE,
         stderr=subprocess.STDOUT,
         text=True,
     )
     (log_dir / f"{geoid}.log").write_text(completed.stdout)
+    complete = completed.returncode == 0 and output_complete(root, geoid)
     return {
         "GEOID": geoid,
-        "status": "success" if completed.returncode == 0 else "failed",
-        "returncode": completed.returncode,
+        "status": "success" if complete else "failed",
+        "returncode": completed.returncode if complete else 1,
     }
 
 

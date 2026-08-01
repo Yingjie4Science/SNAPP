@@ -144,13 +144,20 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--manifest", type=Path, default=DEFAULT_MANIFEST)
     parser.add_argument(
+        "--source-root",
+        type=Path,
+        default=ROOT,
+        help="Repository-shaped data root to hash (default: this checkout).",
+    )
+    parser.add_argument(
         "--verify",
         action="store_true",
         help="Recompute local inputs and fail if they differ from the manifest.",
     )
     args = parser.parse_args()
     manifest = args.manifest.resolve()
-    rows = current_rows(ROOT)
+    source_root = args.source_root.resolve()
+    rows = current_rows(source_root)
 
     if args.verify:
         if not manifest.exists():
@@ -171,11 +178,16 @@ def main() -> None:
                 f"added={added[:10]}, missing={missing[:10]}, "
                 f"changed={changed[:10]}"
             )
-        print(f"Verified {len(rows)} input files against {manifest}")
+        print(
+            f"Verified {len(rows)} input files from {source_root} "
+            f"against {manifest}"
+        )
         return
 
     write_manifest(manifest, rows)
-    print(f"Wrote {len(rows)} input checksums to {manifest}")
+    print(
+        f"Wrote {len(rows)} input checksums from {source_root} to {manifest}"
+    )
 
 
 if __name__ == "__main__":

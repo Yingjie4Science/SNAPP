@@ -155,6 +155,8 @@ In VS Code:
   python src/reproducibility/build_input_manifest.py
   python src/reproducibility/build_input_manifest.py --verify
   ```
+  Use `--source-root /path/to/final-analysis-workspace` when the large final
+  inputs are stored in a separate repository-shaped archive.
   The checksum manifest covers configuration tables, the active national NDVI
   rasters, the locked county AOI, and the SF raw/model-ready inputs. It excludes
   model workspaces and results.

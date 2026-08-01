@@ -94,15 +94,18 @@ All SF and national scenarios were rerun; the corrected national tables contain
 - National county SVI masks within-county inequity.
 - A flat cost per case does not reflect local wage variation in productivity
   losses.
-- SF NDVI does not fully cover the northern/eastern search-radius buffer;
-  99.98% of modeled adult population is covered, but an edge-effect limitation
-  remains.
+- SF NDVI does not fully cover the northern/eastern search-radius buffer. The
+  quantified audit finds 99.9809% center coverage and 99.9084% full 300 m extent
+  coverage; retain this as a small residual edge-effect limitation.
 
 ## Remaining to-do
 
-- [ ] Decide whether to finish the optional national existing-greenness
-      accounting counterfactual; SF already includes this comparison.
-- [ ] Decide whether regional wage-adjusted societal costs belong in the main
-      manuscript or supplement.
+- [x] Finish the national existing-greenness accounting counterfactual so the
+      national and SF reports include the same contextual comparison. All 1,167
+      counties pass final QA; this remains an accounting reference, not an
+      intervention scenario.
+- [x] Keep the national pooled societal cost in the main analysis and place
+      regional wage-adjusted valuation in the supplement as a distributional
+      sensitivity.
 - [ ] Maintain causal-language and outcome-definition caveats during manuscript
       editing.

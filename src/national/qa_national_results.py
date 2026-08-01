@@ -46,6 +46,7 @@ def main() -> None:
         "proportional_10pct",
         "greenable_005",
         "best_potential_p95",
+        "existing_greenness",
     ]
     radii = cli.radius or [250, 300, 500, 1000]
 

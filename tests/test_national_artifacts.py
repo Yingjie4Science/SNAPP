@@ -14,6 +14,7 @@ EXPECTED_RADIUS_SCENARIOS = {
     "national_summary.csv",
     "national_summary_best_potential_p95.csv",
     "national_summary_greenable_005.csv",
+    "national_summary_existing_greenness.csv",
     "national_summary_proportional_10pct.csv",
     "national_summary_uniform_005_radius_250m.csv",
     "national_summary_uniform_005_radius_500m.csv",
@@ -81,7 +82,7 @@ def test_national_summaries_reconcile_population_and_numeric_outputs():
 
 def test_committed_final_qa_has_no_failures():
     rows = read_csv(SUMMARIES / "national_final_qa.csv")
-    assert len(rows) == 7
+    assert len(rows) == 8
     assert all(row["status"] == "pass" for row in rows)
     assert all(int(row["counties"]) == EXPECTED_COUNTIES for row in rows)
     assert all(int(row["missing_geoids"]) == 0 for row in rows)
@@ -89,3 +90,14 @@ def test_committed_final_qa_has_no_failures():
     assert all(int(row["duplicate_geoids"]) == 0 for row in rows)
     assert all(int(row["bad_numeric_rows"]) == 0 for row in rows)
     assert all(float(row["max_adult_population_error"]) <= 1 for row in rows)
+
+
+def test_sf_ndvi_buffer_warning_is_quantified_and_bounded():
+    rows = read_csv(SUMMARIES / "sf_ndvi_buffer_audit.csv")
+    assert len(rows) == 1
+    row = rows[0]
+    assert math.isclose(float(row["total_adult_population"]), 716727, abs_tol=1)
+    center_coverage = float(row["center_coverage_fraction"])
+    full_buffer_coverage = float(row["full_buffer_coverage_fraction"])
+    assert 0.999 < full_buffer_coverage < center_coverage < 1
+    assert float(row["adult_population_buffer_edge_exposed"]) < 700
