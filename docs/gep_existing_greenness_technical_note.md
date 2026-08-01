@@ -137,15 +137,15 @@ For every populated model pixel $j$, InVEST calculates mean NDVI within a
 neighborhood-average NDVI in the reference and observed states, respectively.
 The exposure contrast is
 
-\[
+$$
 \Delta G_j = G_{1j} - G_{0j}.
-\]
+$$
 
 For `existing_greenness`, the model inputs are:
 
-\[
-G_{0j}=0, \qquad G_{1j}=G_{\mathrm{observed},j}.
-\]
+$$
+G_{0j} = 0, \qquad G_{1j} = G_{\mathrm{observed},j}.
+$$
 
 Thus, the alternate state is current 2024 greenness and the reference is a
 synthetic zero-NDVI surface. This direction is important: the result measures
@@ -161,9 +161,9 @@ It is broader than current major depressive disorder and should be named
 
 Baseline prevalent cases in pixel $j$ are
 
-\[
-B_j=P_jp_j,
-\]
+$$
+B_j = P_j p_j,
+$$
 
 where $P_j$ is calibrated adult population. The completed run supplied
 **59,162 valid PLACES tract features**. The separate reference-risk calculation
@@ -180,30 +180,33 @@ is replaced.
 
 Liu et al. (2023) report a pooled odds ratio
 
-\[
-OR_{0.1}=0.931 \quad (95\%\ CI: 0.887\text{–}0.977)
-\]
+$$
+\mathrm{OR}_{0.1} = 0.931
+\quad (95\%\ \mathrm{CI}: 0.887 \text{ to } 0.977)
+$$
 
 per +0.1 NDVI for depression. Because InVEST requires a risk ratio and the
 outcome is common, the odds ratio is converted using the Zhang–Yu approximation:
 
-\[
-RR_{0.1}=\frac{OR_{0.1}}{(1-p_0)+p_0OR_{0.1}}.
-\]
+$$
+\mathrm{RR}_{0.1}
+= \frac{\mathrm{OR}_{0.1}}
+       {(1-p_0)+p_0\mathrm{OR}_{0.1}}.
+$$
 
 The locked reference risk is the adult-population-weighted PLACES prevalence
 among tracts in the lowest population-weighted national NDVI quartile:
 
-\[
-p_0=0.191045.
-\]
+$$
+p_0 = 0.191045.
+$$
 
 The quartile threshold is mean NDVI = 0.416390 and contains 14,993 reference
 tracts. The resulting central risk ratio is
 
-\[
-RR_{0.1}=0.943436
-\]
+$$
+\mathrm{RR}_{0.1} = 0.943436
+$$
 
 with converted OR confidence limits 0.906571–0.981312. The model does not pass
 the published odds ratio directly as if it were a risk ratio.
@@ -213,42 +216,49 @@ the published odds ratio directly as if it were a risk ratio.
 For pixel $j$, InVEST scales the per-0.1-NDVI risk ratio to the observed
 exposure contrast:
 
-\[
-RR_j=\exp\left[\ln(RR_{0.1})\,10\Delta G_j\right]
-    =RR_{0.1}^{10\Delta G_j}.
-\]
+$$
+\begin{aligned}
+\mathrm{RR}_j
+&= \exp\!\left[\ln(\mathrm{RR}_{0.1})\,10\Delta G_j\right] \\
+&= \mathrm{RR}_{0.1}^{\,10\Delta G_j}.
+\end{aligned}
+$$
 
 The modeled preventable fraction and cases are
 
-\[
-PF_j=1-RR_j,
-\]
+$$
+\mathrm{PF}_j = 1-\mathrm{RR}_j,
+$$
 
-\[
-q_j=PF_jB_j
-    =\left(1-RR_{0.1}^{10\Delta G_j}\right)P_jp_j.
-\]
+$$
+\begin{aligned}
+q_j
+&= \mathrm{PF}_j B_j \\
+&= \left(1-\mathrm{RR}_{0.1}^{\,10\Delta G_j}\right)P_j p_j.
+\end{aligned}
+$$
 
 Here $q_j$ is the model quantity associated with existing greenness relative
 to the zero-NDVI reference. County $k$ totals are
 
-\[
-Q_k=\sum_{j\in k}q_j,
-\]
+$$
+Q_k = \sum_{j\in k} q_j,
+$$
 
 and the population-standardized result is
 
-\[
-R_k=1000\frac{Q_k}{\sum_{j\in k}P_j}.
-\]
+$$
+R_k = 1{,}000\,
+\frac{Q_k}{\displaystyle\sum_{j\in k}P_j}.
+$$
 
 ### 4.6 Monetary valuation for GEP
 
 The central annual societal cost per prevalent case is
 
-\[
-c=\$21{,}280\quad\text{(2024 USD per case-year)}.
-\]
+$$
+c = 21{,}280\ \text{(2024 USD per case-year)}.
+$$
 
 It is the rounded pooled mean of two recent, methodologically comparable U.S.
 cost-of-illness estimates (Greenberg et al., 2021, 2023), inflation-adjusted to
@@ -256,13 +266,13 @@ cost-of-illness estimates (Greenberg et al., 2021, 2023), inflation-adjusted to
 
 Pixel and county GEP contributions are
 
-\[
-v_j=cq_j,
-\]
+$$
+v_j = c q_j,
+$$
 
-\[
-V_k=\sum_{j\in k}v_j=cQ_k.
-\]
+$$
+V_k = \sum_{j\in k} v_j = c Q_k.
+$$
 
 Because the same value per case is used in every county, ranking counties by
 monetary value produces the same order as ranking them by cases. The project
