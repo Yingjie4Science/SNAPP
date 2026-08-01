@@ -1,6 +1,6 @@
 # SNAPP — TODO / roadmap
 
-_Updated 2026-07-30. Detailed U.S. decisions are in
+_Updated 2026-08-01. Detailed U.S. decisions are in
 `docs/us_case_status.md`._
 
 ## Completed
@@ -27,20 +27,39 @@ _Updated 2026-07-30. Detailed U.S. decisions are in
 
 ## Remaining before manuscript freeze
 
-- [ ] Decide whether to finish the national existing-greenness accounting run;
-      SF already includes this comparison.
-- [ ] Export an environment lock and raw-input checksum manifest.
-- [ ] Add CI tests for national completeness, population reconciliation, and
-      finite outputs.
-- [ ] Decide whether regional wage-adjusted societal cost belongs in the main
-      analysis or supplement.
-- [ ] Resolve or explicitly retain the SF NDVI buffer edge warning.
-- [ ] Apply the documented endpoint and causal-language caveats throughout the
-      final manuscript.
+- [x] **HIGH — Finish the national existing-greenness accounting run.** This
+      makes the national and SF reports structurally comparable and distinguishes
+      the accounting value of current greenness from feasible new investment.
+      All 1,167 counties pass completeness, population-reconciliation, and
+      finite-output QA; the accounting estimate is 12,733,902 cases/year.
+- [x] **HIGH — Export an exact environment lock and raw-input checksum
+      manifest.** These are necessary to prove which software and large,
+      gitignored inputs produced the final numbers and to detect silent data or
+      dependency drift during review or reproduction.
+- [x] **HIGH — Add CI tests for national completeness, population
+      reconciliation, and finite outputs.** These are necessary because a
+      partial or numerically corrupted 1,167-county rerun can otherwise look
+      superficially complete when only aggregate files are reviewed.
+- [x] **MEDIUM — Place regional wage-adjusted societal cost in the supplement.**
+      The decision is necessary before freeze because wage adjustment affects
+      geographic monetary comparisons, but it does not change preventable cases
+      and adds assumptions beyond the national cost evidence used in the main
+      analysis.
+- [x] **HIGH — Explicitly retain and quantify the SF NDVI buffer edge warning.**
+      The model needs NDVI around each populated cell; the current raster misses
+      part of the northern/eastern 300 m buffer. Only 0.0916% of adults lack full
+      extent coverage, so this is retained as a small limitation rather than a
+      blocker (`results/summaries/sf_ndvi_buffer_audit.md`).
+- [ ] **HIGH — Apply the documented endpoint and causal-language caveats
+      throughout the final manuscript.** **On hold by request.**
 
 ## Later extensions
 
 - [ ] National tract-level equity/SVI (current national result is county-level).
+      **On hold.**
 - [ ] Regional cost sensitivity using local wages for the productivity share.
+      **On hold; supplement placement is decided, computation remains optional.**
 - [ ] Alaska/Hawaii/territory-specific projections and source coverage.
+      **On hold.**
 - [ ] A one-command input manifest/rebuild workflow for a fresh clone.
+      **On hold.**

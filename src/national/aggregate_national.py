@@ -123,7 +123,8 @@ def write_csv(rows):
     with open(OUT_CSV, "w", newline="") as fh:
         w = csv.DictWriter(fh, fieldnames=["GEOID", "name", "tracts",
                                            "preventable_cases", "avoided_cost",
-                                           "adult_population", "preventable_per_1000_adults"])
+                                           "adult_population", "preventable_per_1000_adults"],
+                           lineterminator="\n")
         w.writeheader()
         for r in rows:
             w.writerow(r)
@@ -207,6 +208,11 @@ def main():
                     help="Also roll up by metro area (needs geopandas + counties.gpkg).")
     ap.add_argument("--map", action="store_true",
                     help="Also draw a per-county choropleth (needs geopandas + matplotlib).")
+    ap.add_argument(
+        "--runs-dir",
+        type=Path,
+        help="Optional completed scenario directory, useful for archived caches.",
+    )
     cli = ap.parse_args()
     run_name = (
         "national" if cli.scenario == "uniform_005"
@@ -214,7 +220,7 @@ def main():
     )
     if cli.search_radius != 300:
         run_name += f"_radius_{int(cli.search_radius)}m"
-    RUNS = RUNS_ROOT / run_name
+    RUNS = cli.runs_dir.resolve() if cli.runs_dir else RUNS_ROOT / run_name
     suffix = (
         "" if cli.scenario == "uniform_005" and cli.search_radius == 300
         else f"_{cli.scenario}"
@@ -234,11 +240,15 @@ def main():
     tot_cost = sum(r["avoided_cost"] or 0 for r in rows)
     rate = float(COST_FILE.read_text().strip()) if COST_FILE.exists() else None
     implied = (tot_cost / tot_cases) if tot_cases else None
+    try:
+        runs_label = RUNS.relative_to(BASE_DIR)
+    except ValueError:
+        runs_label = RUNS
 
     lines = [
         f"# National results summary — {cli.scenario}", "",
         f"_Generated {date.today().isoformat()} from {n} county runs "
-        f"in `{RUNS.relative_to(BASE_DIR)}`._", "",
+        f"in `{runs_label}`._", "",
         "## Headline", "",
         f"- Counties with results: **{n}**",
         f"- Exposure radius: **{cli.search_radius:g} m**",

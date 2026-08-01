@@ -42,6 +42,10 @@ _Authoritative status updated 2026-07-30._
 - [x] Added resumable per-county processing, cached-input scenario runs, and
       fail-closed national final QA.
 - [x] Passed final QA for all four national scenarios and all four radii.
+- [x] Archived exact platform package versions and SHA-256 checksums for the
+      locked AOI and analysis inputs.
+- [x] Added automated CI checks for manifest completeness, ACS reconciliation,
+      finite outputs, and committed national QA.
 
 ## Key locked values
 
@@ -90,19 +94,18 @@ All SF and national scenarios were rerun; the corrected national tables contain
 - National county SVI masks within-county inequity.
 - A flat cost per case does not reflect local wage variation in productivity
   losses.
-- SF NDVI does not fully cover the northern/eastern search-radius buffer;
-  99.98% of modeled adult population is covered, but an edge-effect limitation
-  remains.
+- SF NDVI does not fully cover the northern/eastern search-radius buffer. The
+  quantified audit finds 99.9809% center coverage and 99.9084% full 300 m extent
+  coverage; retain this as a small residual edge-effect limitation.
 
 ## Remaining to-do
 
-- [ ] Decide whether to finish the optional national existing-greenness
-      accounting counterfactual; SF already includes this comparison.
-- [ ] Export and commit a reproducible environment lock plus raw-input
-      checksums.
-- [ ] Add automated CI checks for manifest completeness, ACS reconciliation,
-      and finite national outputs.
-- [ ] Decide whether regional wage-adjusted societal costs belong in the main
-      manuscript or supplement.
+- [x] Finish the national existing-greenness accounting counterfactual so the
+      national and SF reports include the same contextual comparison. All 1,167
+      counties pass final QA; this remains an accounting reference, not an
+      intervention scenario.
+- [x] Keep the national pooled societal cost in the main analysis and place
+      regional wage-adjusted valuation in the supplement as a distributional
+      sensitivity.
 - [ ] Maintain causal-language and outcome-definition caveats during manuscript
       editing.

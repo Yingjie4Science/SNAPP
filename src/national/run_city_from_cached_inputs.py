@@ -9,10 +9,14 @@ successful primary `uniform_005` run has built each county's cached inputs.
 from __future__ import annotations
 
 import argparse
+import os
 import sys
 from pathlib import Path
 
+os.environ.setdefault("PROJ_NETWORK", "OFF")
+
 import numpy as np
+import rasterio
 import rioxarray  # noqa: F401
 import xarray as xr
 import yaml
@@ -80,15 +84,26 @@ def main() -> None:
     inputs = workspace / "inputs"
     inputs.mkdir(parents=True, exist_ok=True)
     base_path = cli.ndvi_dir / f"{cli.geoid}_ndvi.tif"
-    base = rioxarray.open_rasterio(base_path, masked=True).squeeze()
     if cli.scenario == "existing_greenness":
-        zero = (base * 0).rio.write_crs(base.rio.crs)
-        zero.rio.write_nodata(float("nan"), inplace=True)
-        zero.attrs.pop("_FillValue", None)
+        # Historical rasters may declare -9999 nodata while physically storing
+        # NaN cells. Write both accounting rasters with finite declared nodata
+        # so convolution cannot propagate unmasked non-finite values.
+        with rasterio.open(base_path) as source:
+            current = source.read(1)
+            profile = source.profile.copy()
+            valid = np.isfinite(current)
+            if source.nodata is not None and np.isfinite(source.nodata):
+                valid &= current != source.nodata
+        nodata = -9999.0
+        profile.update(nodata=nodata, compress="LZW")
         model_base = inputs / "ndvi_zero.tif"
-        zero.rio.to_raster(model_base, driver="GTiff", compress="LZW")
-        model_alt = base_path
+        model_alt = inputs / "ndvi_current_clean.tif"
+        with rasterio.open(model_base, "w", **profile) as target:
+            target.write(np.where(valid, 0.0, nodata).astype(current.dtype), 1)
+        with rasterio.open(model_alt, "w", **profile) as target:
+            target.write(np.where(valid, current, nodata).astype(current.dtype), 1)
     else:
+        base = rioxarray.open_rasterio(base_path, masked=True).squeeze()
         if cli.scenario == "uniform_005":
             alt = base + run_city.SCENARIO_DELTA
         elif cli.scenario == "proportional_10pct":

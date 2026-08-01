@@ -123,9 +123,19 @@ on restart unless `--force` is supplied.
 - Alaska, Hawaii, and territories require projection and source-coverage
   decisions if added; the current AOI and EPSG:5070 workflow are CONUS-focused.
 
+## Reproducibility gates
+
+- Exact conda packages for the analysis platform are archived under
+  `environment-locks/` and can be checked with
+  `python src/reproducibility/export_environment_lock.py --check`.
+- SHA-256 hashes for the active local inputs are archived in
+  `reproducibility/input_checksums.csv` and can be recomputed with
+  `python src/reproducibility/build_input_manifest.py --verify`.
+- GitHub CI validates the committed NDVI manifest, all seven national summary
+  tables, exact ACS adult-population reconciliation, finite/non-negative
+  outputs, and the fail-closed final QA table.
+
 ## Remaining to-do
 
-- Archive exact raw-data checksums and the final environment lock file.
-- Add automated CI tests for the national manifest and summary invariants.
 - Consider regional wage-adjusted costs and tract-level national SVI as
   manuscript extensions, not blockers for the present U.S. analysis.

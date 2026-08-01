@@ -203,3 +203,14 @@ python src/inputs/regional_cost.py --wage-index config/wage_index.csv   # also r
 
 To go further, supply `config/wage_index.csv` (`region,wage`) from BLS QCEW average
 weekly wages by region; the script will then regionalize the wage-driven 65% too.
+
+### Manuscript-freeze decision
+
+Keep the national pooled **$21,280 per case** valuation in the main analysis and
+place any regional wage-adjusted valuation in the supplement. This decision is
+a **medium priority**: the placement must be explicit before freeze, but another
+cost rerun is not required for the primary health result. Wage adjustment changes
+only the monetary valuation, relies on additional regional wage assumptions, and
+does not alter preventable cases. The main text should retain the national
+$17,000–$23,000 cost sensitivity; a regional analysis is best framed as a
+distributional sensitivity rather than a new headline estimate.

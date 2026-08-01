@@ -57,8 +57,11 @@ USAGE
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
+
+os.environ.setdefault("PROJ_NETWORK", "OFF")
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 LOGGER = logging.getLogger("urban_mental_health_runner")

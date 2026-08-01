@@ -142,10 +142,24 @@ In VS Code:
   read it; edit there rather than in individual scripts.
 - **Tests:** `pytest` (from the repo root) runs smoke tests for the cost math,
   config integrity, and scenario capping.
-- **Lock the environment** for exact reproducibility, and commit the lock:
+- **Lock the environment** for exact, platform-specific reproducibility:
   ```bash
-  conda env export --from-history > environment.lock.yml
+  python src/reproducibility/export_environment_lock.py
+  python src/reproducibility/export_environment_lock.py --check
+  # Recreate this Mac/Apple-Silicon environment exactly:
+  conda create --name snapp-locked \
+    --file environment-locks/osx-arm64.conda-lock.txt
   ```
+- **Lock the local analysis inputs** after a completed run:
+  ```bash
+  python src/reproducibility/build_input_manifest.py
+  python src/reproducibility/build_input_manifest.py --verify
+  ```
+  Use `--source-root /path/to/final-analysis-workspace` when the large final
+  inputs are stored in a separate repository-shaped archive.
+  The checksum manifest covers configuration tables, the active national NDVI
+  rasters, the locked county AOI, and the SF raw/model-ready inputs. It excludes
+  model workspaces and results.
 
 ## Datasets
 

@@ -37,8 +37,11 @@ USAGE
 
 import argparse
 import logging
+import os
 import sys
 from pathlib import Path
+
+os.environ.setdefault("PROJ_NETWORK", "OFF")
 
 try:
     import geopandas as gpd

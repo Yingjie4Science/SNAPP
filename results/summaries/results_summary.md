@@ -161,10 +161,13 @@ _Sources: Liu et al. (2023); Vidal Yáñez et al. (2023); Wu et al. (2025) — s
 
 ## Remaining work
 
-- Archive raw-input checksums and an exact software environment lock.
-- Decide whether the optional national existing-greenness accounting counterfactual is needed; the SF report already includes it.
-- Decide whether regional wage-adjusted societal costs belong in the main analysis or supplement.
-- Treat the eastern/northern SF NDVI buffer warning as a residual edge-effect limitation unless a wider source composite can be exported.
+- Apply the documented endpoint and causal-language caveats consistently during final manuscript editing (currently on hold).
+- Keep regional wage-adjusted societal costs in the supplement if that optional sensitivity is computed.
+- Retain the quantified eastern/northern SF NDVI buffer warning as a residual edge-effect limitation; 99.9084% of adults have full 300 m extent coverage.
+
+The exact software lock and raw-input checksum manifest are archived, and the
+national existing-greenness accounting comparison now passes final QA for all
+1,167 counties.
 
 The maintained checklist and decision log are in `docs/us_case_status.md`; the export evidence is in `results/summaries/national_ndvi_audit.md`.
 
@@ -205,4 +208,3 @@ Wu, J., Di, W., Ruan, J., Li, S., Ying, J., Zhou, J., Rudan, I., & Song, P. (202
 Wu, J., Ruan, J., Di, W., Ying, J., Zhou, J., Luo, Z., Rudan, I., & Song, P. (2026). The global burden of hypertension preventable by urban greenness. *Nature Health.* https://doi.org/10.1038/s44360-026-00090-5
 
 Zhang, J., & Yu, K. F. (1998). What's the relative risk? A method of correcting the odds ratio in cohort studies of common outcomes. *JAMA, 280*(19), 1690–1691. https://doi.org/10.1001/jama.280.19.1690
-
