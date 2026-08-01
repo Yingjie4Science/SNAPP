@@ -178,7 +178,7 @@ Assumptions to revisit for a real analysis: the greening scenario (placeholder
 +0.05 NDVI), the effect size (an odds ratio used as a risk ratio), and
 `health_cost_rate` — now the **societal** ~$21,280/case (pooled; range ~$17k–$23k;
 US-national, comorbidity attribution debatable). Use `--basis direct` for a
-conservative healthcare-only figure. Details: `docs/societal_cost_of_depression.md`.
+conservative healthcare-only figure. Details: [`docs/societal_cost_of_depression.md`](docs/societal_cost_of_depression.md).
 
 Install (heavy — depends on GDAL). Per the [InVEST install
 docs](https://invest.readthedocs.io/en/latest/installing.html), conda-forge is
