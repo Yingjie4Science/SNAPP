@@ -66,6 +66,9 @@ def test_national_summaries_reconcile_population_and_numeric_outputs():
         observed = {row["GEOID"].zfill(5) for row in rows}
         assert observed == set(targets)
         assert len(observed) == len(rows)
+        assert all(int(row["county_features"]) == 1 for row in rows)
+        assert all(int(row["prevalence_tracts"]) > 0 for row in rows)
+        assert sum(int(row["prevalence_tracts"]) for row in rows) == 59162
         for row in rows:
             geoid = row["GEOID"].zfill(5)
             cases = float(row["preventable_cases"])

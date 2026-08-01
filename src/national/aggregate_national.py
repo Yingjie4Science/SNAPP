@@ -9,7 +9,8 @@ FID == "ALL" holding the county totals (total_cases, total_cost). This script
 reads every county's ALL row, joins county names from config/regions.csv, and
 writes:
 
-  results/summaries/national_summary.csv    per-county: GEOID, name, tracts,
+  results/summaries/national_summary.csv    per-county: GEOID, name,
+                                             county_features, prevalence_tracts,
                                              preventable_cases, avoided_cost
   results/summaries/national_summary.md      headline national totals + top
                                              counties, and (if geopandas is
@@ -29,6 +30,7 @@ import csv
 import glob
 import logging
 import os
+import sqlite3
 from datetime import date
 from pathlib import Path
 
@@ -43,6 +45,7 @@ COUNTIES_GPKG = BASE_DIR / "data" / "national" / "counties_gee_upload" / "counti
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_DIR = BASE_DIR / "results" / "summaries"
 RUNS = RUNS_ROOT / "national"
+TRACT_RUNS = RUNS_ROOT / "national"
 OUT_CSV = OUT_DIR / "national_summary.csv"
 OUT_MD = OUT_DIR / "national_summary.md"
 FIG = BASE_DIR / "results" / "figures" / "national_preventable_cases_map.png"
@@ -62,21 +65,37 @@ def read_county_names() -> dict:
 
 
 def read_county_total(geoid: str):
-    """Return (tracts, total_cases, total_cost) for one county, or None."""
+    """Return (county features, total cases, total cost), or None."""
     out = RUNS / geoid / "output"
     cands = sorted(glob.glob(str(out / f"*sum*{geoid}*.csv"))) \
         or sorted(glob.glob(str(out / "*sum*.csv")))
     if not cands:
         return None
-    tracts, total_cases, total_cost = 0, None, None
+    county_features, total_cases, total_cost = 0, None, None
     with open(cands[0]) as fh:
         for r in csv.DictReader(fh):
             if str(r.get("FID", "")).upper() == "ALL":
                 total_cases = float(r["total_cases"]) if r.get("total_cases") else None
                 total_cost = float(r["total_cost"]) if r.get("total_cost") else None
             elif r.get("sum_cases") not in (None, ""):
-                tracts += 1
-    return tracts, total_cases, total_cost
+                county_features += 1
+    return county_features, total_cases, total_cost
+
+
+def count_prevalence_tracts(geoid: str) -> int:
+    """Count valid PLACES tract features supplied to the county model run."""
+    path = TRACT_RUNS / geoid / "inputs" / "baseline_prevalence.gpkg"
+    if not path.exists():
+        raise FileNotFoundError(f"Missing tract input for {geoid}: {path}")
+    with sqlite3.connect(path) as database:
+        layer = database.execute(
+            "SELECT table_name FROM gpkg_contents "
+            "WHERE data_type = 'features' LIMIT 1"
+        ).fetchone()
+        if layer is None:
+            raise ValueError(f"No feature layer in tract input for {geoid}: {path}")
+        table = '"' + layer[0].replace('"', '""') + '"'
+        return int(database.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
 
 
 def collect() -> list:
@@ -94,7 +113,8 @@ def collect() -> list:
         if rec is None:
             LOGGER.warning("%s: no summary CSV yet — skipping.", geoid)
             continue
-        tracts, cases, cost = rec
+        county_features, cases, cost = rec
+        prevalence_tracts = count_prevalence_tracts(geoid)
         # Adult population (from run_city) -> age-structure-independent rate per 1,000.
         adult_pop, rate = None, None
         pf = RUNS / geoid / "adult_pop.txt"
@@ -108,7 +128,8 @@ def collect() -> list:
         rows.append({
             "GEOID": geoid,
             "name": names.get(geoid, ""),
-            "tracts": tracts,
+            "county_features": county_features,
+            "prevalence_tracts": prevalence_tracts,
             "preventable_cases": cases,
             "avoided_cost": cost,
             "adult_population": round(adult_pop) if adult_pop else "",
@@ -121,7 +142,8 @@ def collect() -> list:
 def write_csv(rows):
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     with open(OUT_CSV, "w", newline="") as fh:
-        w = csv.DictWriter(fh, fieldnames=["GEOID", "name", "tracts",
+        w = csv.DictWriter(fh, fieldnames=["GEOID", "name", "county_features",
+                                           "prevalence_tracts",
                                            "preventable_cases", "avoided_cost",
                                            "adult_population", "preventable_per_1000_adults"],
                            lineterminator="\n")
@@ -190,7 +212,7 @@ def draw_map(rows):
 
 
 def main():
-    global RUNS, OUT_CSV, OUT_MD, FIG
+    global RUNS, TRACT_RUNS, OUT_CSV, OUT_MD, FIG
     ap = argparse.ArgumentParser(description="Aggregate national per-county runs.")
     ap.add_argument(
         "--scenario",
@@ -213,6 +235,12 @@ def main():
         type=Path,
         help="Optional completed scenario directory, useful for archived caches.",
     )
+    ap.add_argument(
+        "--tract-runs-dir",
+        type=Path,
+        help="Optional primary national run directory containing tract inputs. "
+        "Defaults to the 'national' sibling of --runs-dir.",
+    )
     cli = ap.parse_args()
     run_name = (
         "national" if cli.scenario == "uniform_005"
@@ -221,6 +249,11 @@ def main():
     if cli.search_radius != 300:
         run_name += f"_radius_{int(cli.search_radius)}m"
     RUNS = cli.runs_dir.resolve() if cli.runs_dir else RUNS_ROOT / run_name
+    TRACT_RUNS = (
+        cli.tract_runs_dir.resolve()
+        if cli.tract_runs_dir
+        else RUNS.parent / "national"
+    )
     suffix = (
         "" if cli.scenario == "uniform_005" and cli.search_radius == 300
         else f"_{cli.scenario}"
@@ -263,11 +296,12 @@ def main():
         "- Population was adult-scaled in run_city.py (--adult-fraction, default 0.86), "
         "so totals are not the ~20%-overstated all-ages figure.",
         "", "## Top 20 counties (by preventable cases/year)", "",
-        "| GEOID | county | tracts | preventable_cases | avoided_cost |",
-        "|---|---|---:|---:|---:|",
+        "| GEOID | county | county features | prevalence tracts | preventable_cases | avoided_cost |",
+        "|---|---|---:|---:|---:|---:|",
     ]
     for r in rows[:20]:
-        lines.append(f"| {r['GEOID']} | {r['name']} | {r['tracts']} | "
+        lines.append(f"| {r['GEOID']} | {r['name']} | {r['county_features']} | "
+                     f"{r['prevalence_tracts']} | "
                      f"{(r['preventable_cases'] or 0):,.0f} | "
                      f"${(r['avoided_cost'] or 0):,.0f} |")
 
