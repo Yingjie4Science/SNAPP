@@ -73,13 +73,13 @@ LOGGER = logging.getLogger("urban_mental_health_runner")
 BASE_DIR = Path(__file__).resolve().parents[2]          # project root (SNAPP)
 DATASET_DIR = BASE_DIR / "data" / "urban-mental-health"
 INPUTS = DATASET_DIR / "inputs"
-# Model runs (large, regenerable, gitignored): one folder per run under runs/.
-RUNS = DATASET_DIR / "runs"
-WORKSPACE = RUNS / "sf_baseline"                         # the base SF run
+# Model runs (large, regenerable, gitignored), grouped by study scale.
+RUNS = DATASET_DIR / "runs" / "sf"
+WORKSPACE = RUNS / "baseline"                            # the base SF run
 # "Total value of existing greenness": counterfactual NDVI=0 vs current greenness
 # (how much depression current greenness ALREADY averts), reported alongside the
 # marginal greening scenario. See docs/greening_scenarios.md (dual counterfactual).
-TOTAL_GREENNESS_WS = RUNS / "sf_total_greenness"
+TOTAL_GREENNESS_WS = RUNS / "existing_greenness"
 # Curated, small deliverables (committed): figures / tables / summaries.
 RESULTS = BASE_DIR / "results"
 RESULTS_SUMMARIES = RESULTS / "summaries"
@@ -241,7 +241,7 @@ def main():
     parser.add_argument("--total-greenness", action="store_true",
                         help="Value EXISTING greenness instead of a greening scenario: "
                              "run baseline NDVI=0 vs current NDVI (cases current greenness "
-                             "already averts). Writes to runs/sf_total_greenness.")
+                             "already averts). Writes to runs/sf/existing_greenness.")
     cli = parser.parse_args()
 
     model = load_model()

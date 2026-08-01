@@ -45,4 +45,4 @@ tail -n +2 "$REGIONS_CSV" | grep -v '^#' | while IFS=, read -r geoid name; do
         || echo "    WARNING: $geoid failed; continuing."
 done
 
-echo "==> National run complete. Per-county outputs in data/urban-mental-health/runs/national/<GEOID>/"
+echo "==> National run complete. Per-county outputs in data/urban-mental-health/runs/national/uniform_005/<GEOID>/"

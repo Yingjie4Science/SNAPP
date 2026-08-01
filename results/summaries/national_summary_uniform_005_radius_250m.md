@@ -1,6 +1,6 @@
 # National results summary — uniform_005
 
-_Generated 2026-08-01 from 1167 county runs in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national_radius_250m`._
+_Generated 2026-08-01 from 1167 county runs, now stored in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national/radius_250m`._
 
 ## Headline
 

@@ -24,10 +24,10 @@ CACHED_RUN_CITY = BASE_DIR / "src/national/run_city_from_cached_inputs.py"
 
 
 def scenario_root(scenario: str, radius: float) -> Path:
-    name = "national" if scenario == "uniform_005" else f"national_{scenario}"
+    name = scenario
     if radius != 300:
-        name += f"_radius_{int(radius)}m"
-    return BASE_DIR / "data/urban-mental-health/runs" / name
+        name = f"radius_{int(radius)}m"
+    return BASE_DIR / "data/urban-mental-health/runs/national" / name
 
 
 def output_complete(root: Path, geoid: str) -> bool:

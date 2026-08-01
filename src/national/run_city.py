@@ -350,13 +350,10 @@ def main():
 
     if cli.total_greenness:
         cli.scenario = "existing_greenness"
-    scenario_root = (
-        "national" if cli.scenario == "uniform_005"
-        else f"national_{cli.scenario}"
-    )
+    scenario_root = cli.scenario
     if float(cli.search_radius) != SEARCH_RADIUS_M:
-        scenario_root += f"_radius_{int(cli.search_radius)}m"
-    ws_root = WORKSPACE_ROOT.parent / scenario_root
+        scenario_root = f"radius_{int(cli.search_radius)}m"
+    ws_root = WORKSPACE_ROOT / scenario_root
     city_ws = ws_root / cli.geoid
     city_ws.mkdir(parents=True, exist_ok=True)
     LOGGER.info("[%s] building inputs...", cli.geoid)

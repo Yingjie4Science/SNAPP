@@ -18,7 +18,7 @@ from run_sensitivity import total_preventable_cases  # noqa: E402
 
 LOGGER = logging.getLogger("radius_sensitivity")
 RADII_M = (250, 300, 500, 1000)
-WORKSPACES = run_model.RUNS / "sf_radius_sensitivity"
+WORKSPACES = run_model.RUNS / "radius_sensitivity"
 OUT_CSV = run_model.RESULTS_SUMMARIES / "radius_sensitivity.csv"
 OUT_MD = run_model.RESULTS_SUMMARIES / "radius_sensitivity.md"
 FIG = run_model.RESULTS_FIGURES / "radius_sensitivity.png"

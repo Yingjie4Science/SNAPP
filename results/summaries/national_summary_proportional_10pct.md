@@ -1,6 +1,6 @@
 # National results summary — proportional_10pct
 
-_Generated 2026-08-01 from 1167 county runs in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national_proportional_10pct`._
+_Generated 2026-08-01 from 1167 county runs, now stored in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national/proportional_10pct`._
 
 ## Headline
 

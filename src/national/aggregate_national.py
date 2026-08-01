@@ -3,8 +3,8 @@
 Aggregate the per-county national run into one table + headline totals.
 
 After `run_national.sh` finishes, each county has its own workspace under
-data/urban-mental-health/runs/national/<GEOID>/ with the model's per-tract
-summary at output/*sum*<GEOID>*.csv. That CSV carries one row where
+data/urban-mental-health/runs/national/uniform_005/<GEOID>/ with the model's
+per-county summary at output/*sum*<GEOID>*.csv. That CSV carries one row where
 FID == "ALL" holding the county totals (total_cases, total_cost). This script
 reads every county's ALL row, joins county names from config/regions.csv, and
 writes:
@@ -39,13 +39,13 @@ LOGGER = logging.getLogger("aggregate_national")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
-RUNS_ROOT = UMH / "runs"
+RUNS_ROOT = UMH / "runs" / "national"
 REGIONS_CSV = BASE_DIR / "config" / "regions.csv"
 COUNTIES_GPKG = BASE_DIR / "data" / "national" / "counties_gee_upload" / "counties.shp"
 COST_FILE = UMH / "inputs" / "health_cost_rate.txt"
 OUT_DIR = BASE_DIR / "results" / "summaries"
-RUNS = RUNS_ROOT / "national"
-TRACT_RUNS = RUNS_ROOT / "national"
+RUNS = RUNS_ROOT / "uniform_005"
+TRACT_RUNS = RUNS_ROOT / "uniform_005"
 OUT_CSV = OUT_DIR / "national_summary.csv"
 OUT_MD = OUT_DIR / "national_summary.md"
 FIG = BASE_DIR / "results" / "figures" / "national_preventable_cases_map.png"
@@ -242,17 +242,14 @@ def main():
         "Defaults to the 'national' sibling of --runs-dir.",
     )
     cli = ap.parse_args()
-    run_name = (
-        "national" if cli.scenario == "uniform_005"
-        else f"national_{cli.scenario}"
-    )
+    run_name = cli.scenario
     if cli.search_radius != 300:
-        run_name += f"_radius_{int(cli.search_radius)}m"
+        run_name = f"radius_{int(cli.search_radius)}m"
     RUNS = cli.runs_dir.resolve() if cli.runs_dir else RUNS_ROOT / run_name
     TRACT_RUNS = (
         cli.tract_runs_dir.resolve()
         if cli.tract_runs_dir
-        else RUNS.parent / "national"
+        else RUNS.parent / "uniform_005"
     )
     suffix = (
         "" if cli.scenario == "uniform_005" and cli.search_radius == 300

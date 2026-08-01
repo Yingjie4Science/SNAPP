@@ -39,7 +39,7 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(mess
 LOGGER = logging.getLogger("equity_analysis")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
-WORKSPACE = BASE_DIR / "data" / "urban-mental-health" / "runs" / "sf_baseline"
+WORKSPACE = BASE_DIR / "data" / "urban-mental-health" / "runs" / "sf" / "baseline"
 RESULTS = BASE_DIR / "results"
 OUT_MD = RESULTS / "summaries" / "equity_summary.md"
 OUT_METRICS = RESULTS / "summaries" / "equity_metrics.csv"

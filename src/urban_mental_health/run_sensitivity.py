@@ -17,8 +17,8 @@ REQUIREMENTS  (conda env `snapp`): natcap.invest, rasterio, numpy
 USAGE
     python src/urban_mental_health/run_sensitivity.py
 Outputs:
-    data/urban-mental-health/runs/sf_sensitivity/<label>/   (per-run workspaces)
-    data/urban-mental-health/runs/sf_sensitivity/sensitivity_summary.csv
+    data/urban-mental-health/runs/sf/sensitivity/<label>/   (per-run workspaces)
+    results/summaries/sensitivity_summary.csv
 """
 
 import csv
@@ -47,7 +47,7 @@ P0_SCENARIOS = {
 }
 COST_RATES = {"cost_low_17000": 17000.0, "cost_central_21280": 21280.0, "cost_high_23000": 23000.0}
 
-WS_ROOT = run_model.RUNS / "sf_sensitivity"                 # runs (gitignored)
+WS_ROOT = run_model.RUNS / "sensitivity"                    # runs (gitignored)
 SUMMARY_CSV = run_model.RESULTS_SUMMARIES / "sensitivity_summary.csv"  # committed
 
 

@@ -129,7 +129,7 @@ print("   pop sum = %.0f  (expect ~717k SF adults, not ~1.0M)" % np.nansum(a))
 aoi = "data/urban-mental-health/inputs/aoi.gpkg"
 al = [r[0] for r in sqlite3.connect(aoi).execute("SELECT table_name FROM gpkg_contents")][0]
 na = sqlite3.connect(aoi).execute(f"SELECT count(*) FROM '{al}'").fetchone()[0]
-g = sorted(glob.glob("data/urban-mental-health/runs/sf_baseline/output/*sum*.gpkg"))
+g = sorted(glob.glob("data/urban-mental-health/runs/sf/baseline/output/*sum*.gpkg"))
 if g:
     c = sqlite3.connect(g[0])
     t = [r[0] for r in c.execute("SELECT table_name FROM gpkg_contents")][0]
@@ -141,6 +141,6 @@ if g:
 PY
 
 echo; echo "==> Done. Results in results/summaries/ (results_summary.md, equity_summary.md)"
-echo "    + results/figures/; model runs in data/urban-mental-health/runs/sf_baseline"
-echo "    (+ sf_total_greenness). The best-potential scenario raster is built; compare"
+echo "    + results/figures/; model runs in data/urban-mental-health/runs/sf/baseline"
+echo "    (+ sf/existing_greenness). The best-potential scenario raster is built; compare"
 echo "    scenarios with: python src/urban_mental_health/run_scenarios.py"

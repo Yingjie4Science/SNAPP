@@ -38,7 +38,7 @@ LOGGER = logging.getLogger("make_figures")
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
 INPUTS = UMH / "inputs"
-WORKSPACE = UMH / "runs" / "sf_baseline"
+WORKSPACE = UMH / "runs" / "sf" / "baseline"
 RESULTS = BASE_DIR / "results"
 SCEN_CSV = RESULTS / "summaries" / "scenario_comparison.csv"
 SENS_CSV = RESULTS / "summaries" / "sensitivity_summary.csv"
@@ -115,7 +115,7 @@ def fig2_results_map(scenario_label):
     import geopandas as gpd
     gpkgs = sorted(glob.glob(str(WORKSPACE / "output" / "*sum*.gpkg")))
     if not gpkgs:
-        LOGGER.warning("Fig2 skipped — no summary gpkg in runs/sf_baseline/output. Run the model."); return
+        LOGGER.warning("Fig2 skipped — no summary gpkg in runs/sf/baseline/output. Run the model."); return
     gdf = gpd.read_file(gpkgs[0])
     has_cost = "sum_cost" in gdf.columns and gdf["sum_cost"].notna().any()
     n = 2 if has_cost else 1
@@ -202,7 +202,7 @@ def table2_results_summary():
     TABDIR.mkdir(parents=True, exist_ok=True)
     total_cases = total_cost = None
     # Use the same uniform +0.05 scenario row as the integrated summary.  The
-    # older sf_baseline workspace can differ by a few edge cells and should not
+    # older SF baseline workspace can differ by a few edge cells and should not
     # create a second, slightly different manuscript headline.
     if SCEN_CSV.exists():
         for r in csv.DictReader(open(SCEN_CSV)):

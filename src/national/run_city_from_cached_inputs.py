@@ -27,9 +27,9 @@ import run_city  # noqa: E402
 
 
 def root_name(scenario: str, radius: float) -> str:
-    name = "national" if scenario == "uniform_005" else f"national_{scenario}"
+    name = scenario
     if radius != 300:
-        name += f"_radius_{int(radius)}m"
+        name = f"radius_{int(radius)}m"
     return name
 
 
@@ -62,7 +62,7 @@ def main() -> None:
     cli = parser.parse_args()
 
     central = (
-        BASE_DIR / "data/urban-mental-health/runs/national" / cli.geoid
+        BASE_DIR / "data/urban-mental-health/runs/national/uniform_005" / cli.geoid
     )
     required = {
         "aoi_path": central / "inputs/aoi.gpkg",
@@ -77,7 +77,7 @@ def main() -> None:
         )
 
     workspace = (
-        BASE_DIR / "data/urban-mental-health/runs"
+        BASE_DIR / "data/urban-mental-health/runs/national"
         / root_name(cli.scenario, cli.search_radius)
         / cli.geoid
     )

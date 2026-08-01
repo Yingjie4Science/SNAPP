@@ -1,6 +1,6 @@
 # National results summary — greenable_005
 
-_Generated 2026-08-01 from 1167 county runs in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national_greenable_005`._
+_Generated 2026-08-01 from 1167 county runs, now stored in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national/greenable_005`._
 
 ## Headline
 

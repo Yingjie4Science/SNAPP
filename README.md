@@ -53,25 +53,41 @@ SNAPP/
 │   ├── tables/              # Table1/2 (csv + md)
 │   └── summaries/           # results_summary.md, scenario_comparison.csv, sensitivity_summary.csv
 ├── data/                     # gitignored — never pushed to GitHub
+│   ├── national/            # national AOI, NDVI exports, and source preparation
 │   └── urban-mental-health/
 │       ├── raw/              # raw source data
 │       │   ├── cdc_places/  # depression prevalence shapefile -> risk_rate
 │       │   ├── meps/        # MEPS medical-expenditure files -> health_cost_rate
 │       │   └── nlcd/        # NLCD land cover + tree canopy (greening scenarios)
-│       ├── inputs/           # model-ready inputs (built by the src/ scripts)
-│       └── runs/             # model runs, one folder per run (gitignored, large)
-│           ├── sf_baseline/     #   place _ scenario (InVEST output/ + intermediate/)
-│           ├── sf_sensitivity/  #   effect-size cells
-│           ├── sf_scenarios/    #   greening-scenario runs
-│           
-│   └── national
-│       ├── ndvi/
+│       ├── inputs/           # shared model-ready inputs built by src/
+│       └── runs/             # large, regenerable InVEST workspaces
+│           ├── sf/
+│           │   ├── baseline/              # primary uniform +0.05 run
+│           │   ├── existing_greenness/    # NDVI=0 accounting comparison
+│           │   ├── scenarios/<scenario>/  # investment scenarios
+│           │   ├── sensitivity/<cell>/    # effect-size/prevalence cells
+│           │   └── radius_sensitivity/<radius>/
+│           └── national/
+│               ├── uniform_005/<GEOID>/
+│               ├── proportional_10pct/<GEOID>/
+│               ├── greenable_005/<GEOID>/
+│               ├── best_potential_p95/<GEOID>/
+│               ├── existing_greenness/<GEOID>/
+│               └── radius_<meters>m/<GEOID>/
 └── notebooks/                # optional exploratory analysis
 ```
 
 `data/` is gitignored, so datasets are **not** pushed to GitHub — only code,
 config templates, and docs are. Since the data isn't in the repo, each dataset
 below documents how to obtain or regenerate it so a fresh clone is reproducible.
+
+Every individual InVEST workspace retains its own `input/` or `inputs/`,
+`intermediate/`, `output/`, and timestamped `InVEST-*-log-*.txt` files. SF runs
+are grouped by analysis type; national runs are grouped by scenario and then by
+five-digit county GEOID. Use
+`python src/reproducibility/migrate_run_layout.py --root /path/to/SNAPP` once to
+migrate an older flat `runs/sf_*` and `runs/national_*` tree without copying the
+large model data.
 
 ## Development setup (VS Code + conda, Apple Silicon)
 

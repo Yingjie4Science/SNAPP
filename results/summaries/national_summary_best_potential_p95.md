@@ -1,6 +1,6 @@
 # National results summary — best_potential_p95
 
-_Generated 2026-08-01 from 1167 county runs in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national_best_potential_p95`._
+_Generated 2026-08-01 from 1167 county runs, now stored in `/Users/yingjiel/Documents/snapp/SNAPP/data/urban-mental-health/runs/national/best_potential_p95`._
 
 ## Headline
 

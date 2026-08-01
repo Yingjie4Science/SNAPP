@@ -97,7 +97,7 @@ Run the second alongside the first:
 
 ```
 # SF:
-python src/urban_mental_health/run_model.py --total-greenness   # -> runs/sf_total_greenness
+python src/urban_mental_health/run_model.py --total-greenness   # -> runs/sf/existing_greenness
 # National (per county):
 python src/national/run_city.py --geoid <GEOID> ... --total-greenness
 

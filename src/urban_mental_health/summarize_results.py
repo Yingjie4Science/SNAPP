@@ -28,8 +28,8 @@ LOGGER = logging.getLogger("summarize_results")
 
 BASE_DIR = Path(__file__).resolve().parents[2]
 UMH = BASE_DIR / "data" / "urban-mental-health"
-WORKSPACE = UMH / "runs" / "sf_baseline"                  # base model run
-TOTAL_GREENNESS_WS = UMH / "runs" / "sf_total_greenness"  # existing-greenness run
+WORKSPACE = UMH / "runs" / "sf" / "baseline"                  # base model run
+TOTAL_GREENNESS_WS = UMH / "runs" / "sf" / "existing_greenness"  # accounting run
 RESULTS = BASE_DIR / "results"
 SENS = RESULTS / "summaries" / "sensitivity_summary.csv"
 LIU_REPOOL = RESULTS / "summaries" / "liu_one_effect_per_study.md"
