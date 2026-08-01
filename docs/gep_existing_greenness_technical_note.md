@@ -19,7 +19,7 @@ Product (GEP): the annual mental-health benefit associated with residential
 exposure to existing greenness. GEP is the aggregate monetary value of final
 ecosystem-related goods and services in a defined area and accounting period
 (Ouyang et al., 2020; Zheng et al., 2023). The present result is therefore a
-**single GEP service component**, not total GEP.
+**single GEP service component**.
 
 The `existing_greenness` scenario compares observed 2024 greenness with an
 NDVI = 0 reference. It asks:
@@ -54,7 +54,7 @@ described as the predicted consequence of removing all vegetation.
 - **Monetary quantity:** modeled cases multiplied by the annual incremental
   societal cost per prevalent case.
 
-The result is a service **flow for one year**. It is not the value of the
+The result is a service flow for **one year**. It is not the value of the
 underlying ecosystem asset or the capitalized value of future service flows.
 
 ### 1.2 Valuation interpretation
@@ -75,7 +75,7 @@ also be checked for overlapping pathways before aggregation.
 
 ## 2. Study domain
 
-The locked study universe contains **1,167 whole counties assigned to U.S.
+The focus study universe contains **1,167 whole counties assigned to U.S.
 Metropolitan Statistical Areas** using the official CBSA-to-county delineation
 crosswalk and Census cartographic county geometries. It is not a population-
 ranked subset containing only the largest metros, despite the shorthand phrase
@@ -87,9 +87,7 @@ Alaska, Hawaii, territories, and the District of Columbia are outside the
 locked run. Connecticut is also absent because the county layer uses the newer
 planning-region county equivalents while the membership crosswalk used the
 former county system. This is a **coverage limitation**, not a failed result
-among the 1,167 expected counties. Kentucky and Pennsylvania are included and
-have complete results; the earlier statement that their results were missing
-is obsolete.
+among the 1,167 expected counties. 
 
 ## 3. Inputs
 
@@ -101,25 +99,20 @@ is obsolete.
 | Population distribution | WorldPop Global 2015–2030, R2025A, constrained 2024 population | 100 m people-per-pixel raster | Within-county allocation of residents |
 | Adult population totals | ACS 2023 five-year estimates, adult population from table B09021 and total population from B01003 | County table | Exact age-18+ calibration targets |
 | Exposure-response | Liu et al. (2023) pooled OR per +0.1 NDVI, converted to a risk ratio | Aspatial parameter | Converts greenness difference to relative risk |
-| Societal cost | Pooled recent U.S. MDD cost-of-illness studies, inflation-adjusted | Aspatial national parameter | Converts modeled cases to 2024 USD |
+| Societal cost | Pooled recent U.S. Major Depressive Disorder (MDD) cost-of-illness studies, inflation-adjusted | Aspatial national parameter | Converts modeled cases to 2024 USD |
 
-### 3.1 Corrections to the preliminary outline
+### 3.1 Difference to the physical health modeling
 
-The finalized national run does **not** use the decommissioned Copernicus 300 m
+The finalized national run does **not** use the Copernicus 300 m
 NDVI product or a 2024 annual-average composite. It uses a cloud- and
 saturation-masked **2024 June–September Landsat p90 NDVI composite**, followed
 by area averaging and grid harmonization to 90 m. The p90 composite represents
 peak growing-season greenness rather than year-round mean greenness.
 
 The primary valuation does **not** use Census-region MEPS treatment cost.
-MEPS is retained as a direct-medical comparator, while the main result applies
+MEPS is retained as a **direct-medical comparator**, while the main result applies
 a national **$21,280 societal cost per case**. Regional wage adjustment is a
 supplementary distributional sensitivity and was not used here.
-
-PAD-US public-land ownership is not an input to this scenario. The analysis
-values greenness wherever it occurs and does not attribute the service to public
-versus private land. PAD-US could support a later ownership or stewardship
-attribution analysis, but adding it would change the accounting question.
 
 ## 4. Methods
 
@@ -423,7 +416,7 @@ SHA-256 hashes for active raw and configured inputs are recorded in
 county count, exact ACS population reconciliation, finite/non-negative results,
 valuation identity, and final QA status.
 
-## 8. Recommended reporting language
+## 8. Reporting summary 
 
 **Methods:**
 
@@ -446,7 +439,7 @@ valuation identity, and final QA status.
 > service component and should not be interpreted as a causal prediction of
 > vegetation removal or as total metropolitan GEP.
 
-**Suggested figure caption:**
+**Figures:**
 
 > **Figure 1. Modeled annual mental-health contribution of existing greenness
 > to Gross Ecosystem Product in U.S. metropolitan-area counties (2024 USD).**
