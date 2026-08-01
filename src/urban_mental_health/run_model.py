@@ -4,9 +4,10 @@ Run the InVEST Urban Mental Health model (new in InVEST 3.19) via its Python API
 
 Verified against the model source at:
     natcap/invest -> src/natcap/invest/urban_mental_health/urban_mental_health.py
-The package exposes execute, validate, and MODEL_SPEC:
+The package exposes execute, validate, and MODEL_SPEC. Use the MODEL_SPEC
+wrapper so InVEST records the exact inputs and parameters in the workspace:
     from natcap.invest import urban_mental_health
-    urban_mental_health.execute(args)
+    urban_mental_health.MODEL_SPEC.execute(args, create_logfile=True)
 
 WHAT THE MODEL DOES
     Estimates preventable cases (and optionally societal cost) of a mental-health
@@ -274,7 +275,7 @@ def main():
 
     workspace.mkdir(parents=True, exist_ok=True)
     LOGGER.info("Running Urban Mental Health model -> %s", workspace)
-    model.execute(args)
+    model.MODEL_SPEC.execute(args, create_logfile=True)
     LOGGER.info("Done. Outputs (preventable_cases, summary vector/table, ...) in %s",
                 workspace)
 

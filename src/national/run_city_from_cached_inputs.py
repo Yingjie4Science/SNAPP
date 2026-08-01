@@ -152,7 +152,7 @@ def main() -> None:
     warnings = model.validate(args)
     for keys, message in warnings:
         run_city.LOGGER.warning("[%s] validate: %s: %s", cli.geoid, keys, message)
-    model.execute(args)
+    model.MODEL_SPEC.execute(args, create_logfile=True)
 
 
 if __name__ == "__main__":

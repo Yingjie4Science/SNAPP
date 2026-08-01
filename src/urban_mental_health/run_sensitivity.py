@@ -100,7 +100,7 @@ def main():
             args["effect_size"] = effect_size
             LOGGER.info("Running p0=%s OR=%s RR=%s -> %s",
                         p0, odds_ratio, effect_size, ws)
-            model.execute(args)
+            model.MODEL_SPEC.execute(args, create_logfile=True)
             cases = total_preventable_cases(ws, label)
             LOGGER.info("  p0=%s OR=%s RR=%s -> cases=%.1f",
                         p0, odds_ratio, effect_size, cases)

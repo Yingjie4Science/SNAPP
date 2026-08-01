@@ -45,7 +45,7 @@ def main():
         warnings = model.validate(args)
         for keys, message in warnings:
             LOGGER.warning("%s: %s", keys, message)
-        model.execute(args)
+        model.MODEL_SPEC.execute(args, create_logfile=True)
         cases = total_preventable_cases(workspace, suffix)
         rows.append({
             "radius_m": radius,

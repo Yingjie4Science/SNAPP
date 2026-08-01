@@ -70,7 +70,7 @@ def main():
         args["workspace_dir"] = str(ws)
         args["results_suffix"] = label
         LOGGER.info("Running scenario '%s' (ndvi_alt=%s)...", label, fname)
-        model.execute(args)
+        model.MODEL_SPEC.execute(args, create_logfile=True)
         cases = total_preventable_cases(ws, label)
         total_cost = cases * cost if cost else None
         LOGGER.info("  '%s': %.0f preventable cases%s", label, cases,

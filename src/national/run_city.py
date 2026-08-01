@@ -368,7 +368,7 @@ def main():
         for keys, msg in warnings:
             LOGGER.warning("[%s] validate: %s: %s", cli.geoid, keys, msg)
     LOGGER.info("[%s] running model -> %s", cli.geoid, city_ws)
-    model.execute(args)
+    model.MODEL_SPEC.execute(args, create_logfile=True)
     LOGGER.info("[%s] done.", cli.geoid)
 
 
