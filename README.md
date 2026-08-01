@@ -63,7 +63,9 @@ SNAPP/
 │           ├── sf_baseline/     #   place _ scenario (InVEST output/ + intermediate/)
 │           ├── sf_sensitivity/  #   effect-size cells
 │           ├── sf_scenarios/    #   greening-scenario runs
-│           └── national/<GEOID>/
+│           
+│   └── national
+│       ├── ndvi/
 └── notebooks/                # optional exploratory analysis
 ```
 
