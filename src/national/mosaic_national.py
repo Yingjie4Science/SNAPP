@@ -91,10 +91,11 @@ def preflight(tifs: list):
         LOGGER.warning("MIXED CRS across tiles: %s — reproject first, or mosaic per CRS.",
                        dict(crs_counts))
     if mismatches:
-        LOGGER.warning("%d rasters differ in CRS/res from the reference — pin --source-res "
-                       "to the intended native size (e.g. 90) so the grid doesn't drift.",
+        LOGGER.warning("%d rasters differ in CRS/res from the reference — they'll be "
+                       "re-gridded to the modal resolution with count-preserving -r sum.",
                        mismatches)
-    return crs0, res0, nodata0
+    modal_res = res_counts.most_common(1)[0][0] if res_counts else (abs(res0[0]) if res0 else None)
+    return crs0, res0, nodata0, modal_res
 
 
 def standardize_to_grid(tifs: list, target_res: float, tmp_dir: Path, nodata) -> list:
@@ -153,21 +154,17 @@ def build_vrt(tifs: list, out_vrt: Path, nodata, source_res=None):
                 f"pinned {source_res} m" if source_res else "resolution=highest")
 
 
-def to_cog(vrt: Path, out_cog: Path, res_m=None):
-    """Materialize a COG. Default: NATIVE resolution, exact values (straight
-    translate). If res_m is given, downsample with count-preserving '-r sum'."""
-    if res_m is None:
-        cmd = ["gdal_translate", "-of", "COG", "-co", "COMPRESS=DEFLATE",
-               "-co", "OVERVIEW_RESAMPLING=AVERAGE", "-co", "BIGTIFF=IF_SAFER",
-               str(vrt), str(out_cog)]
-        subprocess.run(cmd, check=True)
-        LOGGER.info("Wrote %s (native resolution, values unchanged)", out_cog)
-    else:
-        cmd = ["gdalwarp", "-overwrite", "-r", "sum", "-tr", str(res_m), str(res_m),
-               "-of", "COG", "-co", "COMPRESS=DEFLATE", "-co", "OVERVIEW_RESAMPLING=AVERAGE",
-               "-co", "BIGTIFF=IF_SAFER", str(vrt), str(out_cog)]
-        subprocess.run(cmd, check=True)
-        LOGGER.info("Wrote %s (%.0f m, sum-resampled)", out_cog, res_m)
+def to_cog(vrt: Path, out_cog: Path):
+    """Materialize a COG from the VRT at its native grid, values unchanged.
+
+    The count-preserving work (re-gridding mixed 30/90 m tiles with -r sum) is done
+    upstream by standardize_to_grid, so the VRT is already uniform and correct here —
+    a straight translate keeps exact pixel values."""
+    cmd = ["gdal_translate", "-of", "COG", "-co", "COMPRESS=DEFLATE",
+           "-co", "OVERVIEW_RESAMPLING=AVERAGE", "-co", "BIGTIFF=IF_SAFER",
+           str(vrt), str(out_cog)]
+    subprocess.run(cmd, check=True)
+    LOGGER.info("Wrote %s (native grid, values unchanged)", out_cog)
 
 
 def raster_sum(path: Path) -> float:
@@ -226,9 +223,9 @@ def main():
     ap.add_argument("--scenario", default="existing_greenness")
     ap.add_argument("--var", choices=["cases", "cost", "both"], default="both")
     ap.add_argument("--source-res", type=float, default=None,
-                    help="Native source resolution in metres to pin the mosaic grid to "
-                         "(e.g. 90). Prevents gdalbuildvrt's 'average' from drifting the "
-                         "grid off the native size. Default: finest tile ('highest').")
+                    help="Pin the mosaic grid to this resolution in metres (e.g. 90), "
+                         "overriding the auto-picked modal native resolution. Off-grid "
+                         "tiles are re-gridded with count-preserving -r sum.")
     ap.add_argument("--resolution", type=float, default=None,
                     help="Downsample the COG to this resolution in metres (count-"
                          "preserving -r sum). Default: keep native (no resampling).")
@@ -251,19 +248,19 @@ def main():
         tifs = discover(scen_dir, prefix)
         if not tifs:
             LOGGER.warning("no rasters for '%s'; skipping.", var); continue
-        _, res, nodata = preflight(tifs)
-        native_m = int(round(cli.source_res)) if cli.source_res else (int(round(res[0])) if res else 0)
-        # If a target grid is pinned, sum-aggregate any off-grid (e.g. 30 m) tiles
-        # to it first so counts are conserved (VRT nearest alone would undercount).
-        if cli.source_res:
-            tifs = standardize_to_grid(tifs, cli.source_res,
-                                       out_dir / "_standardized" / var, nodata)
+        _, res, nodata, modal_res = preflight(tifs)
+        # Target grid: explicit --resolution, else pinned --source-res, else the
+        # MODAL native resolution (e.g. 90 m when 872 tiles are 90 m, 295 are 30 m).
+        target_res = cli.resolution or cli.source_res or modal_res or (res[0] if res else 90.0)
+        # Re-grid every off-target tile with count-preserving -r sum FIRST, so the
+        # mosaic is correct for both variables even with the 30/90 m mix. Tiles
+        # already at target pass through untouched.
+        tifs = standardize_to_grid(tifs, target_res, out_dir / "_standardized" / var, nodata)
         vrt = out_dir / f"national_{cli.scenario}_{var}.vrt"
-        build_vrt(tifs, vrt, nodata, source_res=cli.source_res)
+        build_vrt(tifs, vrt, nodata, source_res=target_res)
         if not cli.no_cog:
-            res_label = int(cli.resolution) if cli.resolution else native_m
-            cog = out_dir / f"national_{cli.scenario}_{var}_{res_label}m.tif"
-            to_cog(vrt, cog, cli.resolution)
+            cog = out_dir / f"national_{cli.scenario}_{var}_{int(round(target_res))}m.tif"
+            to_cog(vrt, cog)
             # QA: mosaic sum vs per-county CSV totals (cases only)
             if var == "cases":
                 nat_from_csv = totals_csv(scen_dir, out_dir / f"national_{cli.scenario}_totals.csv")
