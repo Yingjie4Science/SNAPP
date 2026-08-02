@@ -178,38 +178,52 @@ is replaced.
 
 ### 4.4 Exposure-response estimate and OR-to-RR conversion
 
-Liu et al. (2023) report a pooled odds ratio
+Liu et al. (2023) report a pooled odds ratio of **0.931 (95% CI:
+0.887–0.977) per 0.1-unit increase in NDVI** for depression:
 
 $$
-\mathrm{OR}_{0.1} = 0.931
-\quad (95\%\ \mathrm{CI}: 0.887 \text{ to } 0.977)
+\mathrm{OR}_{0.1} = 0.931.
 $$
 
-per +0.1 NDVI for depression. Because InVEST requires a risk ratio and the
-outcome is common, the odds ratio is converted using the Zhang–Yu approximation:
+Thus, the reported odds of depression are multiplied by 0.931 for each 0.1-unit
+increase in NDVI. InVEST instead requires a **risk ratio per 0.1-unit NDVI
+increase**. Because the outcome is common, the odds ratio should not be used as
+if it were a risk ratio.
 
-$$
-\mathrm{RR}_{0.1}
-= \frac{\mathrm{OR}_{0.1}}
-       {(1-p_0)+p_0\mathrm{OR}_{0.1}}.
-$$
-
-The locked reference risk is the adult-population-weighted PLACES prevalence
-among tracts in the lowest population-weighted national NDVI quartile:
+The Zhang–Yu approximation converts an odds ratio to a risk ratio conditional
+on the outcome risk, $p_0$, in the reference group. For this study, the reference
+group is the lowest adult-population-weighted national NDVI quartile:
 
 $$
 p_0 = 0.191045.
 $$
 
-The quartile threshold is mean NDVI = 0.416390 and contains 14,993 reference
-tracts. The resulting central risk ratio is
+The corresponding NDVI threshold is 0.416390, and the reference group contains
+14,993 tracts. Holding $p_0$ fixed, the conversion is
 
 $$
-\mathrm{RR}_{0.1} = 0.943436
+\widehat{\mathrm{RR}}_{0.1}
+= \frac{\mathrm{OR}_{0.1}}
+       {(1-p_0)+p_0\mathrm{OR}_{0.1}}.
 $$
 
-with converted OR confidence limits 0.906571–0.981312. The model does not pass
-the published odds ratio directly as if it were a risk ratio.
+Substituting the study values gives
+
+$$
+\widehat{\mathrm{RR}}_{0.1}
+= \frac{0.931}
+       {(1-0.191045)+(0.191045)(0.931)}
+= 0.943436.
+$$
+
+Applying the same transformation to the lower and upper limits of the published
+OR confidence interval gives an OR-derived RR interval of
+**0.906571–0.981312**.
+
+This is an **OR-derived interval conditional on the fixed value of $p_0$**. It
+does not incorporate uncertainty in $p_0$ and is not a directly meta-analyzed RR
+confidence interval. The model uses 0.943436 as its central effect size; it does
+not pass the published OR directly as if it were a risk ratio.
 
 ### 4.5 Modeled cases associated with existing greenness
 
