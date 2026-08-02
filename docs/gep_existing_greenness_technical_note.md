@@ -14,12 +14,14 @@
 
 ## Executive summary
 
-This analysis estimates one contribution of urban ecosystems to Gross Ecosystem
-Product (GEP): the annual mental-health benefit associated with residential
-exposure to existing greenness. GEP is the aggregate monetary value of final
-ecosystem-related goods and services in a defined area and accounting period
-(Ouyang et al., 2020; Zheng et al., 2023). The present result is therefore a
-**single GEP service component**.
+Urban nature can support psychological restoration and improve acute
+mental-health outcomes through brief, everyday contact with nature (Li et al.,
+2025). This analysis estimates one contribution of urban ecosystems to Gross
+Ecosystem Product (GEP): the annual mental-health benefit associated with
+residential exposure to existing greenness. GEP is the aggregate monetary value
+of final ecosystem-related goods and services in a defined area and accounting
+period (Ouyang et al., 2020; Zheng et al., 2023). The present result is therefore
+a **single GEP service component**.
 
 The `existing_greenness` scenario compares observed 2024 greenness with an
 NDVI = 0 reference. It asks:
@@ -492,6 +494,10 @@ Greenberg, P. E., Fournier, A.-A., Sisitsky, T., Simes, M., Berman, R.,
 Koenigsberg, S. H., & Kessler, R. C. (2023). The economic burden of adults with
 major depressive disorder in the United States (2019). *Advances in Therapy,
 40*(9), 4460–4479. https://doi.org/10.1007/s12325-023-02622-x
+
+Li, Y., Mao, Y., Mandle, L., et al. (2025). Acute mental health benefits of
+urban nature. *Nature Cities, 2*, 720–731.
+https://doi.org/10.1038/s44284-025-00286-y
 
 Liu, Z., Chen, X., Cui, H., et al. (2023). Green space exposure on depression
 and anxiety outcomes: A meta-analysis. *Environmental Research, 231*, 116303.
