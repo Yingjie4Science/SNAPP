@@ -233,8 +233,8 @@ exposure contrast:
 $$
 \begin{aligned}
 \mathrm{RR}_j
-&= \exp\!\left[\ln(\mathrm{RR}_{0.1})\,10\Delta G_j\right] \\
-&= \mathrm{RR}_{0.1}^{\,10\Delta G_j}.
+&= \exp\left[\ln(\mathrm{RR}_{0.1}) \cdot 10\Delta G_j\right] \\
+&= \mathrm{RR}_{0.1}^{10\Delta G_j}.
 \end{aligned}
 $$
 
@@ -248,7 +248,7 @@ $$
 \begin{aligned}
 q_j
 &= \mathrm{PF}_j B_j \\
-&= \left(1-\mathrm{RR}_{0.1}^{\,10\Delta G_j}\right)P_j p_j.
+&= \left(1-\mathrm{RR}_{0.1}^{10\Delta G_j}\right)P_j p_j.
 \end{aligned}
 $$
 
@@ -262,7 +262,7 @@ $$
 and the population-standardized result is
 
 $$
-R_k = 1{,}000\,
+R_k = 1{,}000
 \frac{Q_k}{\displaystyle\sum_{j\in k}P_j}.
 $$
 
