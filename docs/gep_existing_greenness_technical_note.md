@@ -23,6 +23,16 @@ of final ecosystem-related goods and services in a defined area and accounting
 period (Ouyang et al., 2020; Zheng et al., 2023). The present result is therefore
 a **single GEP service component**.
 
+This project uses the **InVEST Urban Mental Health model** as its spatial
+accounting framework (Natural Capital Alliance, 2026). For each county, the
+model combines neighborhood-scale greenness, the spatial distribution of
+adults, baseline depression prevalence, an exposure-response relationship, and
+an economic value per modeled case to produce pixel-level case and cost
+surfaces. These outputs are then aggregated to county, metropolitan-area, and
+national study-domain totals. InVEST provides a consistent and reproducible way
+to apply the accounting calculation across places; it does not by itself
+establish that the modeled association is causal.
+
 The `existing_greenness` scenario compares observed 2024 greenness with an
 NDVI = 0 reference. It asks:
 
