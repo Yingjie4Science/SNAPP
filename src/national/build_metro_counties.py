@@ -236,7 +236,7 @@ def main():
 
     cli.regions_csv.parent.mkdir(parents=True, exist_ok=True)
     with open(cli.regions_csv, "w", newline="") as fh:
-        w = csv.writer(fh)
+        w = csv.writer(fh, lineterminator="\n")
         w.writerow(["GEOID", "NAME"])
         for _, r in sel.sort_values("GEOID").iterrows():
             w.writerow([r["GEOID"], r.get("NAME", "")])

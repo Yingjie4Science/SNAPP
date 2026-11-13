@@ -1,0 +1,33 @@
+{
+  "added_vs_legacy": 61,
+  "candidate_counties": 1180,
+  "candidate_crs": "EPSG:4269",
+  "candidate_gpkg": "data/national/aoi_versions/2023/derived/msa_counties_2023.gpkg",
+  "candidate_regions_csv": "provenance/aoi_2023/regions_cbsa_2023.csv",
+  "candidate_states": 49,
+  "crosswalk": "data/national/aoi_versions/2023/raw/list1_2023.xlsx",
+  "errors": {
+    "candidate_duplicate_geoids": 0,
+    "candidate_invalid_geometries": 0,
+    "candidate_missing_from_crosswalk": [],
+    "candidate_missing_from_csv": [],
+    "candidate_not_in_crosswalk": [],
+    "csv_missing_from_candidate": [],
+    "regions_csv_duplicate_geoids": 0
+  },
+  "expected_crosswalk_counties": 1180,
+  "legacy_counties": 1167,
+  "legacy_regions_csv": "/Users/yingjiel/Documents/projects/SNAPP/config/regions.csv",
+  "passed": true,
+  "removed_vs_legacy": 48,
+  "scope_excluded_statefp": [
+    "02",
+    "15",
+    "60",
+    "66",
+    "69",
+    "72",
+    "78"
+  ],
+  "shared_with_legacy": 1119
+}

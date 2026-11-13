@@ -51,6 +51,18 @@ the former county system. This is a coverage limitation, not a failed county
 run. `config/regions.csv` is the authoritative GEOID list and
 `data/national/counties.gpkg` is its matching geometry.
 
+## Candidate harmonized 2023 national AOI (not yet promoted)
+
+`provenance/aoi_2023/` records a separate, validated modernization candidate.
+It pairs the July 2023 official CBSA List 1 membership crosswalk with
+full-resolution 2023 TIGER/Line county-equivalent geometry. The candidate has
+1,180 Metropolitan Statistical Area counties in its declared CONUS-plus-DC
+scope, compared with 1,167 in the locked AOI. It retains the entire county when
+the crosswalk lists it as an MSA member; it does not use the optional geometry
+overlap threshold. The locked AOI remains the source for all reported results
+unless and until this candidate is explicitly promoted and the national pipeline
+is rerun.
+
 ### Alternative geometry-based reconstruction (not used for the locked run)
 
 `--overlap --metro-layer <layer> --min-overlap 0.30` is an optional way to
