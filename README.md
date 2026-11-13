@@ -19,7 +19,7 @@ SNAPP/
 ├── tests/                    # pytest smoke tests (cost math, config, scenario)
 ├── run_pipeline.sh           # SF: run all steps end to end
 ├── run_national.sh           # national: loop config/regions.csv, run per county
-├── config/regions.csv        # county GEOIDs (counties in metros) for the national run
+├── config/regions.csv        # locked GEOIDs: official MSA-member counties for the national run
 ├── docs/                     # societal-cost synthesis, cost_studies.csv, scaling notes
 ├── .vscode/                  # shared editor config (interpreter + extensions)
 ├── src/
@@ -40,7 +40,7 @@ SNAPP/
 │   │   ├── fetch_population.py        # WorldPop US 100 m -> adult pop, clip to AOI
 │   │   └── estimate_health_cost.py    # societal (Greenberg) or direct (MEPS)
 │   ├── national/
-│   │   ├── build_metro_counties.py    # AOI layer: counties overlapping metros -> counties.gpkg
+│   │   ├── build_metro_counties.py    # AOI: official MSA-member counties -> counties.gpkg
 │   │   └── run_city.py                # run the model for ONE county (EPSG:5070)
 │   └── urban_mental_health/
 │       ├── run_model.py               # runs the InVEST Urban Mental Health model
@@ -308,27 +308,41 @@ pipeline.
 
 ## Scaling to a national multi-city study
 
-The SF pipeline generalizes to all US metro **counties**. First build the AOI
-layer — counties that fall within/overlap a Metro (CBSA) — with
-`build_metro_counties.py` (pass your own metro layer to match the notebook, or
-let it download TIGER CBSA):
+### Which metropolitan counties are included?
+
+The locked U.S. analysis is **not** a population-ranked selection of the
+largest metros, and it does **not** apply a spatial-overlap cutoff. It includes
+each whole county that the [official 2020 Census/OMB CBSA delineation
+crosswalk](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls)
+classifies as belonging to a **Metropolitan Statistical Area**. Counties listed
+only in a Micropolitan Statistical Area are excluded. This is a county-to-CBSA
+membership rule, so a listed county is included in full; no percentage-of-area
+calculation is involved.
+
+The resulting locked study universe is **1,167 unique counties assigned to 376
+MSAs**. Alaska, Hawaii, territories, and the District of Columbia are excluded
+by the CONUS workflow. Connecticut is also absent because the 2024 Census county
+layer uses planning-region county equivalents whereas the 2020 crosswalk uses
+the former counties. Thus, the file represents metropolitan counties in 47
+conterminous states, not complete coverage of every current U.S. metropolitan
+county. The authoritative county list is `config/regions.csv`; its matching
+geometry is `data/national/counties.gpkg`.
+
+`run_city.py` runs the model for one county (by GEOID), in CONUS-wide CRS
+(**EPSG:5070**), selecting prevalence tracts by spatial intersection and
+windowed-clipping the national WorldPop raster into a per-county run folder.
+`run_national.sh` loops the locked `config/regions.csv` list:
 
 ```bash
-python src/national/build_metro_counties.py --metro-layer <your_metro.shp>
-#   -> data/national/counties.gpkg  +  config/regions.csv (county GEOIDs)
-```
-
-Then `run_city.py` runs the model for one county (by GEOID), in CONUS-wide CRS
-(**EPSG:5070**), selecting prevalence tracts by spatial intersection, windowed-
-clipping the national WorldPop raster, into a per-county run folder.
-`run_national.sh` loops `config/regions.csv`:
-
-```bash
-# 1. AOI layer + county list. Two membership methods:
-#    (a) area overlap (default): keeps counties >=30% inside a metro (tune --min-overlap)
-python src/national/build_metro_counties.py --metro-layer <your_metro.shp> --year 2020
-#    (b) EXACT official CBSA->county crosswalk (no geometry heuristic):
+# 1. LOCKED/DEFAULT method: exact official CBSA->county membership.
+#    --crosswalk is optional because it is the script default; shown for clarity.
 python src/national/build_metro_counties.py --crosswalk
+#
+# Optional alternative only: reconstruct membership from custom metro polygons.
+# Keep a county when >=30% of its equal-area (EPSG:5070) county area overlaps a
+# metro polygon. This is NOT the method used for the locked 1,167-county run.
+python src/national/build_metro_counties.py --overlap \
+  --metro-layer <your_metro.shp> --min-overlap 0.30
 # 2. per-county NDVI (prerequisite — run_national.sh does NOT do this):
 # Faster recommended route: upload counties.gpkg as an EE table asset, set the
 # asset ID in src/inputs/ndvi/ndvi_gee_national.js, and run it in the GEE Code

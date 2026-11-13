@@ -21,14 +21,45 @@ only if you specifically need full-resolution geometry).
 
 ## Why it matters here
 
-- `GEOID`, `NAME`, `STATEFP`, `LSAD` exist in both, so the county↔metro
-  `sjoin(intersects)` and the `LSAD == 'M1'` (Metropolitan) filter behave the same.
-- **County selection near coasts differs:** `tl_` boundaries reach into water, so
-  a metro can "touch" a neighboring coastal county's water extension and pull it
-  in. `cb_` (shoreline-clipped) avoids that — a cleaner, more intuitive AOI for
-  metros like San Francisco.
-- If you ever need **exact overlap areas**, compute them from `tl_` (full-res);
-  `cb_` areas are approximate.
+- In the **locked national analysis**, county membership does not come from a
+  spatial join. It comes from the official CBSA-to-county delineation crosswalk;
+  the county geometry is then used for modelling, clipping, and mapping.
+- The geometry choice matters for those modelling and mapping steps, especially
+  near coasts. `cb_` avoids the water extensions present in `tl_` boundaries.
+- The script's optional geometry-reconstruction mode (`--overlap`) is different:
+  it computes county–metro intersection areas in EPSG:5070. For that optional
+  method, `tl_` is preferable if exact overlap areas are needed; `cb_` areas are
+  generalized.
+
+## National metropolitan-county inclusion rule (locked analysis)
+
+The national results use **whole-county membership**, not a county area-overlap
+cutoff. `src/national/build_metro_counties.py` defaults to the official [2020
+Census/OMB CBSA delineation List 1](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls):
+
+1. Retain crosswalk rows designated **Metropolitan Statistical Area**.
+2. Join their five-digit state-plus-county FIPS codes to the county geometry.
+3. Exclude Alaska, Hawaii, Puerto Rico, Guam, the U.S. Virgin Islands, American
+   Samoa, the Northern Mariana Islands, and—by default—the District of Columbia.
+
+There is **no `--min-overlap` threshold** in that locked method: if the official
+crosswalk assigns a county to an MSA, the entire county is included; if not, it
+is excluded. The resulting locked AOI contains **1,167 counties in 376 MSAs**,
+represented in 47 conterminous states. Connecticut is absent because the 2024
+county layer uses planning-region county equivalents but the 2020 crosswalk uses
+the former county system. This is a coverage limitation, not a failed county
+run. `config/regions.csv` is the authoritative GEOID list and
+`data/national/counties.gpkg` is its matching geometry.
+
+### Alternative geometry-based reconstruction (not used for the locked run)
+
+`--overlap --metro-layer <layer> --min-overlap 0.30` is an optional way to
+rebuild an AOI from a custom metro polygon layer. It retains a county only when
+the sum of its intersections with Metro polygons is at least 30% of that
+county's EPSG:5070 area; a county merely touching a Metro polygon is excluded.
+This 30% cutoff is therefore an **alternative sensitivity/reconstruction rule**,
+not the inclusion criterion for the reported 1,167-county results. A custom
+`--metro-layer` affects selection only when paired with `--overlap`.
 
 ## Vintage
 
