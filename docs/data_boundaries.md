@@ -51,6 +51,27 @@ the former county system. This is a coverage limitation, not a failed county
 run. `config/regions.csv` is the authoritative GEOID list and
 `data/national/counties.gpkg` is its matching geometry.
 
+### Data sources and the Connecticut coverage issue
+
+The AOI used for the reported analysis combines two Census products:
+
+- **Reported version:** [2020 Census/OMB List 1
+  (`list1_2020.xls`)](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls)
+  for CBSA membership, paired with [2024 Census cartographic counties
+  (`cb_2024_us_county_500k.zip`)](https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip)
+  for county geometry.
+
+Connecticut is absent because the 2020 Census/OMB List 1 represents the state
+using its former eight counties, whereas the 2024 Census cartographic county
+layer represents it using nine planning-region county equivalents. The two
+systems have different GEOIDs and therefore cannot be joined. Rhode Island
+retained its county system and does not have this mismatch.
+
+The reported pairing arose from the AOI builder's practical default to use the
+then-current generalized Census cartographic county layer. It was not an
+intentional cross-vintage harmonization strategy. It is retained here to
+preserve reproducibility of the reported results.
+
 ## Candidate harmonized 2023 national AOI (not yet promoted)
 
 `provenance/aoi_2023/` records a separate, validated modernization candidate.
@@ -62,6 +83,20 @@ the crosswalk lists it as an MSA member; it does not use the optional geometry
 overlap threshold. The locked AOI remains the source for all reported results
 unless and until this candidate is explicitly promoted and the national pipeline
 is rerun.
+
+The candidate uses the following paired sources:
+
+- **Harmonized version:** [July 2023 Census/OMB List 1
+  (`list1_2023.xlsx`)](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list1_2023.xlsx)
+  for CBSA membership, paired with [2023 full-resolution TIGER/Line counties
+  (`tl_2023_us_county.zip`)](https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip)
+  for county geometry.
+
+Both sources use the current Connecticut planning-region county equivalents,
+so the GEOIDs join and Connecticut planning regions that are official MSA
+members are included. Before promoting this AOI, the project should confirm
+whether other ecosystem-service analyses use the reported AOI and whether all
+services should be updated consistently.
 
 ### Alternative geometry-based reconstruction (not used for the locked run)
 

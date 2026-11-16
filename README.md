@@ -312,8 +312,8 @@ pipeline.
 
 The locked U.S. analysis is **not** a population-ranked selection of the
 largest metros, and it does **not** apply a spatial-overlap cutoff. It includes
-each whole county that the [official 2020 Census/OMB CBSA delineation
-crosswalk](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls)
+each whole county that the [2020 Census/OMB List 1
+(`list1_2020.xls`)](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls)
 classifies as belonging to a **Metropolitan Statistical Area**. Counties listed
 only in a Micropolitan Statistical Area are excluded. This is a county-to-CBSA
 membership rule, so a listed county is included in full; no percentage-of-area
@@ -321,12 +321,31 @@ calculation is involved.
 
 The resulting locked study universe is **1,167 unique counties assigned to 376
 MSAs**. Alaska, Hawaii, territories, and the District of Columbia are excluded
-by the CONUS workflow. Connecticut is also absent because the 2024 Census county
-layer uses planning-region county equivalents whereas the 2020 crosswalk uses
-the former counties. Thus, the file represents metropolitan counties in 47
+by the CONUS workflow. Thus, the file represents metropolitan counties in 47
 conterminous states, not complete coverage of every current U.S. metropolitan
 county. The authoritative county list is `config/regions.csv`; its matching
 geometry is `data/national/counties.gpkg`.
+
+#### Boundary vintages and Connecticut coverage
+
+The reported AOI combines the 2020 membership system with 2024 county geometry.
+This cross-vintage pairing arose from the AOI builder's practical default to use
+the then-current generalized Census cartographic county layer; it was not an
+intentional harmonization strategy. It is retained to reproduce the reported
+national results.
+
+| AOI version | CBSA membership | County geometry | Connecticut and analysis status |
+|---|---|---|---|
+| **Reported version** | [2020 Census/OMB List 1 (`list1_2020.xls`)](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2020/delineation-files/list1_2020.xls) | [2024 Census cartographic counties (`cb_2024_us_county_500k.zip`)](https://www2.census.gov/geo/tiger/GENZ2024/shp/cb_2024_us_county_500k.zip) | The membership file uses Connecticut's former eight counties, while the geometry uses nine planning-region county equivalents. Their GEOIDs do not join, so Connecticut is absent. This 1,167-county AOI underlies the reported results. |
+| **Harmonized candidate** | [July 2023 Census/OMB List 1 (`list1_2023.xlsx`)](https://www2.census.gov/programs-surveys/metro-micro/geographies/reference-files/2023/delineation-files/list1_2023.xlsx) | [2023 full-resolution TIGER/Line counties (`tl_2023_us_county.zip`)](https://www2.census.gov/geo/tiger/TIGER2023/COUNTY/tl_2023_us_county.zip) | Both sources use Connecticut planning-region county equivalents, so their GEOIDs join. The validated 1,180-county CONUS-plus-DC candidate has not been used for reported results. |
+
+Rhode Island retained its county system and therefore does not have the
+Connecticut mismatch. Before promoting the harmonized candidate, confirm whether
+the other ecosystem-service analyses use the reported AOI and whether all
+services should be updated consistently. See
+[`docs/data_boundaries.md`](docs/data_boundaries.md) for the detailed boundary
+decision and [`provenance/aoi_2023/`](provenance/aoi_2023/) for the source hashes,
+validation, and county-level comparison.
 
 `run_city.py` runs the model for one county (by GEOID), in CONUS-wide CRS
 (**EPSG:5070**), selecting prevalence tracts by spatial intersection and
